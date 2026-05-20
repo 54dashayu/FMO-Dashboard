@@ -22,12 +22,14 @@
 - 针对手机浏览器优化仪表盘布局，方便局域网内手机查看。
 - 提供 Windows x64 便携包，解压后双击启动，无需安装开发环境。
 
+## 📦 安卓测试版 APK
+
+- [FMO-Dashboard-Android-v0.98.0.apk](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.98.0/FMO-Dashboard-Android-v0.98.0.apk)
 ## 📦 Win64 便携版
 
 最新版便携包在 GitHub Release 中下载。推荐普通用户下载 `.exe` 版本，双击即可自动解压并启动：
 
-- [FMO-Dashboard-Windows-Portable.exe](https://github.com/54dashayu/FMO-Dashboard/releases/latest)
-- [FMO-Dashboard-Windows-Portable.zip](https://github.com/54dashayu/FMO-Dashboard/releases/latest)
+- [FMO-Dashboard-Windows-Portable.exe]([https://github.com/54dashayu/FMO-Dashboard/releases/latest](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.98.0/FMO-Dashboard-Windows-Portable.exe)
 
 `.exe` 使用方式：
 
@@ -35,18 +37,11 @@
 2. 双击运行，浏览器会自动打开本机页面。
 3. 同一局域网内的手机也可以访问启动页面中显示的局域网地址。
 
-`.zip` 使用方式：
-
-1. 下载并解压压缩包。
-2. 双击 `start-windows.bat`。
-3. 浏览器会自动打开本机页面。
-4. 同一局域网内的手机也可以访问启动窗口里显示的局域网地址。
 
 
 
-#########以下为BH5HSJ后视镜老师原Fmolos项目说明：#########################################################################################
 
-
+###############以下为BH5HSJ后视镜老师原Fmolos项目说明：####################
 
 ## ✨ 主要功能
 
