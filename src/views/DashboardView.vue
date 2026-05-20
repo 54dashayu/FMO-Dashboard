@@ -137,6 +137,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { Capacitor, registerPlugin } from '@capacitor/core'
 import { FmoApiClient } from '../services/fmoApi'
 import { formatTimestamp } from '../components/home/constants'
 import { getControlTarget, switchStationByRelayName } from '../services/stationControl'
@@ -144,6 +145,8 @@ import { useSpeakingStatusStore } from '../stores/speakingStore'
 import { gridToAddress } from '../services/gridService'
 import { addDiagnosticLog } from '../services/diagnosticLog'
 import toast from '../composables/useToast'
+
+const FmoSpeech = registerPlugin('FmoSpeech')
 
 const props = defineProps({
   fmoAddress: {
@@ -526,6 +529,10 @@ function formatCallsignForSpeech(callsign) {
   return callsign.split('').join(' ')
 }
 
+function isNativeAndroid() {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+}
+
 function getPreferredSpeechVoice() {
   if (!window.speechSynthesis?.getVoices) return null
   const voices = window.speechSynthesis.getVoices()
@@ -672,6 +679,25 @@ async function playBeeps(count) {
 }
 
 async function speakCallsign(callsign) {
+  const text = formatCallsignForSpeech(callsign)
+
+  if (isNativeAndroid()) {
+    try {
+      await FmoSpeech.speak({
+        text,
+        lang: 'en-US',
+        rate: 0.42,
+        pitch: 1
+      })
+      return
+    } catch (err) {
+      addDiagnosticLog('warn', '安卓原生呼号播报失败，尝试网页语音', {
+        callsign,
+        error: err?.message || String(err)
+      })
+    }
+  }
+
   await waitForVoices()
   return new Promise((resolve) => {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
@@ -680,7 +706,7 @@ async function speakCallsign(callsign) {
       return
     }
 
-    const utterance = new SpeechSynthesisUtterance(formatCallsignForSpeech(callsign))
+    const utterance = new SpeechSynthesisUtterance(text)
     const voice = getPreferredSpeechVoice()
     if (voice) utterance.voice = voice
     utterance.lang = 'en-US'
