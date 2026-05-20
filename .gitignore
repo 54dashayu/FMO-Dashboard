@@ -1,0 +1,77 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode
+!.vscode/extensions.json
+.idea
+.qoder
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# IDE - IntelliJ IDEA
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
+
+# IDE - Eclipse
+.project
+.classpath
+.settings/
+
+# IDE - Visual Studio
+.vs/
+*.user
+
+# IDE - WebStorm
+.fleet/
+
+# IDE - Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# IDE - Atom
+.atom/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Android keystore
+*.keystore
+*.jks
+
+# Keep generated desktop and Android launcher icons in the repository so
+# release builds have the correct FMO仪表盘 branding without extra steps.
+.icon-tmp/
+
+# Gradle build output (problem reports etc.)
+build/
+
+# Capacitor
+android/app/release/
+ios/App/build/
+ios/DerivedData/
+
+web-console/
+
+# Portable release artifacts
+release/

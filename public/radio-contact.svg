@@ -1,0 +1,48 @@
+<svg viewBox="24 40 152 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="radioGradient" x1="100" y1="40" x2="100" y2="180" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#FEF3C7" />
+            <stop offset="0.5" stop-color="#FBBF24" />
+            <stop offset="1" stop-color="#F59E0B" />
+        </linearGradient>
+    </defs>
+    
+    <!-- 整体位置微调 -->
+    <g transform="translate(0, 0)">
+        <!-- 对称电波 (左右各三根) -->
+        <g stroke="#FBBF24" stroke-width="6" stroke-linecap="round">
+            <!-- 右侧 -->
+            <g transform="translate(122, 85)">
+                <path d="M5 -18C14 -14 20 -6 20 6" opacity="1" />
+                <path d="M15 -30C28 -24 36 -12 36 6" opacity="0.8" />
+                <path d="M25 -40C44 -30 54 -16 54 6" opacity="0.5" />
+            </g>
+            <!-- 左侧镜像 -->
+            <g transform="translate(78, 85) scale(-1, 1)">
+                <path d="M5 -18C14 -14 20 -6 20 6" opacity="1" />
+                <path d="M15 -30C28 -24 36 -12 36 6" opacity="0.8" />
+                <path d="M25 -40C44 -30 54 -16 54 6" opacity="0.5" />
+            </g>
+        </g>
+
+        <!-- 人形主体 (增加高度) -->
+        <g fill="url(#radioGradient)" stroke="#F59E0B" stroke-width="5">
+            <!-- 头部保持位置 -->
+            <circle cx="100" cy="85" r="18" />
+            <!-- 身体：恢复为更接近原始的底部弧形 -->
+            <path d="M75 165C75 138 85 116 100 116C115 116 125 138 125 165H75Z" />
+        </g>
+
+        <!-- 左右节点 (收缩间距，使重心上浮) -->
+        <g fill="url(#radioGradient)" stroke="#F59E0B" stroke-width="5">
+            <circle cx="42" cy="116" r="15" />
+            <circle cx="158" cy="116" r="15" />
+        </g>
+
+        <!-- 虚线连接 -->
+        <g stroke="#FBBF24" stroke-width="2.5" stroke-dasharray="4 4">
+            <path d="M78 122L56 118" />
+            <path d="M122 122L144 118" />
+        </g>
+    </g>
+</svg>
