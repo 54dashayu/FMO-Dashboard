@@ -49,10 +49,12 @@
             <template v-if="currentStation?.uid"> · #{{ currentStation.uid }}</template>
           </span>
         </div>
-        <button class="refresh-btn" :disabled="refreshing" @click="refreshNow">
-          {{ refreshing ? '刷新中...' : '刷新' }}
-        </button>
-        <span class="refresh-time">{{ lastRefreshText }}</span>
+        <div class="refresh-stack">
+          <button class="refresh-btn" :disabled="refreshing" @click="refreshNow">
+            {{ refreshing ? '刷新中...' : '刷新' }}
+          </button>
+          <span class="refresh-time">{{ lastRefreshText }}</span>
+        </div>
       </div>
     </section>
 
@@ -1111,6 +1113,13 @@ onUnmounted(() => {
   opacity: 0.7;
 }
 
+.refresh-stack {
+  display: grid;
+  justify-items: center;
+  gap: 0.28rem;
+  flex-shrink: 0;
+}
+
 .refresh-time,
 .live-status {
   color: var(--text-tertiary);
@@ -1337,7 +1346,7 @@ onUnmounted(() => {
   .station-actions {
     align-items: center;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.75rem;
     width: 100%;
   }
@@ -1395,6 +1404,7 @@ onUnmounted(() => {
   .refresh-time {
     width: auto;
     white-space: nowrap;
+    font-size: 0.74rem;
   }
 
   .live-table {
