@@ -412,21 +412,21 @@ function formatDistance(km) {
 function bearingToDirection(bearing) {
   const labels = [
     '北',
-    '北东北',
+    '东北偏北',
     '东北',
-    '东东北',
+    '东北偏东',
     '东',
-    '东东南',
+    '东南偏东',
     '东南',
-    '南东南',
+    '东南偏南',
     '南',
-    '南西南',
+    '西南偏南',
     '西南',
-    '西西南',
+    '西南偏西',
     '西',
-    '西西北',
+    '西北偏西',
     '西北',
-    '北西北'
+    '西北偏北'
   ]
   return labels[Math.round(bearing / 22.5) % 16]
 }
