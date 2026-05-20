@@ -588,6 +588,10 @@ function waitForVoices(timeoutMs = 1800) {
   })
 }
 
+function getSpeechTimeoutMs(text) {
+  return Math.max(20000, String(text || '').length * 1800)
+}
+
 function getContactCount(callsign) {
   if (!callsign) return 0
   if (props.contactCounts instanceof Map) {
@@ -683,12 +687,15 @@ async function speakCallsign(callsign) {
 
   if (isNativeAndroid()) {
     try {
-      await FmoSpeech.speak({
+      const result = await FmoSpeech.speak({
         text,
         lang: 'en-US',
         rate: 0.42,
         pitch: 1
       })
+      if (result && result.ok === false) {
+        throw new Error(result.error || '安卓系统语音未播放')
+      }
       return
     } catch (err) {
       addDiagnosticLog('warn', '安卓原生呼号播报失败，尝试网页语音', {
@@ -713,21 +720,32 @@ async function speakCallsign(callsign) {
     utterance.rate = 0.33
     utterance.volume = 1
     utterance.pitch = 1
+    const keepAlive = setInterval(() => {
+      window.speechSynthesis?.resume?.()
+    }, 1000)
     const timeout = setTimeout(() => {
-      addDiagnosticLog('warn', '呼号播报超时，已继续播放提示音', { callsign })
+      clearInterval(keepAlive)
+      addDiagnosticLog('warn', '呼号播报超时，已继续播放提示音', {
+        callsign,
+        voice: voice ? `${voice.name} (${voice.lang})` : '未选择语音',
+        text
+      })
       resolve()
-    }, 8000)
+    }, getSpeechTimeoutMs(text))
     utterance.onend = () => {
+      clearInterval(keepAlive)
       clearTimeout(timeout)
       resolve()
     }
     utterance.onerror = (event) => {
+      clearInterval(keepAlive)
       clearTimeout(timeout)
       addDiagnosticLog('warn', '呼号播报失败', { callsign, error: event.error })
       resolve()
     }
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(utterance)
+    window.speechSynthesis.resume?.()
   })
 }
 

@@ -226,6 +226,24 @@
               <span class="volume-value">{{ audioVolume }}%</span>
             </div>
           </div>
+          <div class="setting-item voice-test-item">
+            <label class="setting-label-normal">语音测试</label>
+            <div class="voice-test-control">
+              <input
+                v-model.trim="voiceTestCallsign"
+                class="voice-test-input"
+                type="text"
+                placeholder="输入呼号"
+                autocomplete="off"
+                autocapitalize="characters"
+                @keyup.enter="handleVoiceTest"
+              />
+              <button class="btn-secondary voice-test-btn" :disabled="voiceTesting" @click="handleVoiceTest">
+                {{ voiceTesting ? '播放中...' : '测试播报' }}
+              </button>
+            </div>
+            <div v-if="voiceTestStatus" class="voice-test-status">{{ voiceTestStatus }}</div>
+          </div>
         </div>
 
         <!-- 数据管理 -->
@@ -348,10 +366,14 @@
 
 <script setup>
 import { ref, computed, onUnmounted } from 'vue'
+import { Capacitor, registerPlugin } from '@capacitor/core'
 import { normalizeHost } from '../utils/urlUtils'
 import confirmDialog from '../composables/useConfirm'
 import { clearGridCache } from '../services/gridService'
+import { addDiagnosticLog } from '../services/diagnosticLog'
 import { useModalBackHandler, registerModal } from '../composables/useModalBackHandler'
+
+const FmoSpeech = registerPlugin('FmoSpeech')
 
 const props = defineProps({
   dbLoaded: {
@@ -424,6 +446,9 @@ const emit = defineEmits([
 
 const connectingId = ref(null)
 const refreshingId = ref(null)
+const voiceTestCallsign = ref('BH1JSS')
+const voiceTesting = ref(false)
+const voiceTestStatus = ref('')
 
 // 同步天数选择
 const syncDays = ref(1)
@@ -848,6 +873,170 @@ function handleVolumeChange(e) {
   const value = Number(e.target.value)
   emit('update-audio-volume', value)
 }
+
+function formatCallsignForSpeech(callsign) {
+  return String(callsign || '')
+    .trim()
+    .toUpperCase()
+    .split('')
+    .join(' ')
+}
+
+function isNativeAndroid() {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+}
+
+function getPreferredSpeechVoice() {
+  if (!window.speechSynthesis?.getVoices) return null
+  const voices = window.speechSynthesis.getVoices()
+  const englishVoices = voices.filter((voice) => /^en[-_]/i.test(voice.lang || ''))
+  const femaleHints = [
+    'female',
+    'woman',
+    'samantha',
+    'victoria',
+    'karen',
+    'susan',
+    'zira',
+    'jenny',
+    'aria',
+    'ava',
+    'emma'
+  ]
+
+  return (
+    englishVoices.find((voice) =>
+      femaleHints.some((hint) => voice.name.toLowerCase().includes(hint))
+    ) ||
+    englishVoices.find((voice) => /en-US/i.test(voice.lang || '')) ||
+    englishVoices[0] ||
+    voices[0] ||
+    null
+  )
+}
+
+function waitForVoices(timeoutMs = 1800) {
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis?.getVoices) {
+      resolve([])
+      return
+    }
+
+    const currentVoices = window.speechSynthesis.getVoices()
+    if (currentVoices.length > 0) {
+      resolve(currentVoices)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      window.speechSynthesis.onvoiceschanged = null
+      resolve(window.speechSynthesis.getVoices())
+    }, timeoutMs)
+
+    window.speechSynthesis.onvoiceschanged = () => {
+      clearTimeout(timer)
+      window.speechSynthesis.onvoiceschanged = null
+      resolve(window.speechSynthesis.getVoices())
+    }
+  })
+}
+
+function getSpeechTimeoutMs(text) {
+  return Math.max(20000, String(text || '').length * 1800)
+}
+
+async function speakByBrowser(text) {
+  const voices = await waitForVoices()
+  return new Promise((resolve, reject) => {
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      reject(new Error('当前浏览器不支持语音合成'))
+      return
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text)
+    const voice = getPreferredSpeechVoice()
+    if (voice) utterance.voice = voice
+    utterance.lang = 'en-US'
+    utterance.rate = 0.33
+    utterance.volume = 1
+    utterance.pitch = 1
+
+    addDiagnosticLog('info', '网页语音测试已发起', {
+      voices: voices.length,
+      voice: voice ? `${voice.name} (${voice.lang})` : '未选择语音',
+      text
+    })
+
+    const keepAlive = setInterval(() => {
+      window.speechSynthesis?.resume?.()
+    }, 1000)
+
+    const timeout = setTimeout(() => {
+      clearInterval(keepAlive)
+      reject(new Error('语音播报超时，请检查系统文字转语音或浏览器语音权限'))
+    }, getSpeechTimeoutMs(text))
+
+    utterance.onend = () => {
+      clearInterval(keepAlive)
+      clearTimeout(timeout)
+      resolve()
+    }
+    utterance.onerror = (event) => {
+      clearInterval(keepAlive)
+      clearTimeout(timeout)
+      reject(new Error(event.error || '语音播报失败'))
+    }
+
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
+    window.speechSynthesis.resume?.()
+  })
+}
+
+async function handleVoiceTest() {
+  const callsign = voiceTestCallsign.value.trim().toUpperCase()
+  if (!callsign) {
+    voiceTestStatus.value = '请先输入一个呼号'
+    return
+  }
+
+  voiceTestCallsign.value = callsign
+  voiceTesting.value = true
+  voiceTestStatus.value = '正在测试播报...'
+  const text = formatCallsignForSpeech(callsign)
+
+  try {
+    if (isNativeAndroid()) {
+      try {
+        const result = await FmoSpeech.speak({ text, lang: 'en-US', rate: 0.42, pitch: 1 })
+        if (result && result.ok === false) {
+          throw new Error(result.error || '安卓系统语音未播放')
+        }
+        voiceTestStatus.value = `已调用安卓系统语音：${callsign}`
+        addDiagnosticLog('info', '语音测试成功：安卓原生 TTS', {
+          callsign,
+          engine: result?.engine || ''
+        })
+        return
+      } catch (err) {
+        addDiagnosticLog('warn', '语音测试：安卓原生 TTS 失败，尝试网页语音', {
+          callsign,
+          error: err?.message || String(err)
+        })
+      }
+    }
+
+    await speakByBrowser(text)
+    voiceTestStatus.value = `已调用网页语音：${callsign}`
+    addDiagnosticLog('info', '语音测试成功：网页 speechSynthesis', { callsign })
+  } catch (err) {
+    const message = err?.message || String(err)
+    voiceTestStatus.value = `播报失败：${message}`
+    addDiagnosticLog('warn', '语音测试失败', { callsign, error: message })
+  } finally {
+    voiceTesting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -930,6 +1119,47 @@ function handleVolumeChange(e) {
   text-align: right;
   color: var(--text-secondary);
   font-size: 0.9rem;
+}
+
+.voice-test-item {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.voice-test-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.voice-test-input {
+  min-width: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+}
+
+.voice-test-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.voice-test-btn {
+  min-width: 6.5rem;
+  white-space: nowrap;
+}
+
+.voice-test-status {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .setting-actions {
