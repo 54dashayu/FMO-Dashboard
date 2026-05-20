@@ -24,11 +24,18 @@
 
 ## 📦 Win64 便携版
 
-最新版便携包在 GitHub Release 中下载：
+最新版便携包在 GitHub Release 中下载。推荐普通用户下载 `.exe` 版本，双击即可自动解压并启动：
 
-[FMO-Dashboard-Windows-Portable.zip](https://github.com/54dashayu/FMO-Dashboard/releases/latest)
+- [FMO-Dashboard-Windows-Portable.exe](https://github.com/54dashayu/FMO-Dashboard/releases/latest)
+- [FMO-Dashboard-Windows-Portable.zip](https://github.com/54dashayu/FMO-Dashboard/releases/latest)
 
-使用方式：
+`.exe` 使用方式：
+
+1. 下载 `FMO-Dashboard-Windows-Portable.exe`。
+2. 双击运行，浏览器会自动打开本机页面。
+3. 同一局域网内的手机也可以访问启动页面中显示的局域网地址。
+
+`.zip` 使用方式：
 
 1. 下载并解压压缩包。
 2. 双击 `start-windows.bat`。
