@@ -6,14 +6,15 @@
         <div v-if="activeContact" class="active-contact-main">
           <div class="active-contact-primary">
             <h2>{{ activeContact.callsign }}</h2>
-            <p>
-              <span>{{ formatTime(activeContact.timestamp) }}</span>
-              <span v-if="activeContact.grid"> · {{ activeContact.grid }}</span>
-              <span v-if="activeContact.qth"> · {{ activeContact.qth }}</span>
+            <p class="active-contact-meta">
+              <span v-if="activeContact.grid">{{ activeContact.grid }}</span>
+              <span v-if="activeContact.qth">{{ activeContact.qth }}</span>
+              <span v-if="!activeContact.grid && !activeContact.qth">位置未知</span>
             </p>
           </div>
           <div class="bearing-panel">
             <div class="compass" :class="{ unavailable: !activeContact.bearing }">
+              <span class="north-label">N</span>
               <svg
                 class="compass-arrow"
                 viewBox="0 0 24 32"
@@ -95,7 +96,7 @@
                 <span v-if="record.toGrid">{{ record.toGrid }}</span>
               </td>
               <td class="time-cell">{{ formatTime(record.timestamp) }}</td>
-              <td class="qth-cell">{{ record.qth || '-' }}</td>
+              <td class="qth-cell"><span class="qth-content">{{ record.qth || '-' }}</span></td>
               <td class="comment-cell">{{ record.toComment || '-' }}</td>
               <td>{{ record.mode || '-' }}</td>
               <td class="relay-cell">
@@ -136,6 +137,7 @@ import { formatTimestamp } from '../components/home/constants'
 import { getControlTarget, switchStationByRelayName } from '../services/stationControl'
 import { useSpeakingStatusStore } from '../stores/speakingStore'
 import { gridToAddress } from '../services/gridService'
+import { addDiagnosticLog } from '../services/diagnosticLog'
 import toast from '../composables/useToast'
 
 const props = defineProps({
@@ -529,6 +531,32 @@ function getPreferredSpeechVoice() {
   )
 }
 
+function waitForVoices(timeoutMs = 1800) {
+  return new Promise((resolve) => {
+    if (!window.speechSynthesis?.getVoices) {
+      resolve([])
+      return
+    }
+
+    const currentVoices = window.speechSynthesis.getVoices()
+    if (currentVoices.length > 0) {
+      resolve(currentVoices)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      window.speechSynthesis.onvoiceschanged = null
+      resolve(window.speechSynthesis.getVoices())
+    }, timeoutMs)
+
+    window.speechSynthesis.onvoiceschanged = () => {
+      clearTimeout(timer)
+      window.speechSynthesis.onvoiceschanged = null
+      resolve(window.speechSynthesis.getVoices())
+    }
+  })
+}
+
 function getContactCount(callsign) {
   if (!callsign) return 0
   if (props.contactCounts instanceof Map) {
@@ -619,9 +647,11 @@ async function playBeeps(count) {
   }
 }
 
-function speakCallsign(callsign) {
+async function speakCallsign(callsign) {
+  await waitForVoices()
   return new Promise((resolve) => {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      addDiagnosticLog('warn', '当前 WebView 不支持语音合成，无法播报呼号')
       resolve()
       return
     }
@@ -633,8 +663,19 @@ function speakCallsign(callsign) {
     utterance.rate = 0.33
     utterance.volume = 1
     utterance.pitch = 1
-    utterance.onend = resolve
-    utterance.onerror = resolve
+    const timeout = setTimeout(() => {
+      addDiagnosticLog('warn', '呼号播报超时，已继续播放提示音', { callsign })
+      resolve()
+    }, 8000)
+    utterance.onend = () => {
+      clearTimeout(timeout)
+      resolve()
+    }
+    utterance.onerror = (event) => {
+      clearTimeout(timeout)
+      addDiagnosticLog('warn', '呼号播报失败', { callsign, error: event.error })
+      resolve()
+    }
     window.speechSynthesis.cancel()
     window.speechSynthesis.speak(utterance)
   })
@@ -691,6 +732,7 @@ async function refreshDashboard() {
   const client = createClient()
   if (!client) {
     error.value = '请先设置 FMO 地址'
+    addDiagnosticLog('warn', '仪表盘刷新失败：未设置 FMO 地址')
     return
   }
 
@@ -723,7 +765,11 @@ async function refreshDashboard() {
       try {
         const detail = item.logId ? await client.getQsoDetail(item.logId) : null
         detailed.push(normalizeRecord(item, detail))
-      } catch {
+      } catch (err) {
+        addDiagnosticLog('warn', '读取通联详情失败，已使用列表数据', {
+          logId: item.logId,
+          error: err?.message || String(err)
+        })
         detailed.push(normalizeRecord(item, null))
       }
     }
@@ -732,6 +778,7 @@ async function refreshDashboard() {
     lastRefreshAt.value = new Date()
   } catch (err) {
     error.value = `刷新失败：${err.message || err}`
+    addDiagnosticLog('error', '仪表盘刷新失败', err)
   } finally {
     loadingStation.value = false
     refreshing.value = false
@@ -773,6 +820,14 @@ watch(
     if (mode === 'off') {
       voiceStatus.value = '已关闭所有播报'
     } else {
+      if (mode === 'alert') {
+        waitForVoices().then((voices) => {
+          addDiagnosticLog('info', '新呼号提示已开启', {
+            speechSynthesis: Boolean(window.speechSynthesis),
+            voices: voices.length
+          })
+        })
+      }
       const context = getAudioContext()
       if (context?.state === 'suspended') {
         try {
@@ -924,6 +979,18 @@ onUnmounted(() => {
   line-height: 1.35;
 }
 
+.active-contact-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.55rem;
+}
+
+.active-contact-meta span + span::before {
+  content: '·';
+  margin-right: 0.55rem;
+  color: var(--text-disabled);
+}
+
 .active-contact-card.idle .active-contact-empty h2 {
   color: var(--text-secondary);
 }
@@ -959,6 +1026,7 @@ onUnmounted(() => {
   position: relative;
   width: 46px;
   height: 46px;
+  margin-top: 0.55rem;
   border: 2px solid var(--border-secondary);
   border-radius: 50%;
   color: var(--color-success);
@@ -968,13 +1036,15 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.compass::before {
-  content: 'N';
+.north-label {
   position: absolute;
-  top: 2px;
+  top: -0.68rem;
+  left: 50%;
+  transform: translateX(-50%);
   color: var(--text-tertiary);
   font-size: 0.58rem;
   line-height: 1;
+  pointer-events: none;
 }
 
 .compass-arrow {
@@ -1013,12 +1083,14 @@ onUnmounted(() => {
 }
 
 .refresh-btn {
+  width: 92px;
   border: 1px solid var(--color-success);
   background: var(--color-success);
   color: #fff;
   border-radius: 4px;
   padding: 0.45rem 0.9rem;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .refresh-btn:disabled {
@@ -1079,7 +1151,7 @@ onUnmounted(() => {
   font-size: 0.9rem;
   line-height: 1.25;
   text-align: left;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .live-table th {
@@ -1096,7 +1168,7 @@ onUnmounted(() => {
 }
 
 .callsign-cell {
-  width: clamp(135px, 14vw, 165px);
+  width: clamp(118px, 12vw, 148px);
 }
 
 .callsign-cell strong {
@@ -1155,6 +1227,9 @@ onUnmounted(() => {
 .qth-cell {
   width: clamp(170px, 18vw, 230px);
   color: var(--text-secondary);
+}
+
+.qth-content {
   display: -webkit-box;
   overflow: hidden;
   word-break: break-word;
@@ -1240,7 +1315,7 @@ onUnmounted(() => {
   .station-actions {
     align-items: center;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 0.75rem;
     width: 100%;
   }
@@ -1266,6 +1341,7 @@ onUnmounted(() => {
   .compass {
     width: 38px;
     height: 38px;
+    margin-top: 0.52rem;
   }
 
   .compass-arrow {
@@ -1286,10 +1362,7 @@ onUnmounted(() => {
   }
 
   .active-contact-primary p {
-    display: -webkit-box;
     overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
   }
 
   .refresh-btn {
@@ -1298,12 +1371,12 @@ onUnmounted(() => {
   }
 
   .refresh-time {
-    grid-column: 1 / -1;
-    width: 100%;
+    width: auto;
+    white-space: nowrap;
   }
 
   .live-table {
-    min-width: 880px;
+    min-width: 780px;
   }
 
   .live-table-wrap {
@@ -1352,7 +1425,7 @@ onUnmounted(() => {
   }
 
   .live-table {
-    min-width: 820px;
+    min-width: 735px;
   }
 
   .live-table th,
@@ -1362,15 +1435,18 @@ onUnmounted(() => {
   }
 
   .callsign-cell {
-    width: 132px;
+    width: 112px;
   }
 
   .time-cell {
-    width: 152px;
+    width: 148px;
   }
 
   .qth-cell {
-    width: 210px;
+    width: 205px;
+  }
+
+  .qth-content {
     -webkit-line-clamp: 2;
   }
 

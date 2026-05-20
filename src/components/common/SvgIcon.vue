@@ -84,6 +84,15 @@
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
     </template>
 
+    <!-- diagnostic: 诊断日志图标 -->
+    <template v-else-if="name === 'diagnostic'">
+      <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7Z" />
+      <path d="M14 2v5h5" />
+      <path d="M9 13h6" />
+      <path d="M9 17h3" />
+      <path d="M9 9h1" />
+    </template>
+
     <!-- about: 信息图标 -->
     <template v-else-if="name === 'about'">
       <circle cx="12" cy="12" r="10" />
@@ -122,6 +131,7 @@ defineProps({
         'more',
         'remoteControl',
         'friendLinks',
+        'diagnostic',
         'about',
         'settings',
         'locationReport'

@@ -58,6 +58,13 @@ export const MORE_ROUTES = [
     icon: 'friendLinks',
     description: '业余无线电相关站点'
   },
+  {
+    path: '/diagnostic',
+    label: '诊断日志',
+    type: 'diagnostic',
+    icon: 'diagnostic',
+    description: '导出错误与连接诊断信息'
+  },
   // 仅 Android 端追加"自动定位"，位于"关于"之前
   ...(getPlatform().capabilities.hasNativeLocation ? [locationReportRoute] : []),
   aboutRoute

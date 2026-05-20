@@ -10,6 +10,7 @@ import RemoteControlView from '../views/RemoteControlView.vue'
 import FriendLinksView from '../views/FriendLinksView.vue'
 import AboutView from '../views/AboutView.vue'
 import SettingsView from '../views/SettingsView.vue'
+import DiagnosticView from '../views/DiagnosticView.vue'
 import { getPlatform } from '../platform'
 
 const children = [
@@ -66,6 +67,11 @@ const children = [
     path: 'settings',
     name: 'settings',
     component: SettingsView
+  },
+  {
+    path: 'diagnostic',
+    name: 'diagnostic',
+    component: DiagnosticView
   }
 ]
 

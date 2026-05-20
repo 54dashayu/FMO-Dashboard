@@ -7,7 +7,10 @@ import pinia from './stores'
 import { useLocationStore } from './stores/locationStore'
 import { getPlatform } from './platform'
 import { applySafeAreaInsets } from './platform/native-capacitor/SystemUiService.native'
+import { installDiagnosticLog } from './services/diagnosticLog'
 import './style.css'
+
+installDiagnosticLog()
 
 //  Android 原生平台：env(safe-area-inset-*) 在许多厂商 ROM 上返回 0px，
 // 需要通过原生 WindowInsets API 动态获取真实值并写入 CSS 变量。
