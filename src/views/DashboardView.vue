@@ -95,7 +95,10 @@
                 </strong>
                 <span v-if="record.toGrid">{{ record.toGrid }}</span>
               </td>
-              <td class="time-cell">{{ formatTime(record.timestamp) }}</td>
+              <td class="time-cell">
+                <span>{{ formatDatePart(record.timestamp) }}</span>
+                <span>{{ formatClockPart(record.timestamp) }}</span>
+              </td>
               <td class="qth-cell"><span class="qth-content">{{ record.qth || '-' }}</span></td>
               <td class="comment-cell">{{ record.toComment || '-' }}</td>
               <td>{{ record.mode || '-' }}</td>
@@ -293,6 +296,16 @@ function formatClock(date) {
 function formatTime(timestamp) {
   if (!timestamp) return '-'
   return formatTimestamp(timestamp)
+}
+
+function formatDatePart(timestamp) {
+  const text = formatTime(timestamp)
+  return text.includes(' ') ? text.split(' ')[0] : text
+}
+
+function formatClockPart(timestamp) {
+  const text = formatTime(timestamp)
+  return text.includes(' ') ? text.split(' ')[1] : ''
 }
 
 function normalizeRecord(item, detail) {
@@ -1220,8 +1233,17 @@ onUnmounted(() => {
 }
 
 .time-cell {
-  width: 158px;
+  width: 118px;
   white-space: nowrap;
+}
+
+.time-cell span {
+  display: block;
+}
+
+.time-cell span + span {
+  margin-top: 0.12rem;
+  color: var(--text-secondary);
 }
 
 .qth-cell {
@@ -1439,7 +1461,7 @@ onUnmounted(() => {
   }
 
   .time-cell {
-    width: 148px;
+    width: 106px;
   }
 
   .qth-cell {
