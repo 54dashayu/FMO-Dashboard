@@ -1,4 +1,11 @@
-import { createReadStream, existsSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import {
+  createReadStream,
+  existsSync,
+  readFileSync,
+  statSync,
+  unlinkSync,
+  writeFileSync
+} from 'node:fs'
 import { createServer } from 'node:http'
 import { networkInterfaces } from 'node:os'
 import { extname, join, normalize, resolve, sep } from 'node:path'
@@ -6,8 +13,10 @@ import { spawn } from 'node:child_process'
 
 const root = resolve(process.cwd(), 'app')
 const pidFile = resolve(process.cwd(), 'fmo-dashboard.pid')
+const stateFile = resolve(process.cwd(), 'fmo-dashboard-state.json')
 const preferredPort = Number(process.env.PORT || 5180)
 const host = process.env.HOST || '0.0.0.0'
+let closeTimer = null
 
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -55,6 +64,37 @@ function openBrowser(url) {
   }).unref()
 }
 
+function isProcessAlive(pid) {
+  if (!pid || pid === process.pid) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function openExistingInstance() {
+  if (!existsSync(stateFile)) return false
+
+  try {
+    const state = JSON.parse(readFileSync(stateFile, 'utf8'))
+    const port = Number(state.port)
+    const pid = Number(state.pid)
+    if (!port || !isProcessAlive(pid)) return false
+
+    const healthUrl = `http://127.0.0.1:${port}/__health`
+    const response = await fetch(healthUrl, { signal: AbortSignal.timeout(1200) })
+    if (!response.ok) return false
+
+    openBrowser(`http://127.0.0.1:${port}/`)
+    console.log(`FMO仪表盘 is already running at http://127.0.0.1:${port}/`)
+    return true
+  } catch {
+    return false
+  }
+}
+
 function getLanAddresses(port) {
   return Object.values(networkInterfaces())
     .flat()
@@ -64,6 +104,27 @@ function getLanAddresses(port) {
 
 function createAppServer() {
   return createServer((request, response) => {
+    if (closeTimer) {
+      clearTimeout(closeTimer)
+      closeTimer = null
+    }
+
+    if (request.url === '/__health') {
+      response.setHeader('Content-Type', 'application/json; charset=utf-8')
+      response.end(JSON.stringify({ ok: true, pid: process.pid, port: selectedPort }))
+      return
+    }
+
+    if (request.url === '/__portable-client-closed') {
+      response.statusCode = 204
+      response.end()
+      closeTimer = setTimeout(() => {
+        cleanup()
+        process.exit(0)
+      }, 8000)
+      return
+    }
+
     const filePath = resolveRequestPath(request.url)
     const ext = extname(filePath).toLowerCase()
 
@@ -92,6 +153,10 @@ function listen(server, port) {
 let server = null
 let selectedPort = preferredPort
 
+if (await openExistingInstance()) {
+  process.exit(0)
+}
+
 for (let offset = 0; offset < 20; offset += 1) {
   server = createAppServer()
   selectedPort = preferredPort + offset
@@ -109,6 +174,11 @@ const localUrl = `http://127.0.0.1:${selectedPort}/`
 const lanUrls = getLanAddresses(selectedPort)
 
 writeFileSync(pidFile, String(process.pid), 'utf8')
+writeFileSync(
+  stateFile,
+  JSON.stringify({ pid: process.pid, port: selectedPort, startedAt: new Date().toISOString() }),
+  'utf8'
+)
 
 console.log(`FMO仪表盘 Portable is running at ${localUrl}`)
 if (host === '0.0.0.0') {
@@ -123,6 +193,11 @@ openBrowser(localUrl)
 function cleanup() {
   try {
     unlinkSync(pidFile)
+  } catch {
+    // Ignore cleanup errors when the file was already removed.
+  }
+  try {
+    unlinkSync(stateFile)
   } catch {
     // Ignore cleanup errors when the file was already removed.
   }

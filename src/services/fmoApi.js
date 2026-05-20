@@ -86,7 +86,7 @@ export class FmoApiClient {
         clearTimeout(connectTimeout)
         console.error('FMO WebSocket error:', error)
         this.connectPromise = null
-        reject(error)
+        reject(new Error(`WebSocket connection failed: ${wsUrl}`))
       }
 
       this.socket.onclose = () => {

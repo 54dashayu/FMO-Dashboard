@@ -12,6 +12,18 @@ import './style.css'
 
 installDiagnosticLog()
 
+// Windows 便携版使用本地内置服务。桌面浏览器关闭后通知服务延迟退出，
+// 下次双击不会遗留旧 Node 进程或端口冲突提示。
+if (
+  window.location.hostname === '127.0.0.1' &&
+  window.location.port &&
+  window.location.port !== '5173'
+) {
+  window.addEventListener('pagehide', () => {
+    navigator.sendBeacon?.('/__portable-client-closed')
+  })
+}
+
 //  Android 原生平台：env(safe-area-inset-*) 在许多厂商 ROM 上返回 0px，
 // 需要通过原生 WindowInsets API 动态获取真实值并写入 CSS 变量。
 // 降级值：状态栏约 36px，导航栏约 48px（在 WebView CSS 坐标中 1dp ≈ 1px）。

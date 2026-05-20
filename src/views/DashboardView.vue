@@ -310,6 +310,15 @@ function formatClockPart(timestamp) {
   return text.includes(' ') ? text.split(' ')[1] : ''
 }
 
+function formatErrorMessage(err) {
+  if (!err) return '未知错误'
+  if (err instanceof Error && err.message) return err.message
+  if (typeof err === 'string') return err
+  if (err?.message) return err.message
+  if (err?.type) return `连接事件异常：${err.type}`
+  return '连接失败，请检查 FMO 地址、网络或浏览器安全设置'
+}
+
 function normalizeRecord(item, detail) {
   const log = detail?.log || detail || item
   return {
@@ -792,7 +801,7 @@ async function refreshDashboard() {
     records.value = detailed
     lastRefreshAt.value = new Date()
   } catch (err) {
-    error.value = `刷新失败：${err.message || err}`
+    error.value = `刷新失败：${formatErrorMessage(err)}`
     addDiagnosticLog('error', '仪表盘刷新失败', err)
   } finally {
     loadingStation.value = false
