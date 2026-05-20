@@ -9,8 +9,13 @@ ManifestDPIAware true
   !define OUTPUT_EXE "FMO-Dashboard-Windows-Portable.exe"
 !endif
 
+!ifndef ICON_FILE
+  !define ICON_FILE "src-tauri\icons\icon.ico"
+!endif
+
 Name "FMO仪表盘"
 OutFile "${OUTPUT_EXE}"
+Icon "${ICON_FILE}"
 InstallDir "$LOCALAPPDATA\FMO-Dashboard-Portable"
 RequestExecutionLevel user
 SilentInstall normal
