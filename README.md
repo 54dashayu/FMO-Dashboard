@@ -29,7 +29,7 @@
 
 最新版便携包在 GitHub Release 中下载。推荐普通用户下载 `.exe` 版本，双击即可自动解压并启动：
 
-- [FMO-Dashboard-Windows-Portable.exe]([https://github.com/54dashayu/FMO-Dashboard/releases/latest](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.98.0/FMO-Dashboard-Windows-Portable.exe)
+- [FMO-Dashboard-Windows-Portable.exe](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.98.0/FMO-Dashboard-Windows-Portable.exe)
 
 `.exe` 使用方式：
 
