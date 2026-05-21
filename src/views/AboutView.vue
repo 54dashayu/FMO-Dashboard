@@ -106,10 +106,11 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import packageInfo from '../../package.json'
 import sponsorList from '../data/sponsors.json'
 import thanksList from '../data/thanks.json'
 
-const appVersion = computed(() => 'v0.98')
+const appVersion = computed(() => `v${packageInfo.version}`)
 
 const showCoffee = ref(false)
 </script>

@@ -17,19 +17,30 @@
 - 最近通联列表实时刷新，按呼号去重，最新一次发言优先显示。
 - 已经出现在通联日志中的呼号，会在最近通联列表中显示小星星。
 - 支持中继名称点击切换，已收藏中继显示星标。
-- 增加声音模式：播报呼号+提示、通联结束后播报、仅通联、关闭所有声音。
-- 呼号播报优先使用女声慢速播放，并按历史新呼号、今日新呼号、10 分钟未出现呼号播放不同提示。
+- 增加声音模式：新呼号提示、通联播报、关闭所有播报。
+- 呼号播报增加内置离线语音兜底，默认使用 NATO 字母解释法，例如 `BH1JSS` 播报为 `Bravo Hotel One Juliet Sierra Sierra`。
+- 按历史新呼号、今日新呼号、10 分钟未出现呼号播放不同提示音，且不会播报自己的呼号。
+- 增加诊断日志页面，方便排查 APK 闪退、FMO 连接异常、语音播报失败等问题。
 - 针对手机浏览器优化仪表盘布局，方便局域网内手机查看。
-- 提供 Windows x64 便携包，解压后双击启动，无需安装开发环境。
+- 提供 Windows x64 便携包和 EXE 启动器，无需安装开发环境。
+
+## 🆕 V0.99 更新说明
+
+- **语音播报优化**：新增内置离线呼号语音，优先使用 NATO 字母解释法播报呼号，避免不同浏览器或安卓机型 TTS 不可用导致无声。
+- **语音测试工具**：在“更多 - 设置 - 播放设置”中增加语音测试输入框，可填写任意呼号测试播报。
+- **诊断日志**：新增诊断日志能力，用于记录连接异常、语音播报失败、APK 运行问题等排查信息。
+- **仪表盘优化**：继续优化当前通联卡片、最近通联列表、QTH、相对方位和移动端布局。
+- **Win64 便携版优化**：修复重复启动时旧 Node 进程残留、端口冲突提示不友好等问题。
+- **安卓 APK 优化**：增加安卓原生 TTS 状态判断，同时保留内置离线语音作为更可靠的兜底。
 
 ## 📦 安卓测试版 APK
 
-- [FMO-Dashboard-Android-v0.98.0.apk](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.98.0/FMO-Dashboard-Android-v0.98.0.apk)
+- [FMO-Dashboard-Android-v0.99.0.apk](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.99.0/FMO-Dashboard-Android-v0.99.0.apk)
 ## 📦 Win64 便携版
 
 最新版便携包在 GitHub Release 中下载。推荐普通用户下载 `.exe` 版本，双击即可自动解压并启动：
 
-- [FMO-Dashboard-Windows-Portable.exe](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.98.0/FMO-Dashboard-Windows-Portable.exe)
+- [FMO-Dashboard-Windows-Portable.exe](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.99.0/FMO-Dashboard-Windows-Portable.exe)
 
 `.exe` 使用方式：
 
