@@ -144,6 +144,7 @@ import { getControlTarget, switchStationByRelayName } from '../services/stationC
 import { useSpeakingStatusStore } from '../stores/speakingStore'
 import { gridToAddress } from '../services/gridService'
 import { addDiagnosticLog } from '../services/diagnosticLog'
+import { playCallsignSpeech } from '../services/callsignSpeech'
 import toast from '../composables/useToast'
 
 const FmoSpeech = registerPlugin('FmoSpeech')
@@ -684,6 +685,16 @@ async function playBeeps(count) {
 
 async function speakCallsign(callsign) {
   const text = formatCallsignForSpeech(callsign)
+
+  try {
+    await playCallsignSpeech(callsign)
+    return
+  } catch (err) {
+    addDiagnosticLog('warn', '内置呼号语音播放失败，尝试系统语音', {
+      callsign,
+      error: err?.message || String(err)
+    })
+  }
 
   if (isNativeAndroid()) {
     try {

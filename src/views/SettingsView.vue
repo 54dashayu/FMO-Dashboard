@@ -371,6 +371,7 @@ import { normalizeHost } from '../utils/urlUtils'
 import confirmDialog from '../composables/useConfirm'
 import { clearGridCache } from '../services/gridService'
 import { addDiagnosticLog } from '../services/diagnosticLog'
+import { playCallsignSpeech } from '../services/callsignSpeech'
 import { useModalBackHandler, registerModal } from '../composables/useModalBackHandler'
 
 const FmoSpeech = registerPlugin('FmoSpeech')
@@ -1006,6 +1007,17 @@ async function handleVoiceTest() {
   const text = formatCallsignForSpeech(callsign)
 
   try {
+    try {
+      await playCallsignSpeech(callsign)
+      voiceTestStatus.value = `已播放内置呼号语音：${callsign}`
+      return
+    } catch (err) {
+      addDiagnosticLog('warn', '语音测试：内置呼号语音失败，尝试系统语音', {
+        callsign,
+        error: err?.message || String(err)
+      })
+    }
+
     if (isNativeAndroid()) {
       try {
         const result = await FmoSpeech.speak({ text, lang: 'en-US', rate: 0.42, pitch: 1 })
