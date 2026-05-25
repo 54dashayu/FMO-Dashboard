@@ -1,6 +1,6 @@
 [package]
 name = "fmo-dashboard"
-version = "0.98.0"
+version = "1.0.0"
 description = "FMO仪表盘"
 authors = ["BH1JSS"]
 license = "MIT"

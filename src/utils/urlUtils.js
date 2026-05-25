@@ -5,8 +5,11 @@
  */
 export function normalizeHost(address) {
   if (!address) return ''
-  return address
+  let value = String(address)
     .trim()
-    .replace(/^(https?|wss?):?\/\//, '')
+    .replace(/^(https?|wss?):?\/\//i, '')
     .replace(/\/+$/, '')
+
+  value = value.replace(/\/(ws|events)\/?$/i, '')
+  return value
 }

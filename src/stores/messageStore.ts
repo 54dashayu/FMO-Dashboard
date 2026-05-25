@@ -131,10 +131,7 @@ export const useMessageStore = defineStore('message', () => {
   function disconnect() {
     if (socket) {
       try {
-        if (
-          socket.readyState === WebSocket.OPEN ||
-          socket.readyState === WebSocket.CONNECTING
-        ) {
+        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
           socket.close()
         }
       } catch (err) {
@@ -226,12 +223,7 @@ export const useMessageStore = defineStore('message', () => {
     })
   }
 
-  async function requestWithConnection(
-    addr: string,
-    proto: string,
-    subType: string,
-    data: any
-  ) {
+  async function requestWithConnection(addr: string, proto: string, subType: string, data: any) {
     const shouldDisconnect = !connected.value
     if (shouldDisconnect) {
       await connect(addr, proto)
@@ -317,13 +309,7 @@ export const useMessageStore = defineStore('message', () => {
     return result
   }
 
-  function send(
-    addr: string,
-    proto: string,
-    callsign: string,
-    ssid: number,
-    message: string
-  ) {
+  function send(addr: string, proto: string, callsign: string, ssid: number, message: string) {
     return requestWithConnection(addr, proto, 'send', { callsign, ssid, message })
   }
 

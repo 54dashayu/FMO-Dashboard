@@ -100,9 +100,12 @@ public class FmoEventsPlugin extends Plugin {
         ConnectionState state = new ConnectionState(addressId, url);
         state.apiUrl = apiUrl == null ? "" : apiUrl;
         connections.put(addressId, state);
-        BusinessState bs = new BusinessState();
-        business.put(addressId, bs);
-        loadHistoryFromPrefs(addressId, bs);
+        BusinessState bs = business.get(addressId);
+        if (bs == null) {
+            bs = new BusinessState();
+            business.put(addressId, bs);
+            loadHistoryFromPrefs(addressId, bs);
+        }
         openWebSocket(state);
         call.resolve();
     }
@@ -665,14 +668,17 @@ public class FmoEventsPlugin extends Plugin {
     /** 从 SharedPreferences 加载发言历史到 BusinessState。
      *  仅在 connect() 创建新 BusinessState 后调用一次。
      *  按 callsign 去重（与实时处理逻辑一致），保留最新记录。
-     *  进行中的记录（endTime=null）视为已结束，避免重启后残留脏状态。 */
+     *  进行中的记录若足够新，则保留为当前发言人，用于 App 唤醒/重连后补回当前通联；
+     *  太旧的进行中记录视为已结束，避免重启后长期残留脏状态。 */
     private void loadHistoryFromPrefs(String addressId, BusinessState bs) {
         if (prefs == null) return;
         String json = prefs.getString(KEY_HISTORY_PREFIX + addressId, null);
         if (json == null || json.isEmpty()) return;
         try {
             JSONArray arr = new JSONArray(json);
-            long cutoff = System.currentTimeMillis() - HISTORY_RETENTION_MS;
+            long now = System.currentTimeMillis();
+            long cutoff = now - HISTORY_RETENTION_MS;
+            long activeCutoff = now - 15 * 60 * 1000;
             java.util.Set<String> seen = new java.util.HashSet<>();
             synchronized (bs) {
                 for (int i = 0; i < arr.length(); i++) {
@@ -687,8 +693,10 @@ public class FmoEventsPlugin extends Plugin {
                     HistoryEntry entry = new HistoryEntry(callsign, grid, startTime);
                     if (!obj.isNull("endTime")) {
                         entry.endTime = obj.getLong("endTime");
+                    } else if (startTime >= activeCutoff && bs.currentSpeaker.isEmpty()) {
+                        bs.currentSpeaker = callsign;
+                        bs.currentGrid = grid;
                     } else {
-                        // 进行中的记录在重启后视为已结束
                         entry.endTime = startTime;
                     }
                     bs.history.add(entry);

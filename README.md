@@ -24,29 +24,38 @@
 - 针对手机浏览器优化仪表盘布局，方便局域网内手机查看。
 - 提供 Windows x64 便携包和 EXE 启动器，无需安装开发环境。
 
-## 🆕 V0.99 更新说明
+## 🆕 V1.0.0 更新说明
 
-- **语音播报优化**：新增内置离线呼号语音，优先使用 NATO 字母解释法播报呼号，避免不同浏览器或安卓机型 TTS 不可用导致无声。
-- **语音测试工具**：在“更多 - 设置 - 播放设置”中增加语音测试输入框，可填写任意呼号测试播报。
-- **诊断日志**：新增诊断日志能力，用于记录连接异常、语音播报失败、APK 运行问题等排查信息。
-- **仪表盘优化**：继续优化当前通联卡片、最近通联列表、QTH、相对方位和移动端布局。
-- **Win64 便携版优化**：修复重复启动时旧 Node 进程残留、端口冲突提示不友好等问题。
-- **安卓 APK 优化**：增加安卓原生 TTS 状态判断，同时保留内置离线语音作为更可靠的兜底。
+- **实时通联状态更稳**：启动、重连和前后台恢复时主动补偿刷新正在通联状态，减少“当前无人发言”的误显示。
+- **呼号卡片直达**：最近通联列表中带星标的老朋友呼号可直接打开通联卡片。
+- **新呼号标记**：当前通联大号呼号后会为从未通联过的呼号显示“新”标记。
+- **呼号播报去重**：减少同一次发言在网页版和 Win64 便携版中偶发重复播报的问题。
+- **FMO 地址更稳**：统一规范化 `fmo.local`、完整 URL 和 `/ws` 路径输入，提升刷新和同步稳定性。
+- **Win64 便携版体验优化**：EXE 启动器改为便携启动语义，避免表现得像传统安装向导。
 
-## 📦 安卓测试版 APK
+## 🌐 网页版
 
-- [FMO-Dashboard-Android-v0.99.0.apk](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.99.0/FMO-Dashboard-Android-v0.99.0.apk)
+- [https://fmo.bh1jss.net/](https://fmo.bh1jss.net/)
+
 ## 📦 Win64 便携版
 
 最新版便携包在 GitHub Release 中下载。推荐普通用户下载 `.exe` 版本，双击即可自动解压并启动：
 
-- [FMO-Dashboard-Windows-Portable.exe](https://github.com/54dashayu/FMO-Dashboard/releases/download/v0.99.0/FMO-Dashboard-Windows-Portable.exe)
+- [FMO-Dashboard-Windows-Portable-v1.0.0.exe](https://github.com/54dashayu/FMO-Dashboard/releases/download/v1.0.0/FMO-Dashboard-Windows-Portable-v1.0.0.exe)
+- [FMO-Dashboard-Windows-Portable-v1.0.0.zip](https://github.com/54dashayu/FMO-Dashboard/releases/download/v1.0.0/FMO-Dashboard-Windows-Portable-v1.0.0.zip)
 
 `.exe` 使用方式：
 
-1. 下载 `FMO-Dashboard-Windows-Portable.exe`。
+1. 下载 `FMO-Dashboard-Windows-Portable-v1.0.0.exe`。
 2. 双击运行，浏览器会自动打开本机页面。
 3. 同一局域网内的手机也可以访问启动页面中显示的局域网地址。
+
+## 📚 项目文档
+
+- [项目交接文档](docs/project-handover.md)：整理当前成果、发布物、部署方式和后续待办。
+- [Codex 长对话摘要](docs/codex-archived-thread-summary.md)：从归档对话中提炼出的项目演进脉络。
+- [VPS 访问统计说明](docs/vps-stats.md)：私有统计页的部署思路和安全注意事项。
+- [FMO 中继控制说明](doc/fmo-station-control.md)：中继切换、QRZ 跳转和实时仪表盘早期实现记录。
 
 
 

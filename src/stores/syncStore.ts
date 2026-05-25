@@ -130,11 +130,7 @@ export const useSyncStore = defineStore('sync', () => {
     }, 5000)
   }
 
-  async function updateAfterSync(
-    wasEmpty: boolean,
-    syncedCount: number,
-    message: string | null
-  ) {
+  async function updateAfterSync(wasEmpty: boolean, syncedCount: number, message: string | null) {
     if (syncedCount === 0) return { callsigns: [] as string[], wasEmpty }
 
     const callsigns: string[] = await getAvailableFromCallsigns()
@@ -393,10 +389,7 @@ export const useSyncStore = defineStore('sync', () => {
 
     try {
       if (isAborted) return
-      const { totalSynced, totalProcessed } = await syncFullForAddress(
-        client,
-        buildSyncContext()
-      )
+      const { totalSynced, totalProcessed } = await syncFullForAddress(client, buildSyncContext())
 
       const failedCount = syncFailedRecords.value.length
       syncStatus.value =

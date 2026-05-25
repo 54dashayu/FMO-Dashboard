@@ -62,9 +62,7 @@ function loadParams() {
   }
 }
 function saveHistoryRecord(record: HistoryRecord) {
-  let history: HistoryRecord[] = JSON.parse(
-    localStorage.getItem(STORAGE_KEY.HISTORY) || '[]'
-  )
+  let history: HistoryRecord[] = JSON.parse(localStorage.getItem(STORAGE_KEY.HISTORY) || '[]')
   history.unshift({ ...record, timestamp: new Date().toISOString() })
   if (history.length > 20) history = history.slice(0, 20)
   localStorage.setItem(STORAGE_KEY.HISTORY, JSON.stringify(history))

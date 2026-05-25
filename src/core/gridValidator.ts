@@ -19,11 +19,7 @@ export function validateGrid(grid: string | null | undefined): GridValidation {
   }
   const normalized = normalizeGrid(grid)
 
-  if (
-    normalized.length < 4 ||
-    normalized.length > 8 ||
-    normalized.length % 2 !== 0
-  ) {
+  if (normalized.length < 4 || normalized.length > 8 || normalized.length % 2 !== 0) {
     return { valid: false, error: 'grid 长度必须在 4-8 字符之间且为偶数长度' }
   }
 

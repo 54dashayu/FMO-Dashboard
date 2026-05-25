@@ -215,6 +215,8 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
   padding: 0.6rem 1rem;
   cursor: pointer;
   transition: background 0.2s;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .speaking-bar:hover {
@@ -226,6 +228,7 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
   align-items: center;
   gap: 0.75rem;
   min-height: 1.5rem;
+  min-width: 0;
 }
 
 .speaking-indicator {
@@ -258,6 +261,7 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
 
 .speaking-text {
   flex: 1;
+  min-width: 0;
   font-size: 1.1rem;
   color: var(--text-primary);
   line-height: 1.3rem;
@@ -399,6 +403,40 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
   line-height: 1;
 }
 
+:global(.native-ios) .speaking-bar {
+  padding: 0.4rem 0.75rem;
+}
+
+:global(.native-ios) .speaking-bar-content {
+  min-height: 2rem;
+}
+
+:global(.native-ios) .speaking-text {
+  font-size: 1.1rem;
+}
+
+:global(.native-ios) .speaking-text strong {
+  font-size: 1.3rem;
+}
+
+:global(.native-ios) .speaking-expand {
+  font-size: 0.9rem;
+}
+
+:global(.native-ios) .audio-toggle-btn {
+  width: 32px;
+  height: 32px;
+}
+
+:global(.native-ios) .audio-toggle-btn .audio-icon {
+  font-size: 1rem;
+}
+
+:global(.native-ios) .voice-mode-select {
+  max-width: 104px;
+  font-size: 0.8rem;
+}
+
 @media (max-width: 768px) {
   .speaking-bar {
     padding: 0.4rem 0.75rem;
@@ -459,7 +497,7 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
   }
 
   .speaking-expand {
-    font-size: 0.85rem;
+    display: none;
   }
 
   .audio-toggle-btn {

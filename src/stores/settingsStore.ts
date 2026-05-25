@@ -83,9 +83,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const activeAddress = computed<AddressItem | null>(() => {
     if (!fmoAddressStorage.value.activeId) return null
     return (
-      fmoAddressStorage.value.addresses.find(
-        (a) => a.id === fmoAddressStorage.value.activeId
-      ) || null
+      fmoAddressStorage.value.addresses.find((a) => a.id === fmoAddressStorage.value.activeId) ||
+      null
     )
   })
 
@@ -190,22 +189,37 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   async function validateConnection(host: string, proto: string): Promise<boolean> {
-    const wsUrl = `${proto}://${normalizeHost(host)}/ws`
+    const normalizedHost = normalizeHost(host)
+    const wsUrl = `${proto}://${normalizedHost}/ws`
     return new Promise((resolve) => {
-      const socket = new WebSocket(wsUrl)
+      let settled = false
+      let socket: WebSocket
+      try {
+        socket = new WebSocket(wsUrl)
+      } catch {
+        resolve(false)
+        return
+      }
+      const finish = (ok: boolean) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timeout)
+        resolve(ok)
+      }
       const timeout = setTimeout(() => {
         socket.close()
-        resolve(false)
-      }, 5000)
+        finish(false)
+      }, 8000)
       socket.onopen = () => {
-        clearTimeout(timeout)
         socket.close()
-        resolve(true)
+        finish(true)
       }
       socket.onerror = () => {
-        clearTimeout(timeout)
         socket.close()
-        resolve(false)
+        finish(false)
+      }
+      socket.onclose = () => {
+        if (!settled) finish(false)
       }
     })
   }
@@ -215,9 +229,7 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   function generateNumId(): number {
-    const usedIds = new Set(
-      fmoAddressStorage.value.addresses.map((a) => a.numId).filter(Boolean)
-    )
+    const usedIds = new Set(fmoAddressStorage.value.addresses.map((a) => a.numId).filter(Boolean))
     let id = 1
     while (usedIds.has(id)) id++
     return id
@@ -240,18 +252,15 @@ export const useSettingsStore = defineStore('settings', () => {
     await saveFmoAddresses(fmoAddressStorage.value)
   }
 
-  async function addFmoAddress(
-    name: string,
-    host: string,
-    proto: string
-  ): Promise<ActionResult> {
-    const client = new FmoApiClient(`${proto}://${host}`)
-    if (!client.isValidAddress(host)) {
+  async function addFmoAddress(name: string, host: string, proto: string): Promise<ActionResult> {
+    const normalizedHost = normalizeHost(host)
+    const client = new FmoApiClient(`${proto}://${normalizedHost}`)
+    if (!client.isValidAddress(normalizedHost)) {
       return { success: false, message: '请输入有效的IP地址或域名' }
     }
 
     const exists = fmoAddressStorage.value.addresses.some(
-      (a) => a.host === host && a.protocol === proto
+      (a) => normalizeHost(a.host) === normalizedHost && a.protocol === proto
     )
     if (exists) {
       return { success: false, message: '该地址已存在' }
@@ -259,10 +268,15 @@ export const useSettingsStore = defineStore('settings', () => {
 
     const id = generateId()
     const numId = generateNumId()
-    const newAddress: AddressItem = { id, numId, name: name || host, host, protocol: proto }
+    const newAddress: AddressItem = {
+      id,
+      numId,
+      name: name || normalizedHost,
+      host: normalizedHost,
+      protocol: proto
+    }
 
     try {
-      const normalizedHost = normalizeHost(host)
       const fullAddress = `${proto}://${normalizedHost}`
       const apiClient = new FmoApiClient(fullAddress)
       const userInfo = await apiClient.getUserInfo()
@@ -294,13 +308,14 @@ export const useSettingsStore = defineStore('settings', () => {
       return { success: false, message: '地址不存在' }
     }
 
-    const client = new FmoApiClient(`${proto}://${host}`)
-    if (!client.isValidAddress(host)) {
+    const normalizedHost = normalizeHost(host)
+    const client = new FmoApiClient(`${proto}://${normalizedHost}`)
+    if (!client.isValidAddress(normalizedHost)) {
       return { success: false, message: '请输入有效的IP地址或域名' }
     }
 
     const duplicate = fmoAddressStorage.value.addresses.some(
-      (a, i) => i !== index && a.host === host && a.protocol === proto
+      (a, i) => i !== index && normalizeHost(a.host) === normalizedHost && a.protocol === proto
     )
     if (duplicate) {
       return { success: false, message: '该地址已存在' }
@@ -308,8 +323,8 @@ export const useSettingsStore = defineStore('settings', () => {
 
     fmoAddressStorage.value.addresses[index] = {
       ...fmoAddressStorage.value.addresses[index],
-      name: name || host,
-      host,
+      name: name || normalizedHost,
+      host: normalizedHost,
       protocol: proto
     }
 
@@ -478,12 +493,7 @@ export const useSettingsStore = defineStore('settings', () => {
     }
 
     try {
-      const allRecords = await getAllRecordsFromIndexedDB(
-        1,
-        999999,
-        '',
-        selectedFromCallsign
-      )
+      const allRecords = await getAllRecordsFromIndexedDB(1, 999999, '', selectedFromCallsign)
       const callsigns = new Set<string>()
       const today = new Date()
 

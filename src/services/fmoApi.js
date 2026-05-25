@@ -57,14 +57,14 @@ export class FmoApiClient {
       console.log(`Connecting to FMO: ${wsUrl}`)
       this.socket = new WebSocket(wsUrl)
 
-      // 设置连接超时：5秒
+      // 内网穿透/移动网络下 WebSocket 握手偶尔会超过 5 秒，放宽一点减少误判。
       const connectTimeout = setTimeout(() => {
         console.error('FMO WebSocket connection timeout')
         this.connectPromise = null
         this.socket.close()
         this.socket = null
         reject(new Error('WebSocket connection timeout'))
-      }, 5000)
+      }, 10000)
 
       this.socket.onopen = () => {
         clearTimeout(connectTimeout)
@@ -130,6 +130,25 @@ export class FmoApiClient {
   }
 
   async sendRequest(type, subType, data = {}, options = {}) {
+    const retries = options.retries || 0
+    const retryDelayMs = options.retryDelayMs || 450
+    let lastError = null
+
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+      try {
+        return await this.sendRequestOnce(type, subType, data, options)
+      } catch (err) {
+        lastError = err
+        if (attempt >= retries) break
+        this.resetSocketAfterFailure()
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs * (attempt + 1)))
+      }
+    }
+
+    throw lastError
+  }
+
+  async sendRequestOnce(type, subType, data = {}, options = {}) {
     await this.connect()
 
     return new Promise((resolve, reject) => {
@@ -151,6 +170,7 @@ export class FmoApiClient {
         if (this.pendingRequests.has(key)) {
           this.pendingRequests.delete(key)
           this.timeoutTimers.delete(key)
+          this.resetSocketAfterFailure()
           reject(new Error(`Request timeout: ${key}`))
         }
       }, options.timeoutMs || 15000)
@@ -168,16 +188,24 @@ export class FmoApiClient {
     if (fromCallsign) {
       params.fromCallsign = fromCallsign
     }
-    return this.sendRequest('qso', 'getList', params)
+    return this.sendRequest('qso', 'getList', params, { retries: 1, timeoutMs: 12000 })
   }
 
   async getQsoDetail(logId) {
-    return this.sendRequest('qso', 'getDetail', { logId })
+    return this.sendRequest('qso', 'getDetail', { logId }, { retries: 1, timeoutMs: 12000 })
   }
 
   // Station 相关方法
   async getStationList(start = 0, count = 10) {
-    return this.sendRequest('station', 'getListRange', { start, count })
+    return this.sendRequest(
+      'station',
+      'getListRange',
+      { start, count },
+      {
+        retries: 1,
+        timeoutMs: 12000
+      }
+    )
   }
 
   async getAllStations() {
@@ -195,7 +223,15 @@ export class FmoApiClient {
   }
 
   async getPinnedList(start = 0, count = 10) {
-    return this.sendRequest('station', 'getPinnedList', { start, count })
+    return this.sendRequest(
+      'station',
+      'getPinnedList',
+      { start, count },
+      {
+        retries: 1,
+        timeoutMs: 12000
+      }
+    )
   }
 
   async getAllPinnedStations() {
@@ -231,7 +267,7 @@ export class FmoApiClient {
   }
 
   async getCurrentStation() {
-    return this.sendRequest('station', 'getCurrent', {})
+    return this.sendRequest('station', 'getCurrent', {}, { retries: 1, timeoutMs: 12000 })
   }
 
   async setCurrentStation(uid) {
@@ -252,7 +288,7 @@ export class FmoApiClient {
 
   // Config 相关方法
   async getCoordinate() {
-    return this.sendRequest('config', 'getCordinate', {})
+    return this.sendRequest('config', 'getCordinate', {}, { retries: 1, timeoutMs: 12000 })
   }
 
   async setCoordinate(latitude, longitude) {
@@ -291,5 +327,21 @@ export class FmoApiClient {
       }
     })
     this.timeoutTimers.clear()
+  }
+
+  resetSocketAfterFailure() {
+    this.connectPromise = null
+    if (!this.socket) return
+    try {
+      if (
+        this.socket.readyState === WebSocket.OPEN ||
+        this.socket.readyState === WebSocket.CONNECTING
+      ) {
+        this.socket.close()
+      }
+    } catch (err) {
+      console.error('重置 WebSocket 失败:', err)
+    }
+    this.socket = null
   }
 }

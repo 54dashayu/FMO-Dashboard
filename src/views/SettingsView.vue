@@ -238,7 +238,11 @@
                 autocapitalize="characters"
                 @keyup.enter="handleVoiceTest"
               />
-              <button class="btn-secondary voice-test-btn" :disabled="voiceTesting" @click="handleVoiceTest">
+              <button
+                class="btn-secondary voice-test-btn"
+                :disabled="voiceTesting"
+                @click="handleVoiceTest"
+              >
                 {{ voiceTesting ? '播放中...' : '测试播报' }}
               </button>
             </div>
@@ -372,9 +376,11 @@ import confirmDialog from '../composables/useConfirm'
 import { clearGridCache } from '../services/gridService'
 import { addDiagnosticLog } from '../services/diagnosticLog'
 import { playCallsignSpeech } from '../services/callsignSpeech'
+import { formatCallsignForSpeech as formatCallsignForNatoSpeech } from '../utils/callsignSpeechText'
 import { useModalBackHandler, registerModal } from '../composables/useModalBackHandler'
 
 const FmoSpeech = registerPlugin('FmoSpeech')
+const IOS_SPEECH_RATE = 1
 
 const props = defineProps({
   dbLoaded: {
@@ -616,10 +622,18 @@ const getSyncFullButtonText = computed(() => {
 
 // 验证WebSocket连接
 async function validateConnection(host, proto) {
-  const wsUrl = `${proto}://${normalizeHost(host)}/ws`
+  const normalizedHost = normalizeHost(host)
+  const wsUrl = `${proto}://${normalizedHost}/ws`
 
   return new Promise((resolve) => {
     let socket
+    let settled = false
+    const finish = (ok) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeout)
+      resolve(ok)
+    }
     try {
       socket = new WebSocket(wsUrl)
     } catch {
@@ -629,24 +643,21 @@ async function validateConnection(host, proto) {
 
     const timeout = setTimeout(() => {
       socket.close()
-      resolve(false)
-    }, 5000)
+      finish(false)
+    }, 8000)
 
     socket.onopen = () => {
-      clearTimeout(timeout)
       socket.close()
-      resolve(true)
+      finish(true)
     }
 
     socket.onerror = () => {
-      clearTimeout(timeout)
       socket.close()
-      resolve(false)
+      finish(false)
     }
 
     socket.onclose = () => {
-      clearTimeout(timeout)
-      resolve(false)
+      finish(false)
     }
   })
 }
@@ -682,8 +693,9 @@ function cancelAddressDialog() {
 
 async function submitAddressForm() {
   const { name, host, protocol } = formData.value
+  const normalizedHost = normalizeHost(host)
 
-  if (!host.trim()) {
+  if (!normalizedHost) {
     formError.value = '请输入地址'
     return
   }
@@ -692,7 +704,7 @@ async function submitAddressForm() {
   formValidating.value = true
 
   // 验证连接
-  const isConnected = await validateConnection(host.trim(), protocol)
+  const isConnected = await validateConnection(normalizedHost, protocol)
 
   formValidating.value = false
 
@@ -705,14 +717,14 @@ async function submitAddressForm() {
   if (editingId.value) {
     emit('update-address', {
       id: editingId.value,
-      name: name.trim() || host.trim(),
-      host: host.trim(),
+      name: name.trim() || normalizedHost,
+      host: normalizedHost,
       protocol
     })
   } else {
     emit('add-address', {
-      name: name.trim() || host.trim(),
-      host: host.trim(),
+      name: name.trim() || normalizedHost,
+      host: normalizedHost,
       protocol
     })
   }
@@ -745,7 +757,7 @@ async function handleSelectAddress(id) {
         host: addr.host,
         protocol: addr.protocol
       })
-    } catch (err) {
+    } catch {
       // 验证失败
     } finally {
       connectingId.value = null
@@ -875,16 +887,20 @@ function handleVolumeChange(e) {
   emit('update-audio-volume', value)
 }
 
-function formatCallsignForSpeech(callsign) {
+function isNativeAndroid() {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+}
+
+function isNativeIos() {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios'
+}
+
+function formatCallsignForLegacySpeech(callsign) {
   return String(callsign || '')
     .trim()
     .toUpperCase()
     .split('')
     .join(' ')
-}
-
-function isNativeAndroid() {
-  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
 }
 
 function getPreferredSpeechVoice() {
@@ -946,7 +962,7 @@ function getSpeechTimeoutMs(text) {
   return Math.max(20000, String(text || '').length * 1800)
 }
 
-async function speakByBrowser(text) {
+async function speakByBrowser(text, options = {}) {
   const voices = await waitForVoices()
   return new Promise((resolve, reject) => {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
@@ -954,11 +970,11 @@ async function speakByBrowser(text) {
       return
     }
 
-    const utterance = new SpeechSynthesisUtterance(text)
+    const utterance = new window.SpeechSynthesisUtterance(text)
     const voice = getPreferredSpeechVoice()
     if (voice) utterance.voice = voice
     utterance.lang = 'en-US'
-    utterance.rate = 0.33
+    utterance.rate = options.rate ?? 0.33
     utterance.volume = 1
     utterance.pitch = 1
 
@@ -1004,7 +1020,44 @@ async function handleVoiceTest() {
   voiceTestCallsign.value = callsign
   voiceTesting.value = true
   voiceTestStatus.value = '正在测试播报...'
-  const text = formatCallsignForSpeech(callsign)
+
+  if (isNativeIos()) {
+    const text = formatCallsignForNatoSpeech(callsign)
+    try {
+      await speakByBrowser(text, { rate: IOS_SPEECH_RATE })
+      voiceTestStatus.value = `已调用 iOS 系统语音：${callsign}`
+      addDiagnosticLog('info', 'iOS 语音测试成功：speechSynthesis', {
+        callsign,
+        text,
+        rate: IOS_SPEECH_RATE
+      })
+    } catch (err) {
+      const message = err?.message || String(err)
+      addDiagnosticLog('warn', 'iOS 语音测试：系统语音失败，尝试内置呼号音频', {
+        callsign,
+        text,
+        error: message
+      })
+      try {
+        await playCallsignSpeech(callsign)
+        voiceTestStatus.value = `iOS 系统语音失败，已使用内置呼号音频：${callsign}`
+        addDiagnosticLog('info', 'iOS 语音测试成功：内置呼号音频', { callsign, text })
+      } catch (fallbackErr) {
+        const fallbackMessage = fallbackErr?.message || String(fallbackErr)
+        voiceTestStatus.value = `播报失败：${message}；内置音频也失败：${fallbackMessage}`
+        addDiagnosticLog('warn', 'iOS 语音测试失败：内置呼号音频不可用', {
+          callsign,
+          text,
+          error: fallbackMessage
+        })
+      }
+    } finally {
+      voiceTesting.value = false
+    }
+    return
+  }
+
+  const text = formatCallsignForLegacySpeech(callsign)
 
   try {
     try {

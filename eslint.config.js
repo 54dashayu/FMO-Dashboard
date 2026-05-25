@@ -32,6 +32,13 @@ export default [
     }
   },
   {
-    ignores: ['dist/**', 'node_modules/**']
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'android/**',
+      'ios/**',
+      'release/**',
+      '.xcode-derived-data/**'
+    ]
   }
 ]

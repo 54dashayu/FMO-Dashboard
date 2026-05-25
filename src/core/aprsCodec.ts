@@ -52,7 +52,10 @@ export interface CounterState {
   counter: number
 }
 
-export function nextCounter(prev: CounterState | null, timeSlot: number): {
+export function nextCounter(
+  prev: CounterState | null,
+  timeSlot: number
+): {
   counter: number
   next: CounterState
 } {

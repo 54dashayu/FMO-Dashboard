@@ -1,8 +1,17 @@
-import type { ILocationService, PermissionCheckResult, ReportStatusResult } from '../interfaces/ILocationService'
+import type {
+  ILocationService,
+  PermissionCheckResult,
+  ReportStatusResult
+} from '../interfaces/ILocationService'
 
 export class WebLocationService implements ILocationService {
   async checkPermission(): Promise<PermissionCheckResult> {
-    return { granted: false, notificationGranted: false, backgroundGranted: false, needRationale: false }
+    return {
+      granted: false,
+      notificationGranted: false,
+      backgroundGranted: false,
+      needRationale: false
+    }
   }
 
   async requestPermission(): Promise<boolean> {
@@ -17,7 +26,11 @@ export class WebLocationService implements ILocationService {
     // no-op
   }
 
-  async getCurrentPosition(): Promise<{ latitude: number; longitude: number; accuracy: number } | null> {
+  async getCurrentPosition(): Promise<{
+    latitude: number
+    longitude: number
+    accuracy: number
+  } | null> {
     return null
   }
 
@@ -29,7 +42,11 @@ export class WebLocationService implements ILocationService {
     // no-op
   }
 
-  async startForegroundService(_title: string, _text: string, _intervalMinutes: number): Promise<void> {
+  async startForegroundService(
+    _title: string,
+    _text: string,
+    _intervalMinutes: number
+  ): Promise<void> {
     // no-op
   }
 

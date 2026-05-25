@@ -12,6 +12,10 @@ import './style.css'
 
 installDiagnosticLog()
 
+if (Capacitor.isNativePlatform()) {
+  document.documentElement.classList.add(`native-${Capacitor.getPlatform()}`)
+}
+
 // Windows 便携版使用本地内置服务。桌面浏览器关闭后通知服务延迟退出，
 // 下次双击不会遗留旧 Node 进程或端口冲突提示。
 if (

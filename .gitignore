@@ -70,6 +70,7 @@ build/
 android/app/release/
 ios/App/build/
 ios/DerivedData/
+.xcode-derived-data/
 
 web-console/
 

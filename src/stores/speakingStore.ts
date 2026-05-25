@@ -9,6 +9,7 @@ import type { ServerInfo, EventsStatus } from '../platform/types/speaking'
 
 // 是否由原生侧（Android）托管 events：连接池、快照、通知栏等
 const hasNativeEvents = getPlatform().capabilities.hasNativeEvents
+const DUPLICATE_SPEAKING_EVENT_MS = 2500
 
 interface SpeakingRecord {
   callsign: string
@@ -29,10 +30,15 @@ function loadFromStorage(addressId: string): SpeakingRecord[] {
     const raw = localStorage.getItem(getStorageKey(addressId))
     if (!raw) return []
     const list: SpeakingRecord[] = JSON.parse(raw)
-    const oneHourAgo = Date.now() - 60 * 60 * 1000
+    const now = Date.now()
+    const oneHourAgo = now - 60 * 60 * 1000
+    const activeCutoff = now - 15 * 60 * 1000
     return list
       .filter((h) => (h.endTime || h.startTime) > oneHourAgo)
-      .map((h) => ({ ...h, endTime: h.endTime || h.startTime }))
+      .map((h) => ({
+        ...h,
+        endTime: h.endTime == null && h.startTime >= activeCutoff ? null : h.endTime || h.startTime
+      }))
   } catch (err) {
     console.error(`[${addressId}] 加载发言历史失败:`, err)
     return []
@@ -182,6 +188,16 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
 
           if (isSpeaking && callsign) {
             const grid = msg.data.grid || ''
+            const currentSpeaker = currentSpeakerMap.get(addressId) || ''
+            const activeRecord = history.find((h) => !h.endTime && h.callsign === callsign)
+            if (
+              currentSpeaker === callsign &&
+              activeRecord &&
+              now - activeRecord.startTime < DUPLICATE_SPEAKING_EVENT_MS
+            ) {
+              continue
+            }
+
             if (grid) {
               gridToAddress(grid)
                 .then((r: any) => speakerAddressMap.set(addressId, formatAddr(r)))
@@ -403,7 +419,10 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
     installListeners()
     const addressId = 'single'
     // 若已连接/连接中，忽略
-    if (statusMap.get(addressId) === 'connected') return
+    if (statusMap.get(addressId) === 'connected') {
+      if (hasNativeEvents) syncFromNativeSnapshot(addressId)
+      return
+    }
 
     primaryAddressId.value = addressId
     connectionConfigs.set(addressId, { host, protocol, isPrimary: true })
@@ -414,14 +433,18 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
       getPlatform().events.setPrimary(addressId)
     }
     const { wsUrl, apiUrl } = buildWsUrl(host, protocol)
-    getPlatform().events.connect({ addressId, url: wsUrl, apiUrl }).catch((err) => {
-      console.warn(`[${addressId}] connect failed`, err)
-    })
+    getPlatform()
+      .events.connect({ addressId, url: wsUrl, apiUrl })
+      .catch((err) => {
+        console.warn(`[${addressId}] connect failed`, err)
+      })
   }
 
   function disconnectEventWs(addressId: string) {
     connectionConfigs.delete(addressId)
-    getPlatform().events.disconnect(addressId).catch(() => {})
+    getPlatform()
+      .events.disconnect(addressId)
+      .catch(() => {})
     stopHistoryCleanup(addressId)
 
     currentSpeakerMap.delete(addressId)
@@ -467,7 +490,9 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
   }
 
   function disconnectAllEventWs() {
-    getPlatform().events.disconnectAll().catch(() => {})
+    getPlatform()
+      .events.disconnectAll()
+      .catch(() => {})
 
     for (const addressId of Array.from(cleanupTimers.keys())) stopHistoryCleanup(addressId)
     cleanupTimers.clear()
@@ -526,6 +551,39 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
     changeCounter.value++
   }
 
+  function refreshSnapshot(addressId?: string) {
+    return syncFromNativeSnapshot(addressId)
+  }
+
+  async function reconnectEventWs(addressId?: string) {
+    const id = addressId || primaryAddressId.value || 'single'
+    const cfg = connectionConfigs.get(id)
+    if (!cfg) return
+
+    statusMap.set(id, 'reconnecting')
+    if (cfg.isPrimary) primaryConnected.value = false
+    changeCounter.value++
+
+    try {
+      await getPlatform().events.disconnect(id)
+    } catch {
+      /* ignore */
+    }
+
+    if (hasNativeEvents) {
+      pushCachedServerNameIfAny(id)
+      await getPlatform().events.setPrimary(cfg.isPrimary ? id : '')
+    }
+
+    const { wsUrl, apiUrl } = buildWsUrl(cfg.host, cfg.protocol)
+    try {
+      await getPlatform().events.connect({ addressId: id, url: wsUrl, apiUrl })
+      if (hasNativeEvents) await syncFromNativeSnapshot(id)
+    } catch (err) {
+      console.warn(`[${id}] reconnect failed`, err)
+    }
+  }
+
   return {
     // 响应式 state / computed
     primaryAddressId,
@@ -550,6 +608,8 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
     getServerInfo,
     updateServerInfo,
     setOnMessageCallback,
-    clearSpeakingHistory
+    clearSpeakingHistory,
+    refreshSnapshot,
+    reconnectEventWs
   }
 })

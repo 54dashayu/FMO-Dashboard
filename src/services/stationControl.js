@@ -27,8 +27,12 @@ function matchStationByName(stations, relayName) {
 
   const normalized = target.toLowerCase()
   return (
-    stations.find((station) => String(station.name || '').trim().toLowerCase() === normalized) ||
-    null
+    stations.find(
+      (station) =>
+        String(station.name || '')
+          .trim()
+          .toLowerCase() === normalized
+    ) || null
   )
 }
 

@@ -5,7 +5,10 @@
         <span class="eyebrow">{{ activeContact?.isSpeaking ? '当前通联' : '最后发言' }}</span>
         <div v-if="activeContact" class="active-contact-main">
           <div class="active-contact-primary">
-            <h2>{{ activeContact.callsign }}</h2>
+            <h2>
+              {{ activeContact.callsign }}
+              <span v-if="activeContact.isNewCallsign" class="active-contact-new-badge">新</span>
+            </h2>
             <p class="active-contact-meta">
               <span v-if="activeContact.grid">{{ activeContact.grid }}</span>
               <span v-if="activeContact.qth">{{ activeContact.qth }}</span>
@@ -61,7 +64,7 @@
     <section class="live-panel">
       <div class="panel-header">
         <h3>最近通联</h3>
-        <span :class="['live-status', error ? 'error' : '']">
+        <span :class="['live-status', liveStatusKind]">
           {{ liveStatusText }}
         </span>
       </div>
@@ -84,14 +87,26 @@
               :key="record.rowId"
               :class="{ 'is-speaking': record.isSpeaking }"
             >
-              <td class="callsign-cell">
+              <td
+                class="callsign-cell"
+                :class="{ 'is-clickable': record.hasLoggedContact && record.toCallsign }"
+                :title="record.hasLoggedContact && record.toCallsign ? '查看通联卡片' : ''"
+                @click="openCallsignRecords(record)"
+              >
                 <strong>
-                  {{ record.toCallsign || '-' }}
-                  <span
-                    v-if="record.hasLoggedContact"
-                    class="logged-star"
-                    title="已在通联日志中"
-                  >★</span>
+                  <button
+                    v-if="record.hasLoggedContact && record.toCallsign"
+                    class="callsign-card-link"
+                    title="查看通联卡片"
+                    type="button"
+                    @click.stop="openCallsignRecords(record)"
+                  >
+                    {{ record.toCallsign }}
+                  </button>
+                  <template v-else>{{ record.toCallsign || '-' }}</template>
+                  <span v-if="record.hasLoggedContact" class="logged-star" title="已在通联日志中"
+                    >★</span
+                  >
                   <span v-if="record.isSelf" class="self-badge">您</span>
                   <span v-if="record.isSpeaking" class="speaking-badge">正在发言</span>
                 </strong>
@@ -101,7 +116,9 @@
                 <span>{{ formatDatePart(record.timestamp) }}</span>
                 <span>{{ formatClockPart(record.timestamp) }}</span>
               </td>
-              <td class="qth-cell"><span class="qth-content">{{ record.qth || '-' }}</span></td>
+              <td class="qth-cell">
+                <span class="qth-content">{{ record.qth || '-' }}</span>
+              </td>
               <td class="comment-cell">{{ record.toComment || '-' }}</td>
               <td>{{ record.mode || '-' }}</td>
               <td class="relay-cell">
@@ -114,13 +131,13 @@
                 >
                   {{ record.relayName }}
                 </button>
-                <span
-                  v-if="record.isRelayPinned"
-                  class="favorite-indicator"
-                  title="已在 FMO 收藏中"
-                >★</span>
+                <span v-if="record.isRelayPinned" class="favorite-indicator" title="已在 FMO 收藏中"
+                  >★</span
+                >
                 <span v-if="!record.relayName">-</span>
-                <span v-if="record.relayAdmin" class="relay-admin">（{{ record.relayAdmin }}）</span>
+                <span v-if="record.relayAdmin" class="relay-admin"
+                  >（{{ record.relayAdmin }}）</span
+                >
               </td>
             </tr>
           </tbody>
@@ -138,6 +155,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Capacitor, registerPlugin } from '@capacitor/core'
+import { App as CapacitorApp } from '@capacitor/app'
 import { FmoApiClient } from '../services/fmoApi'
 import { formatTimestamp } from '../components/home/constants'
 import { getControlTarget, switchStationByRelayName } from '../services/stationControl'
@@ -145,9 +163,11 @@ import { useSpeakingStatusStore } from '../stores/speakingStore'
 import { gridToAddress } from '../services/gridService'
 import { addDiagnosticLog } from '../services/diagnosticLog'
 import { playCallsignSpeech } from '../services/callsignSpeech'
+import { formatCallsignForSpeech as formatCallsignForNatoSpeech } from '../utils/callsignSpeechText'
 import toast from '../composables/useToast'
 
 const FmoSpeech = registerPlugin('FmoSpeech')
+const IOS_SPEECH_RATE = 1
 
 const props = defineProps({
   fmoAddress: {
@@ -176,11 +196,15 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits(['show-callsign-records'])
+
 const records = ref([])
 const currentStation = ref(null)
 const refreshing = ref(false)
 const loadingStation = ref(false)
 const error = ref('')
+const refreshWarning = ref('')
+const consecutiveRefreshFailures = ref(0)
 const lastRefreshAt = ref(null)
 const switchingRelay = ref('')
 const pinnedRelayNames = ref([])
@@ -191,10 +215,20 @@ const activeNow = ref(Date.now())
 let timer = null
 let activeTimer = null
 let audioContext = null
-const REFRESH_INTERVAL_MS = 5000
+let removeVisibilityListener = null
+let removeAppStateListener = null
+let lastForegroundRefreshAt = 0
+const REFRESH_INTERVAL_MS = 12000
 const ACTIVE_CONTACT_LINGER_MS = 5000
+const SOFT_REFRESH_FAILURE_LIMIT = 3
 const VOICE_REPEAT_INTERVAL_MS = 10 * 60 * 1000
 const VOICE_HISTORY_KEY = 'fmo_dashboard_voice_history'
+const FOREGROUND_REFRESH_DEBOUNCE_MS = 1200
+const ANNOUNCE_DEDUP_WINDOW_MS = 3000
+
+const shouldReconnectEventsOnForeground =
+  Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios'
+const recentAnnouncements = new Map()
 
 const controlTarget = computed(() => getControlTarget(props.fmoAddress, props.protocol))
 const controlHost = computed(() => controlTarget.value.host)
@@ -209,22 +243,35 @@ const lastRefreshText = computed(() => {
 
 const liveStatusText = computed(() => {
   if (error.value) return error.value
+  if (refreshWarning.value) return refreshWarning.value
   if (voiceStatus.value) return voiceStatus.value
   if (primaryConnected.value) return '实时监听中'
   return '正在连接实时事件'
 })
 
+const liveStatusKind = computed(() => {
+  if (error.value) return 'error'
+  if (refreshWarning.value) return 'warning'
+  return ''
+})
+
 const currentSpeakingRecord = computed(() => {
-  return [...speakingHistory.value]
-    .filter((item) => !item.endTime && item.callsign)
-    .sort((a, b) => (b.startTime || 0) - (a.startTime || 0))[0] || null
+  return (
+    [...speakingHistory.value]
+      .filter((item) => !item.endTime && item.callsign)
+      .sort((a, b) => (b.startTime || 0) - (a.startTime || 0))[0] || null
+  )
 })
 
 const recentEndedSpeakingRecord = computed(() => {
   const now = activeNow.value
-  return [...speakingHistory.value]
-    .filter((item) => item.endTime && item.callsign && now - item.endTime <= ACTIVE_CONTACT_LINGER_MS)
-    .sort((a, b) => (b.endTime || 0) - (a.endTime || 0))[0] || null
+  return (
+    [...speakingHistory.value]
+      .filter(
+        (item) => item.endTime && item.callsign && now - item.endTime <= ACTIVE_CONTACT_LINGER_MS
+      )
+      .sort((a, b) => (b.endTime || 0) - (a.endTime || 0))[0] || null
+  )
 })
 
 const activeContact = computed(() => {
@@ -234,41 +281,48 @@ const activeContact = computed(() => {
   const matchedLog = findMatchingLog(current)
   const grid = normalizeGrid(current.grid || matchedLog?.toGrid || '')
   const qth = getRecordQth({ ...matchedLog, toGrid: grid })
-  const bearing = getBearingForGrid(grid)
+  const callsign = getCallsign(current)
+  const isSelf = isSelfCallsign(callsign)
+  const bearing = getBearingForGrid(grid, isSelf)
 
   return {
-    callsign: getCallsign(current),
+    callsign,
     timestamp: Math.floor(current.startTime / 1000),
     grid,
     qth,
     bearing,
-    bearingHint: getBearingHint(grid),
-    isSpeaking: !current.endTime
+    bearingHint: getBearingHint(grid, isSelf),
+    isSpeaking: !current.endTime,
+    isNewCallsign: Boolean(callsign && !isSelf && getContactCount(callsign) <= 0)
   }
 })
 
 const displayRecords = computed(() => {
-  const liveRows = speakingHistory.value.filter((item) => item.endTime).map((item) => {
-    const matchedLog = findMatchingLog(item)
-    const timestamp = Math.floor(item.startTime / 1000)
-    const grid = item.grid || matchedLog?.toGrid || ''
-    return {
-      ...matchedLog,
-      rowId: `live-${item.callsign}-${item.startTime}`,
-      toCallsign: item.callsign,
-      toGrid: grid,
-      qth: getRecordQth({ ...matchedLog, toGrid: grid }),
-      timestamp,
-      toComment: item.endTime ? matchedLog?.toComment || '最近发言' : '正在发言',
-      mode: matchedLog?.mode || 'FMO',
-      relayName: item.serverName || matchedLog?.relayName || currentStation.value?.name || '',
-      relayAdmin: matchedLog?.relayAdmin || '',
-      isRelayPinned: isRelayPinned(item.serverName || matchedLog?.relayName || currentStation.value?.name),
-      hasLoggedContact: hasLoggedContact(item.callsign, matchedLog),
-      isSelf: isSelfCallsign(item.callsign),
-      isSpeaking: !item.endTime
-    }
-  })
+  const liveRows = speakingHistory.value
+    .filter((item) => item.endTime)
+    .map((item) => {
+      const matchedLog = findMatchingLog(item)
+      const timestamp = Math.floor(item.startTime / 1000)
+      const grid = item.grid || matchedLog?.toGrid || ''
+      return {
+        ...matchedLog,
+        rowId: `live-${item.callsign}-${item.startTime}`,
+        toCallsign: item.callsign,
+        toGrid: grid,
+        qth: getRecordQth({ ...matchedLog, toGrid: grid }),
+        timestamp,
+        toComment: item.endTime ? matchedLog?.toComment || '最近发言' : '正在发言',
+        mode: matchedLog?.mode || 'FMO',
+        relayName: item.serverName || matchedLog?.relayName || currentStation.value?.name || '',
+        relayAdmin: matchedLog?.relayAdmin || '',
+        isRelayPinned: isRelayPinned(
+          item.serverName || matchedLog?.relayName || currentStation.value?.name
+        ),
+        hasLoggedContact: hasLoggedContact(item.callsign, matchedLog),
+        isSelf: isSelfCallsign(item.callsign),
+        isSpeaking: !item.endTime
+      }
+    })
 
   const qsoRows = records.value
     .filter(
@@ -286,7 +340,9 @@ const displayRecords = computed(() => {
       isSpeaking: false
     }))
 
-  const sortedRows = [...liveRows, ...qsoRows].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+  const sortedRows = [...liveRows, ...qsoRows].sort(
+    (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
+  )
   return dedupeLatestByCallsign(sortedRows).slice(0, 20)
 })
 
@@ -334,11 +390,7 @@ function normalizeRecord(item, detail) {
 
 function formatAddress(address) {
   if (!address) return ''
-  return [
-    address.province,
-    address.city,
-    address.district
-  ]
+  return [address.province, address.city, address.district]
     .filter(Boolean)
     .filter((part, index, arr) => arr.indexOf(part) === index)
     .join('')
@@ -360,7 +412,9 @@ function getRecordQth(record) {
 }
 
 function normalizeGrid(grid) {
-  return String(grid || '').trim().toUpperCase()
+  return String(grid || '')
+    .trim()
+    .toUpperCase()
 }
 
 function gridToLatLng(grid) {
@@ -416,9 +470,7 @@ function calculateDistanceKm(from, to) {
   const dLng = toRadians(to.lng - from.lng)
   const lat1 = toRadians(from.lat)
   const lat2 = toRadians(to.lat)
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
   return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
@@ -427,9 +479,7 @@ function calculateBearing(from, to) {
   const lat2 = toRadians(to.lat)
   const dLng = toRadians(to.lng - from.lng)
   const y = Math.sin(dLng) * Math.cos(lat2)
-  const x =
-    Math.cos(lat1) * Math.sin(lat2) -
-    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng)
   return Math.round((toDegrees(Math.atan2(y, x)) + 360) % 360)
 }
 
@@ -461,7 +511,16 @@ function bearingToDirection(bearing) {
   return labels[Math.round(bearing / 22.5) % 16]
 }
 
-function getBearingForGrid(grid) {
+function getBearingForGrid(grid, isSelf = false) {
+  if (isSelf) {
+    return {
+      bearing: 0,
+      direction: '本机位置',
+      distanceKm: 0,
+      distanceText: '0 m'
+    }
+  }
+
   const from = fmoCoordinate.value
   const to = gridToLatLng(grid)
   if (!from || !to) return null
@@ -475,14 +534,17 @@ function getBearingForGrid(grid) {
   }
 }
 
-function getBearingHint(grid) {
+function getBearingHint(grid, isSelf = false) {
+  if (isSelf) return '本机位置'
   if (!grid) return '缺少对方网格'
   if (!fmoCoordinate.value) return '未读取到 FMO 坐标'
   return '网格格式不可用'
 }
 
 function normalizeRelayName(name) {
-  return String(name || '').trim().toLowerCase()
+  return String(name || '')
+    .trim()
+    .toLowerCase()
 }
 
 function isRelayPinned(relayName) {
@@ -519,19 +581,30 @@ function getCallsign(record) {
 }
 
 function normalizeCallsign(callsign) {
-  return String(callsign || '').trim().toUpperCase()
+  return String(callsign || '')
+    .trim()
+    .toUpperCase()
 }
 
 function isSelfCallsign(callsign) {
-  return Boolean(normalizeCallsign(callsign) && normalizeCallsign(callsign) === normalizeCallsign(props.selectedFromCallsign))
-}
-
-function formatCallsignForSpeech(callsign) {
-  return callsign.split('').join(' ')
+  return Boolean(
+    normalizeCallsign(callsign) &&
+    normalizeCallsign(callsign) === normalizeCallsign(props.selectedFromCallsign)
+  )
 }
 
 function isNativeAndroid() {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+}
+
+function isNativeIos() {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios'
+}
+
+function formatCallsignForLegacySpeech(callsign) {
+  return String(callsign || '')
+    .split('')
+    .join(' ')
 }
 
 function getPreferredSpeechVoice() {
@@ -611,7 +684,7 @@ function hasTodayContact(callsign) {
   }
   return Boolean(
     props.todayContactedCallsigns?.[callsign] ||
-      props.todayContactedCallsigns?.[callsign.toLowerCase()]
+    props.todayContactedCallsigns?.[callsign.toLowerCase()]
   )
 }
 
@@ -684,7 +757,11 @@ async function playBeeps(count) {
 }
 
 async function speakCallsign(callsign) {
-  const text = formatCallsignForSpeech(callsign)
+  if (isNativeIos()) {
+    return speakCallsignOnIos(callsign)
+  }
+
+  const text = formatCallsignForLegacySpeech(callsign)
 
   try {
     await playCallsignSpeech(callsign)
@@ -724,7 +801,7 @@ async function speakCallsign(callsign) {
       return
     }
 
-    const utterance = new SpeechSynthesisUtterance(text)
+    const utterance = new window.SpeechSynthesisUtterance(text)
     const voice = getPreferredSpeechVoice()
     if (voice) utterance.voice = voice
     utterance.lang = 'en-US'
@@ -760,11 +837,98 @@ async function speakCallsign(callsign) {
   })
 }
 
+async function speakCallsignOnIos(callsign) {
+  const text = formatCallsignForNatoSpeech(callsign)
+
+  async function playBuiltInFallback(reason) {
+    try {
+      window.speechSynthesis?.cancel?.()
+      await playCallsignSpeech(callsign)
+      addDiagnosticLog('info', '已使用内置呼号音频保底播报', {
+        callsign,
+        text,
+        reason
+      })
+    } catch (err) {
+      addDiagnosticLog('warn', '内置呼号音频保底播报失败', {
+        callsign,
+        text,
+        reason,
+        error: err?.message || String(err)
+      })
+    }
+  }
+
+  await waitForVoices()
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return false
+      settled = true
+      resolve()
+      return true
+    }
+
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      addDiagnosticLog('warn', '当前 WebView 不支持语音合成，尝试内置呼号语音')
+      playBuiltInFallback('web-speech-unavailable').finally(finish)
+      return
+    }
+
+    const utterance = new window.SpeechSynthesisUtterance(text)
+    const voice = getPreferredSpeechVoice()
+    if (voice) utterance.voice = voice
+    utterance.lang = 'en-US'
+    utterance.rate = IOS_SPEECH_RATE
+    utterance.volume = 1
+    utterance.pitch = 1
+    const keepAlive = setInterval(() => {
+      window.speechSynthesis?.resume?.()
+    }, 1000)
+    const timeout = setTimeout(() => {
+      clearInterval(keepAlive)
+      if (settled) return
+      addDiagnosticLog('warn', '呼号播报超时，已继续播放提示音', {
+        callsign,
+        voice: voice ? `${voice.name} (${voice.lang})` : '未选择语音',
+        text
+      })
+      playBuiltInFallback('web-speech-timeout').finally(finish)
+    }, getSpeechTimeoutMs(text))
+    utterance.onend = () => {
+      clearInterval(keepAlive)
+      clearTimeout(timeout)
+      finish()
+    }
+    utterance.onerror = (event) => {
+      clearInterval(keepAlive)
+      clearTimeout(timeout)
+      if (settled) return
+      addDiagnosticLog('warn', '呼号播报失败', { callsign, error: event.error })
+      playBuiltInFallback(`web-speech-error:${event.error || 'unknown'}`).finally(finish)
+    }
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
+    window.speechSynthesis.resume?.()
+  })
+}
+
 async function announceCallsign(callsign) {
   if (props.voiceMode !== 'alert' || !callsign) return
   if (isSelfCallsign(callsign)) return
+  const normalized = normalizeCallsign(callsign)
+  const eventKey = currentSpeakingRecord.value
+    ? `${normalized}:${currentSpeakingRecord.value.startTime || ''}`
+    : normalized
+  const lastAnnouncedAt = recentAnnouncements.get(eventKey) || 0
+  if (Date.now() - lastAnnouncedAt < ANNOUNCE_DEDUP_WINDOW_MS) return
+  recentAnnouncements.set(eventKey, Date.now())
+
   const plan = getVoicePlan(callsign)
-  if (!plan) return
+  if (!plan) {
+    recentAnnouncements.delete(eventKey)
+    return
+  }
 
   const history = loadVoiceHistory()
   history[callsign] = Date.now()
@@ -774,6 +938,15 @@ async function announceCallsign(callsign) {
   await speakCallsign(callsign)
   await playBeeps(plan.beepCount)
   voiceStatus.value = ''
+}
+
+function openCallsignRecords(record) {
+  const callsign = getCallsign(record)
+  if (!callsign || !hasLoggedContact(callsign, record)) return
+  emit('show-callsign-records', {
+    callsign,
+    timestamp: record.timestamp || null
+  })
 }
 
 function dedupeLatestByCallsign(rows) {
@@ -855,9 +1028,25 @@ async function refreshDashboard() {
 
     records.value = detailed
     lastRefreshAt.value = new Date()
+    consecutiveRefreshFailures.value = 0
+    refreshWarning.value = ''
+    error.value = ''
   } catch (err) {
-    error.value = `刷新失败：${formatErrorMessage(err)}`
-    addDiagnosticLog('error', '仪表盘刷新失败', err)
+    consecutiveRefreshFailures.value += 1
+    const message = formatErrorMessage(err)
+    const hasCachedData = records.value.length > 0 || currentStation.value || lastRefreshAt.value
+    if (hasCachedData && consecutiveRefreshFailures.value < SOFT_REFRESH_FAILURE_LIMIT) {
+      refreshWarning.value = `网络波动，保留上次数据（${consecutiveRefreshFailures.value}/${SOFT_REFRESH_FAILURE_LIMIT}）：${message}`
+      error.value = ''
+      addDiagnosticLog('warn', '仪表盘刷新暂时失败，保留上次数据', {
+        failures: consecutiveRefreshFailures.value,
+        error: message
+      })
+    } else {
+      refreshWarning.value = ''
+      error.value = `刷新失败：${message}`
+      addDiagnosticLog('error', '仪表盘刷新失败', err)
+    }
   } finally {
     loadingStation.value = false
     refreshing.value = false
@@ -867,6 +1056,33 @@ async function refreshDashboard() {
 
 function refreshNow() {
   refreshDashboard()
+  refreshSpeakingSnapshot()
+}
+
+function refreshSpeakingSnapshot({ reconnect = false } = {}) {
+  const addressId = speakingStatus.primaryAddressId || 'single'
+  if (reconnect) {
+    return speakingStatus.reconnectEventWs?.(addressId)
+  }
+  speakingStatus.refreshSnapshot?.(addressId)
+}
+
+function refreshAfterForeground() {
+  const now = Date.now()
+  if (now - lastForegroundRefreshAt < FOREGROUND_REFRESH_DEBOUNCE_MS) return
+  lastForegroundRefreshAt = now
+  refreshSpeakingSnapshot({ reconnect: shouldReconnectEventsOnForeground })
+  refreshDashboard()
+}
+
+function handleVisibilityChange() {
+  if (document.visibilityState !== 'visible') return
+  refreshAfterForeground()
+}
+
+function handleAppStateChange(state) {
+  if (!state?.isActive) return
+  refreshAfterForeground()
 }
 
 watch(
@@ -923,10 +1139,7 @@ watch(
       voiceStatus.value = `声音模式：${labelMap[mode] || mode}`
     }
     setTimeout(() => {
-      if (
-        voiceStatus.value === '已关闭所有播报' ||
-        voiceStatus.value.startsWith('声音模式：')
-      ) {
+      if (voiceStatus.value === '已关闭所有播报' || voiceStatus.value.startsWith('声音模式：')) {
         voiceStatus.value = ''
       }
     }, 1800)
@@ -956,22 +1169,39 @@ onMounted(() => {
   if (controlHost.value && !primaryConnected.value) {
     speakingStatus.connectEventWs(controlHost.value, controlProtocol.value)
   }
+  refreshSpeakingSnapshot()
   refreshDashboard()
   timer = setInterval(refreshDashboard, REFRESH_INTERVAL_MS)
   activeTimer = setInterval(() => {
     activeNow.value = Date.now()
   }, 1000)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  removeVisibilityListener = () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }
+  if (shouldReconnectEventsOnForeground) {
+    CapacitorApp.addListener('appStateChange', handleAppStateChange).then((handle) => {
+      removeAppStateListener = () => {
+        handle.remove()
+      }
+    })
+  }
 })
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
   if (activeTimer) clearInterval(activeTimer)
+  if (removeVisibilityListener) removeVisibilityListener()
+  if (removeAppStateListener) removeAppStateListener()
   window.speechSynthesis?.cancel()
 })
 </script>
 
 <style scoped>
 .dashboard-view {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   height: 100%;
   min-height: 0;
   overflow: hidden;
@@ -983,6 +1213,7 @@ onUnmounted(() => {
 
 .station-band,
 .live-panel {
+  min-width: 0;
   background: var(--bg-card);
   border: 1px solid var(--border-light);
   border-radius: 8px;
@@ -1043,11 +1274,31 @@ onUnmounted(() => {
 
 .active-contact-primary h2,
 .active-contact-empty h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   margin: 0;
   color: var(--text-primary);
   font-size: clamp(1.55rem, 3vw, 2.45rem);
   line-height: 1;
   letter-spacing: 0;
+}
+
+.active-contact-new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(64, 158, 255, 0.45);
+  border-radius: 4px;
+  min-width: 1.36rem;
+  height: 1.1rem;
+  padding: 0 0.26rem;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  transform: translateY(-0.08rem);
+  vertical-align: baseline;
 }
 
 .active-contact-primary p,
@@ -1217,10 +1468,15 @@ onUnmounted(() => {
   color: var(--color-danger);
 }
 
+.live-status.warning {
+  color: var(--color-warning);
+}
+
 .live-table-wrap {
   min-height: 0;
   flex: 1;
   overflow: auto;
+  max-width: 100%;
 }
 
 .live-table {
@@ -1260,6 +1516,38 @@ onUnmounted(() => {
 .callsign-cell strong {
   display: block;
   font-size: 0.98rem;
+}
+
+.callsign-card-link {
+  appearance: none;
+  border: 0;
+  border-radius: 4px;
+  margin: -0.05rem -0.12rem;
+  padding: 0.05rem 0.12rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: 0;
+}
+
+.callsign-card-link:hover,
+.callsign-card-link:focus-visible {
+  background: var(--bg-table-hover);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16rem;
+  outline: none;
+}
+
+.callsign-cell.is-clickable {
+  cursor: pointer;
+}
+
+.callsign-cell.is-clickable:active .callsign-card-link,
+.callsign-cell.is-clickable:active .logged-star {
+  opacity: 0.75;
 }
 
 .callsign-cell span,
@@ -1384,6 +1672,7 @@ onUnmounted(() => {
   .dashboard-view {
     padding: 1rem;
     overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .station-band,
@@ -1398,6 +1687,7 @@ onUnmounted(() => {
 
   .active-contact-card {
     width: 100%;
+    min-width: 0;
   }
 
   .active-contact-main {
@@ -1477,6 +1767,9 @@ onUnmounted(() => {
 
   .live-table-wrap {
     max-height: 70vh;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

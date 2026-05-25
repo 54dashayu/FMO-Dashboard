@@ -1,8 +1,4 @@
-import type {
-  EventsSnapshot,
-  EventsStatus,
-  ServerInfo
-} from '../types/speaking'
+import type { EventsSnapshot, EventsStatus, ServerInfo } from '../types/speaking'
 
 export interface EventsConnectConfig {
   /** 多连接隔离 key（一般使用地址 ID） */

@@ -32,8 +32,7 @@ let instance: Platform | null = null
  */
 export function getPlatform(): Platform {
   if (instance) return instance
-  const isAndroid =
-    Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+  const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
   instance = isAndroid ? createNativePlatform() : createWebPlatform()
   return instance
 }

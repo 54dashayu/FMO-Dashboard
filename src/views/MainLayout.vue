@@ -290,10 +290,7 @@ function sendUsageStatsBeacon(reason = 'init') {
   if (!USAGE_STATS_HOSTS.has(window.location.hostname)) return
 
   const activeAddress = settings.activeAddress.value
-  const callsign =
-    activeAddress?.userInfo?.callsign ||
-    selectedFromCallsign.value ||
-    ''
+  const callsign = activeAddress?.userInfo?.callsign || selectedFromCallsign.value || ''
   if (!callsign && !settings.fmoAddress.value) return
 
   const now = Date.now()
@@ -1592,12 +1589,14 @@ provide('protocol', settings.protocol)
 
 <style scoped>
 .container {
+  width: 100%;
+  min-width: 0;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -1661,10 +1660,12 @@ provide('protocol', settings.protocol)
 .content-area {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   position: relative;
+  min-width: 0;
   will-change: transform;
 }
 
@@ -1675,6 +1676,21 @@ provide('protocol', settings.protocol)
 
 .back-to-top-btn {
   display: none;
+}
+
+:global(.native-ios) .container {
+  width: 100%;
+  max-width: none;
+}
+
+:global(.native-ios) .content-area {
+  overflow-x: hidden;
+  padding: 0 0.5rem 0.5rem;
+  min-height: 0;
+}
+
+:global(.native-ios) .mobile-nav {
+  display: flex;
 }
 
 @media (max-width: 768px) {

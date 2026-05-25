@@ -6,7 +6,11 @@
           <h2>FMO 中继控制</h2>
           <p>{{ activeAddressLabel }}</p>
         </div>
-        <button class="btn-secondary" :disabled="!canControl || stationLoading" @click="refreshStation">
+        <button
+          class="btn-secondary"
+          :disabled="!canControl || stationLoading"
+          @click="refreshStation"
+        >
           {{ stationLoading ? '刷新中...' : '刷新' }}
         </button>
       </div>
@@ -26,9 +30,7 @@
         />
       </div>
 
-      <div v-if="!canControl" class="empty-panel">
-        请输入 FMO 地址
-      </div>
+      <div v-if="!canControl" class="empty-panel">请输入 FMO 地址</div>
 
       <div v-else class="station-panel">
         <div class="current-station">
@@ -119,7 +121,9 @@ const activeAddress = computed(() => {
   return props.addressList.find((addr) => addr.id === props.activeAddressId) || null
 })
 
-const controlHost = computed(() => activeAddress.value?.host || props.fmoAddress || manualHost.value)
+const controlHost = computed(
+  () => activeAddress.value?.host || props.fmoAddress || manualHost.value
+)
 const controlProtocol = computed(() => {
   if (activeAddress.value?.protocol) return activeAddress.value.protocol
   if (props.fmoAddress) return props.protocol || 'ws'

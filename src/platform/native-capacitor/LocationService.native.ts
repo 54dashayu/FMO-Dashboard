@@ -1,16 +1,29 @@
-import type { ILocationService, PermissionCheckResult, ReportStatusResult } from '../interfaces/ILocationService'
+import type {
+  ILocationService,
+  PermissionCheckResult,
+  ReportStatusResult
+} from '../interfaces/ILocationService'
 import { Capacitor } from '@capacitor/core'
 import { registerPlugin } from '@capacitor/core'
 
 interface FmoLocationPlugin {
-  checkPermission(): Promise<{ granted: boolean; notificationGranted: boolean; backgroundGranted: boolean; needRationale: boolean }>
+  checkPermission(): Promise<{
+    granted: boolean
+    notificationGranted: boolean
+    backgroundGranted: boolean
+    needRationale: boolean
+  }>
   requestPermission(): Promise<{ granted: boolean }>
   requestBackgroundPermission(): Promise<{ granted: boolean }>
   setFmoConfig(options: { url: string; intervalSeconds: number }): Promise<void>
   getCurrentPosition(): Promise<{ latitude: number; longitude: number; accuracy: number } | null>
   startWatching(options: { intervalSeconds: number }): Promise<void>
   stopWatching(): Promise<void>
-  startForegroundService(options: { title: string; text: string; intervalSeconds: number }): Promise<void>
+  startForegroundService(options: {
+    title: string
+    text: string
+    intervalSeconds: number
+  }): Promise<void>
   stopForegroundService(): Promise<void>
   addListener(eventName: string, callback: (data: any) => void): void
 }
@@ -59,7 +72,12 @@ export class NativeLocationService implements ILocationService {
         needRationale: result.needRationale === true
       }
     } catch {
-      return { granted: false, notificationGranted: false, backgroundGranted: false, needRationale: false }
+      return {
+        granted: false,
+        notificationGranted: false,
+        backgroundGranted: false,
+        needRationale: false
+      }
     }
   }
 
@@ -81,7 +99,11 @@ export class NativeLocationService implements ILocationService {
     }
   }
 
-  async getCurrentPosition(): Promise<{ latitude: number; longitude: number; accuracy: number } | null> {
+  async getCurrentPosition(): Promise<{
+    latitude: number
+    longitude: number
+    accuracy: number
+  } | null> {
     try {
       return await Location.getCurrentPosition()
     } catch {
@@ -109,7 +131,11 @@ export class NativeLocationService implements ILocationService {
     await Location.stopWatching()
   }
 
-  async startForegroundService(title: string, text: string, intervalSeconds: number): Promise<void> {
+  async startForegroundService(
+    title: string,
+    text: string,
+    intervalSeconds: number
+  ): Promise<void> {
     await Location.startForegroundService({ title, text, intervalSeconds })
   }
 

@@ -1,7 +1,12 @@
 <template>
   <header class="header">
     <div class="header-left">
-      <img src="/app-icon.png" alt="FMO仪表盘" class="header-logo" @click="$emit('open-nav-menu')" />
+      <img
+        src="/app-icon.png"
+        alt="FMO仪表盘"
+        class="header-logo"
+        @click="$emit('open-nav-menu')"
+      />
       <span class="header-divider"></span>
       <h1 class="header-title" @click="$emit('open-nav-menu')">FMO仪表盘</h1>
       <span class="total-logs">
@@ -86,12 +91,14 @@ defineEmits(['open-nav-menu'])
   gap: 1.5rem;
   background: var(--bg-header);
   border-bottom: 1px solid var(--border-light);
+  min-width: 0;
 }
 
 .header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
   flex-shrink: 0;
 }
 
@@ -239,9 +246,42 @@ defineEmits(['open-nav-menu'])
   color: var(--color-success);
 }
 
+:global(.native-ios) .header {
+  padding: 0.5rem 0.75rem;
+  gap: 0.75rem;
+}
+
+:global(.native-ios) .header-title,
+:global(.native-ios) .header-nav {
+  display: none;
+}
+
+:global(.native-ios) .header-logo,
+:global(.native-ios) .header-divider {
+  display: block;
+}
+
+:global(.native-ios) .header-left {
+  gap: 0.5rem;
+}
+
+:global(.native-ios) .total-logs {
+  font-size: 0.95rem;
+  min-width: 0;
+}
+
+:global(.native-ios) .star {
+  font-size: 1.2rem;
+}
+
+:global(.native-ios) .callsign-icon {
+  font-size: 1.1rem;
+}
+
 @media (max-width: 768px) {
   .header {
     padding: 0.5rem 0.75rem;
+    gap: 0.75rem;
   }
 
   .header-title {
@@ -266,6 +306,7 @@ defineEmits(['open-nav-menu'])
 
   .total-logs {
     font-size: 0.95rem;
+    min-width: 0;
   }
 
   .star {

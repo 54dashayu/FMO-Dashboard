@@ -78,7 +78,9 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
     if (!isPlaying.value) return
     if (document.visibilityState === 'visible') {
       // Web：可能因页面隐藏 AudioContext 被挂起；Android：no-op
-      getPlatform().audio.resume().catch(() => {})
+      getPlatform()
+        .audio.resume()
+        .catch(() => {})
     }
   }
 

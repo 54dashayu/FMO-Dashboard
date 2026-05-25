@@ -18,6 +18,7 @@ export class WebEventsService implements IEventsService {
   private connections = new Map<string, WebSocket>()
   private configs = new Map<string, EventsConnectConfig>()
   private reconnectTimers = new Map<string, any>()
+  private reconnectAttempts = new Map<string, number>()
   private serverInfoTimers = new Map<string, any>()
   private primaryAddressId: string | null = null
   private manualDisconnect = new Set<string>()
@@ -57,6 +58,7 @@ export class WebEventsService implements IEventsService {
       this.connections.delete(addressId)
     }
     this.configs.delete(addressId)
+    this.reconnectAttempts.delete(addressId)
     if (this.primaryAddressId === addressId) this.primaryAddressId = null
   }
 
@@ -111,8 +113,20 @@ export class WebEventsService implements IEventsService {
     }
     this.connections.set(addressId, ws)
 
+    const connectTimeout = setTimeout(() => {
+      if (ws.readyState === WebSocket.CONNECTING) {
+        try {
+          ws.close()
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 12000)
+
     ws.onopen = () => {
+      clearTimeout(connectTimeout)
       this.clearReconnectTimer(addressId)
+      this.reconnectAttempts.delete(addressId)
       this.emitStatus(addressId, 'connected')
       this.startServerInfoPolling(addressId)
     }
@@ -120,6 +134,7 @@ export class WebEventsService implements IEventsService {
       this.emitMessage(addressId, String(ev.data))
     }
     ws.onclose = () => {
+      clearTimeout(connectTimeout)
       this.stopServerInfoPolling(addressId)
       if (this.manualDisconnect.has(addressId)) {
         this.emitStatus(addressId, 'disconnected')
@@ -135,12 +150,15 @@ export class WebEventsService implements IEventsService {
 
   private scheduleReconnect(addressId: string) {
     if (this.reconnectTimers.has(addressId)) return
+    const attempt = this.reconnectAttempts.get(addressId) || 0
+    const delay = Math.min(30000, 2500 * 2 ** attempt)
+    this.reconnectAttempts.set(addressId, attempt + 1)
     const timer = setTimeout(() => {
       this.reconnectTimers.delete(addressId)
       if (!this.manualDisconnect.has(addressId) && this.configs.has(addressId)) {
         this.openSocket(addressId)
       }
-    }, 5000)
+    }, delay)
     this.reconnectTimers.set(addressId, timer)
   }
 

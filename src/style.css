@@ -59,7 +59,13 @@
 }
 
 :root {
-  font-family: 'MixedFont', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    'MixedFont',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light dark;
@@ -221,6 +227,7 @@ body {
   display: flex;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
   /* background 由 ::before 伪元素提供，避免遮挡底纹 */
   color: var(--text-primary);
   text-shadow: 0 0 0.3px rgba(0, 0, 0, 0.3);
@@ -250,20 +257,20 @@ body::before {
     ),
     /* 右半屏：45° 向上斜线 */
     repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 8px,
-      rgba(0, 0, 0, 0.06) 8px,
-      rgba(0, 0, 0, 0.06) 12px
-    ),
+        45deg,
+        transparent,
+        transparent 8px,
+        rgba(0, 0, 0, 0.06) 8px,
+        rgba(0, 0, 0, 0.06) 12px
+      ),
     /* 左半屏：45° 向下斜线 */
     repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 8px,
-      rgba(0, 0, 0, 0.06) 8px,
-      rgba(0, 0, 0, 0.06) 12px
-    );
+        -45deg,
+        transparent,
+        transparent 8px,
+        rgba(0, 0, 0, 0.06) 8px,
+        rgba(0, 0, 0, 0.06) 12px
+      );
   background-size:
     100% 100%,
     50% 100%,
@@ -303,21 +310,21 @@ body::before {
         rgba(255, 255, 255, 0.15) 100%
       ),
       /* 右半屏：45° 向上斜线 */
-      repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 8px,
-        rgba(255, 255, 255, 0.06) 8px,
-        rgba(255, 255, 255, 0.06) 12px
-      ),
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 8px,
+          rgba(255, 255, 255, 0.06) 8px,
+          rgba(255, 255, 255, 0.06) 12px
+        ),
       /* 左半屏：45° 向下斜线 */
-      repeating-linear-gradient(
-        -45deg,
-        transparent,
-        transparent 8px,
-        rgba(255, 255, 255, 0.06) 8px,
-        rgba(255, 255, 255, 0.06) 12px
-      );
+        repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 8px,
+          rgba(255, 255, 255, 0.06) 8px,
+          rgba(255, 255, 255, 0.06) 12px
+        );
   }
 }
 
@@ -364,14 +371,24 @@ button:focus-visible {
   background: transparent;
   border: 1px solid rgba(255, 95, 87, 0.55);
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 0;
   font-weight: 700;
   color: rgba(255, 95, 87, 0.7);
   cursor: pointer;
-  line-height: 0;
+  line-height: 1;
   padding: 0;
   flex-shrink: 0;
   transition: all 0.2s;
+}
+
+.close-btn::before {
+  content: '×';
+  display: block;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  transform: translateY(-0.5px);
 }
 
 .close-btn:hover {
@@ -386,12 +403,14 @@ button:focus-visible {
 
 #app {
   width: 100%;
+  height: 100dvh;
+  box-sizing: border-box;
+  overflow-x: hidden;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0;
   /* Android：由 FmoSystemUi 插件设置 CSS 变量；iOS/Web：使用 env(safe-area-inset-*) */
   padding-top: var(--safe-inset-top, env(safe-area-inset-top, 0px));
-  padding-bottom: var(--safe-inset-bottom, env(safe-area-inset-bottom, 0px));
   padding-left: var(--safe-inset-left, env(safe-area-inset-left, 0px));
   padding-right: var(--safe-inset-right, env(safe-area-inset-right, 0px));
   text-align: left;
@@ -403,12 +422,30 @@ button:focus-visible {
     24px 0 48px 0 rgba(0, 0, 0, 0.1);
 }
 
+.native-ios,
+.native-ios body {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.native-ios #app {
+  width: 100%;
+  max-width: none;
+  overflow-x: hidden;
+  box-shadow: none;
+}
+
 /* 暗色模式 #app 阴影覆盖（必须在基础 #app 之后） */
 @media (prefers-color-scheme: dark) {
   #app {
     box-shadow:
       -24px 0 48px 0 rgba(255, 255, 255, 0.15),
       24px 0 48px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .native-ios #app {
+    box-shadow: none;
   }
 }
 
@@ -418,6 +455,7 @@ button:focus-visible {
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+    overflow-x: hidden;
   }
 
   input,

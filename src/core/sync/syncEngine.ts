@@ -82,11 +82,7 @@ export async function processSingleQsoItem(
       const detailResponse = await client.getQsoDetail(item.logId)
       qso = detailResponse.log
       if (qso) {
-        const exists = await isQsoExistsInIndexedDB(
-          qso.fromCallsign,
-          qso.timestamp,
-          qso.toCallsign
-        )
+        const exists = await isQsoExistsInIndexedDB(qso.fromCallsign, qso.timestamp, qso.toCallsign)
         if (exists) qso = null
       }
     }
@@ -97,10 +93,7 @@ export async function processSingleQsoItem(
 
     return qso
   } catch (err: any) {
-    console.warn(
-      `获取详情失败 logId=${item.logId}, toCallsign=${item.toCallsign}:`,
-      err?.message
-    )
+    console.warn(`获取详情失败 logId=${item.logId}, toCallsign=${item.toCallsign}:`, err?.message)
     onFailed({
       logId: item.logId,
       toCallsign: item.toCallsign,
@@ -114,11 +107,7 @@ export async function processSingleQsoItem(
 /**
  * 同步最近 N 天（默认 1 天）的 QSO。
  */
-export async function syncRecentData(
-  client: any,
-  days: number,
-  ctx: SyncContext
-): Promise<number> {
+export async function syncRecentData(client: any, days: number, ctx: SyncContext): Promise<number> {
   const rangeStart = getDaysAgoTimestamp(days)
   const statusCallback = ctx.statusCallback ?? noop
   const isAborted = ctx.isAborted ?? never
@@ -213,11 +202,7 @@ export async function syncIncrementalForAddress(
           const detailResponse = await client.getQsoDetail(item.logId)
           qso = detailResponse.log
           if (qso) {
-            exists = await isQsoExistsInIndexedDB(
-              qso.fromCallsign,
-              qso.timestamp,
-              qso.toCallsign
-            )
+            exists = await isQsoExistsInIndexedDB(qso.fromCallsign, qso.timestamp, qso.toCallsign)
           }
         }
 
@@ -327,4 +312,3 @@ export async function syncFullForAddress(
 
   return { totalSynced, totalProcessed }
 }
-
