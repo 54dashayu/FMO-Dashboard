@@ -5,35 +5,13 @@
         <img src="/app-icon.png" alt="" class="dashboard-brand-mark" />
         <strong>{{ t('app.name', 'FMO 仪表盘') }}</strong>
       </div>
-      <div class="recent-relay-command" :title="recentRelayCommandTitle">
-        <button
-          type="button"
-          class="recent-relay-step"
-          :disabled="recentRelayBusy"
-          :title="t('common.previous', '上一个')"
-          @click="emit('station-prev')"
-        >
-          ‹
-        </button>
-        <button
-          type="button"
-          class="recent-relay-target"
-          :disabled="recentRelayBusy"
-          @click="openStationList"
-        >
-          <span>{{ t('dashboard.recentActiveRelay', '最近活跃中继') }}</span>
-          <strong>{{ recentRelayControlName || t('dashboard.relaySearch', '中继列表') }}</strong>
-        </button>
-        <button
-          type="button"
-          class="recent-relay-step"
-          :disabled="recentRelayBusy"
-          :title="t('common.next', '下一个')"
-          @click="emit('station-next')"
-        >
-          ›
-        </button>
-      </div>
+      <button
+        type="button"
+        class="recent-relay-command"
+        :title="recentRelayCommandTitle"
+        :aria-label="t('dashboard.recentActiveRelay', '最近活跃中继')"
+        @click="showRecentRelaySwitcher = true"
+      ></button>
       <div class="connection-strip">
         <span :class="['status-dot', liveStatusKind || 'ok']"></span>
         <div class="connection-copy">
@@ -115,6 +93,34 @@
         </button>
       </div>
     </section>
+
+    <div
+      v-if="showRecentRelaySwitcher"
+      class="recent-relay-switcher-overlay"
+      @click.self="showRecentRelaySwitcher = false"
+    >
+      <section
+        class="recent-relay-switcher"
+        :aria-label="t('dashboard.recentActiveRelay', '最近活跃中继')"
+      >
+        <button
+          type="button"
+          class="recent-relay-action"
+          :disabled="recentRelayBusy"
+          @click="switchRecentRelay('prev')"
+        >
+          上个活跃中继
+        </button>
+        <button
+          type="button"
+          class="recent-relay-action"
+          :disabled="recentRelayBusy"
+          @click="switchRecentRelay('next')"
+        >
+          下个活跃中继
+        </button>
+      </section>
+    </div>
 
     <div class="dashboard-grid">
       <section class="active-contact-card" :class="{ idle: !activeContact }">
@@ -582,6 +588,7 @@ const qthCache = ref({})
 const fmoCoordinate = ref(null)
 const voiceStatus = ref('')
 const activeNow = ref(Date.now())
+const showRecentRelaySwitcher = ref(false)
 let timer = null
 let activeTimer = null
 let audioContext = null
@@ -796,11 +803,11 @@ const recentRelayBusy = computed(() => {
 
 const recentRelayCommandTitle = computed(() => {
   if (recentRelayControlName.value) {
-    return t('dashboard.switchToRelay', `切换到 ${recentRelayControlName.value}`, {
+    return t('dashboard.recentActiveRelay', `最近活跃中继：${recentRelayControlName.value}`, {
       name: recentRelayControlName.value
     })
   }
-  return t('dashboard.relaySearch', '中继列表 / 搜索')
+  return t('dashboard.recentActiveRelay', '最近活跃中继')
 })
 
 const displayRecords = computed(() => {
@@ -1801,6 +1808,11 @@ function getSpeakingRelayName(speakingRecord) {
   return speakingRecord.serverName || matchedLog?.relayName || ''
 }
 
+function switchRecentRelay(direction) {
+  if (recentRelayBusy.value) return
+  emit(direction === 'prev' ? 'station-prev' : 'station-next')
+}
+
 onMounted(() => {
   applyTheme()
   if (controlHost.value && !primaryConnected.value) {
@@ -2661,76 +2673,14 @@ onUnmounted(() => {
   display: none;
   min-width: 0;
   height: 2.25rem;
-  grid-template-columns: 1.55rem minmax(0, 1fr) 1.55rem;
-  align-items: stretch;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 45%, var(--border-light));
-  border-radius: 7px;
-  color: var(--color-primary);
-  background: var(--surface-accent);
-  overflow: hidden;
-}
-
-.recent-relay-command:hover {
-  border-color: var(--color-primary);
-  background: color-mix(in srgb, var(--surface-accent) 70%, var(--bg-card));
-}
-
-.recent-relay-step,
-.recent-relay-target {
-  min-width: 0;
   border: 0;
-  color: inherit;
+  color: var(--color-primary);
   background: transparent;
-  font: inherit;
   cursor: pointer;
 }
 
-.recent-relay-step {
-  display: grid;
-  place-items: center;
-  color: var(--color-primary);
-  font-size: 1.35rem;
-  font-weight: 650;
-  line-height: 1;
-}
-
-.recent-relay-step:disabled {
-  color: var(--text-disabled);
-  cursor: default;
-}
-
-.recent-relay-target {
-  display: grid;
-  align-content: center;
-  justify-items: start;
-  padding: 0 0.22rem;
-  text-align: left;
-}
-
-.recent-relay-target:disabled {
-  cursor: wait;
-  opacity: 0.72;
-}
-
-.recent-relay-target span,
-.recent-relay-target strong {
-  max-width: 100%;
-  overflow: hidden;
-  line-height: 1.1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.recent-relay-target span {
-  font-size: 0.64rem;
-  font-weight: 750;
-}
-
-.recent-relay-target strong {
-  margin-top: 0.12rem;
-  color: var(--text-primary);
-  font-size: 0.76rem;
-  font-weight: 800;
+.recent-relay-command:hover {
+  background: transparent;
 }
 
 .command-stats,
@@ -2849,6 +2799,49 @@ onUnmounted(() => {
 .tool-icon {
   font-size: 1rem;
   line-height: 1;
+}
+
+.recent-relay-switcher-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  align-items: start;
+  justify-items: center;
+  padding: calc(5rem + var(--safe-inset-top, env(safe-area-inset-top, 0px))) 1rem 1rem;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.recent-relay-switcher {
+  display: grid;
+  width: min(100%, 22rem);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border-light) 75%, var(--color-success));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
+  box-shadow: var(--shadow-panel);
+}
+
+.recent-relay-action {
+  min-height: 3rem;
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  background: #63d37d;
+  font-size: 0.96rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.recent-relay-action:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.recent-relay-action:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 .command-refresh {
@@ -3442,7 +3435,7 @@ onUnmounted(() => {
   }
 
   .recent-relay-command {
-    display: grid;
+    display: block;
     width: 100%;
     height: 2.25rem;
   }
@@ -3711,20 +3704,17 @@ onUnmounted(() => {
 
   .recent-relay-command {
     height: 2.05rem;
-    grid-template-columns: 1.08rem minmax(0, 1fr) 1.08rem;
   }
 
-  .recent-relay-step {
-    font-size: 1rem;
+  .recent-relay-switcher {
+    width: min(100%, 19.5rem);
+    gap: 0.6rem;
+    padding: 0.58rem;
   }
 
-  .recent-relay-target span {
-    display: none;
-  }
-
-  .recent-relay-target strong {
-    margin-top: 0;
-    font-size: 0.7rem;
+  .recent-relay-action {
+    min-height: 2.75rem;
+    font-size: 0.9rem;
   }
 
   .command-select-wrap {
