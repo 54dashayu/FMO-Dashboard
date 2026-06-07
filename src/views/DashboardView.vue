@@ -5,6 +5,35 @@
         <img src="/app-icon.png" alt="" class="dashboard-brand-mark" />
         <strong>{{ t('app.name', 'FMO 仪表盘') }}</strong>
       </div>
+      <div class="recent-relay-command" :title="recentRelayCommandTitle">
+        <button
+          type="button"
+          class="recent-relay-step"
+          :disabled="recentActiveRelayOptions.length <= 1"
+          :title="t('common.previous', '上一个')"
+          @click="stepRecentRelay(-1)"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="recent-relay-target"
+          :disabled="Boolean(recentActiveRelayName && switchingRelay === recentActiveRelayName)"
+          @click="handleRelayDetailAction"
+        >
+          <span>{{ t('dashboard.switchRecentRelay', '切到最近活跃') }}</span>
+          <strong>{{ recentActiveRelayName || t('dashboard.relaySearch', '中继列表') }}</strong>
+        </button>
+        <button
+          type="button"
+          class="recent-relay-step"
+          :disabled="recentActiveRelayOptions.length <= 1"
+          :title="t('common.next', '下一个')"
+          @click="stepRecentRelay(1)"
+        >
+          ›
+        </button>
+      </div>
       <div class="connection-strip">
         <span :class="['status-dot', liveStatusKind || 'ok']"></span>
         <div class="connection-copy">
@@ -172,15 +201,8 @@
           <button
             type="button"
             class="contact-detail-card relay-detail-card"
-            :disabled="Boolean(recentActiveRelayName && switchingRelay === recentActiveRelayName)"
-            :title="
-              recentActiveRelayName
-                ? t('dashboard.switchToRelay', `切换到 ${recentActiveRelayName}`, {
-                    name: recentActiveRelayName
-                  })
-                : t('dashboard.relaySearch', '中继列表 / 搜索')
-            "
-            @click="handleRelayDetailAction"
+            :title="t('dashboard.relaySearch', '中继列表 / 搜索')"
+            @click="openStationList"
           >
             <span>{{ t('dashboard.relay', '中继 / 服务器') }}</span>
             <strong>
@@ -192,13 +214,6 @@
               }}
               <small v-if="currentStation?.uid">#{{ currentStation.uid }}</small>
             </strong>
-            <em>{{
-              recentActiveRelayName
-                ? switchingRelay === recentActiveRelayName
-                  ? t('common.switching', '切换中...')
-                  : t('dashboard.switchRecentRelay', '切到最近活跃')
-                : t('dashboard.relaySearch', '中继列表 / 搜索')
-            }}</em>
           </button>
           <div>
             <span>{{ t('dashboard.frequency', '频率 / 模式') }}</span>
@@ -557,6 +572,7 @@ const qthCache = ref({})
 const fmoCoordinate = ref(null)
 const voiceStatus = ref('')
 const activeNow = ref(Date.now())
+const selectedRecentRelayIndex = ref(0)
 let timer = null
 let activeTimer = null
 let audioContext = null
@@ -743,22 +759,37 @@ const activeContact = computed(() => {
   }
 })
 
+const recentActiveRelayOptions = computed(() => {
+  const relays = []
+  const seen = new Set()
+  const sortedHistory = [...speakingHistory.value].sort((a, b) => {
+    const aTime = a.endTime || a.startTime || 0
+    const bTime = b.endTime || b.startTime || 0
+    return bTime - aTime
+  })
+
+  for (const item of sortedHistory) {
+    const relayName = getSpeakingRelayName(item)
+    const normalizedName = normalizeRelayName(relayName)
+    if (!normalizedName || seen.has(normalizedName)) continue
+    seen.add(normalizedName)
+    relays.push(relayName)
+  }
+
+  return relays
+})
+
 const recentActiveRelayName = computed(() => {
-  const liveRelay = getSpeakingRelayName(currentSpeakingRecord.value)
-  if (liveRelay) return liveRelay
+  return recentActiveRelayOptions.value[selectedRecentRelayIndex.value] || ''
+})
 
-  const recentRelay = getSpeakingRelayName(recentEndedSpeakingRecord.value)
-  if (recentRelay) return recentRelay
-
-  const latestRelayRecord = [...speakingHistory.value]
-    .filter((item) => item.callsign && (item.serverName || findMatchingLog(item)?.relayName))
-    .sort((a, b) => {
-      const aTime = a.endTime || a.startTime || 0
-      const bTime = b.endTime || b.startTime || 0
-      return bTime - aTime
-    })[0]
-
-  return getSpeakingRelayName(latestRelayRecord)
+const recentRelayCommandTitle = computed(() => {
+  if (recentActiveRelayName.value) {
+    return t('dashboard.switchToRelay', `切换到 ${recentActiveRelayName.value}`, {
+      name: recentActiveRelayName.value
+    })
+  }
+  return t('dashboard.relaySearch', '中继列表 / 搜索')
 })
 
 const displayRecords = computed(() => {
@@ -1730,6 +1761,15 @@ watch(
   }
 )
 
+watch(
+  () => recentActiveRelayOptions.value.join('\n'),
+  () => {
+    if (selectedRecentRelayIndex.value >= recentActiveRelayOptions.value.length) {
+      selectedRecentRelayIndex.value = 0
+    }
+  }
+)
+
 async function switchRelay(relayName) {
   if (!relayName || switchingRelay.value) return
   switchingRelay.value = relayName
@@ -1765,6 +1805,12 @@ function handleRelayDetailAction() {
     return
   }
   openStationList()
+}
+
+function stepRecentRelay(direction) {
+  const total = recentActiveRelayOptions.value.length
+  if (total <= 1) return
+  selectedRecentRelayIndex.value = (selectedRecentRelayIndex.value + direction + total) % total
 }
 
 onMounted(() => {
@@ -2623,6 +2669,82 @@ onUnmounted(() => {
   font-size: 0.82rem;
 }
 
+.recent-relay-command {
+  display: none;
+  min-width: 0;
+  height: 2.25rem;
+  grid-template-columns: 1.55rem minmax(0, 1fr) 1.55rem;
+  align-items: stretch;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 45%, var(--border-light));
+  border-radius: 7px;
+  color: var(--color-primary);
+  background: var(--surface-accent);
+  overflow: hidden;
+}
+
+.recent-relay-command:hover {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--surface-accent) 70%, var(--bg-card));
+}
+
+.recent-relay-step,
+.recent-relay-target {
+  min-width: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.recent-relay-step {
+  display: grid;
+  place-items: center;
+  color: var(--color-primary);
+  font-size: 1.35rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.recent-relay-step:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.recent-relay-target {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  padding: 0 0.22rem;
+  text-align: left;
+}
+
+.recent-relay-target:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.recent-relay-target span,
+.recent-relay-target strong {
+  max-width: 100%;
+  overflow: hidden;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-relay-target span {
+  font-size: 0.64rem;
+  font-weight: 750;
+}
+
+.recent-relay-target strong {
+  margin-top: 0.12rem;
+  color: var(--text-primary);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
 .command-stats,
 .command-tools {
   display: flex;
@@ -2937,11 +3059,6 @@ onUnmounted(() => {
   background: var(--surface-primary);
 }
 
-.relay-detail-card:disabled {
-  cursor: wait;
-  opacity: 0.72;
-}
-
 .contact-details span {
   display: block;
   color: var(--text-tertiary);
@@ -2961,21 +3078,6 @@ onUnmounted(() => {
   color: var(--text-tertiary);
   font-size: 0.76rem;
   font-weight: 650;
-}
-
-.contact-details em {
-  display: inline-flex;
-  min-height: 1.5rem;
-  align-items: center;
-  margin-top: 0.5rem;
-  padding: 0.16rem 0.45rem;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 45%, var(--border-light));
-  border-radius: 6px;
-  color: var(--color-primary);
-  background: var(--surface-accent);
-  font-size: 0.68rem;
-  font-style: normal;
-  font-weight: 750;
 }
 
 .dashboard-actions {
@@ -3280,6 +3382,7 @@ onUnmounted(() => {
   }
 
   .dashboard-brand,
+  .recent-relay-command,
   .connection-strip,
   .command-stats,
   .command-tools {
@@ -3293,6 +3396,11 @@ onUnmounted(() => {
 
   .command-stats span {
     font-size: 0.72rem;
+  }
+
+  .recent-relay-command {
+    min-width: 7.8rem;
+    padding: 0 0.5rem;
   }
 
   .command-tool-wide {
@@ -3345,6 +3453,12 @@ onUnmounted(() => {
     display: none;
   }
 
+  .recent-relay-command {
+    display: grid;
+    width: 100%;
+    height: 2.25rem;
+  }
+
   .command-stats,
   .command-address {
     display: none;
@@ -3362,7 +3476,22 @@ onUnmounted(() => {
   }
 
   .command-select-wrap {
-    display: none;
+    display: inline-flex;
+    width: 7.1rem;
+    height: 2.25rem;
+    min-width: 0;
+    flex-shrink: 0;
+    padding: 0 0.3rem 0 0.48rem;
+  }
+
+  .command-select-wrap .tool-icon {
+    font-size: 0.72rem;
+  }
+
+  .command-select {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.7rem;
   }
 
   .command-tool-wide {
@@ -3579,8 +3708,7 @@ onUnmounted(() => {
   }
 
   .dashboard-brand strong {
-    max-width: 6.2rem;
-    font-size: 0.82rem;
+    display: none;
   }
 
   .dashboard-brand-mark,
@@ -3591,6 +3719,34 @@ onUnmounted(() => {
 
   .command-tools {
     gap: 0.25rem;
+  }
+
+  .recent-relay-command {
+    height: 2.05rem;
+    grid-template-columns: 1.08rem minmax(0, 1fr) 1.08rem;
+  }
+
+  .recent-relay-step {
+    font-size: 1rem;
+  }
+
+  .recent-relay-target span {
+    display: none;
+  }
+
+  .recent-relay-target strong {
+    margin-top: 0;
+    font-size: 0.7rem;
+  }
+
+  .command-select-wrap {
+    width: 6.45rem;
+    height: 2.05rem;
+    padding-left: 0.4rem;
+  }
+
+  .command-select {
+    font-size: 0.66rem;
   }
 
   .active-contact-card,
@@ -3705,7 +3861,6 @@ onUnmounted(() => {
 
   .connection-strip,
   .command-stats,
-  .command-select-wrap,
   .command-tools :deep(.public-tool-btn),
   .command-tools :deep(.download-tool-btn) {
     display: none;
