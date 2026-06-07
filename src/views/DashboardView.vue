@@ -29,17 +29,16 @@
           >
         </div>
         <div class="command-stats">
-          <span class="command-stat total-stat" :title="t('header.total', '总通联数量')">
-            <span class="stat-star" aria-hidden="true">★</span>
-            {{ totalLogs || totalContactCount }}
+          <span
+            class="command-stat total-today-stat"
+            :title="`${t('header.total', '总通联数量')} / ${t('header.today', '今日通联数量')}`"
+          >
+            <span class="stat-icon" aria-hidden="true">✨</span>
+            {{ totalLogs || totalContactCount }}<small>/{{ todayLogs || todayContactCount }}</small>
           </span>
           <span class="command-stat friend-stat" :title="t('header.friends', '好友数量')">
-            <span class="stat-light" aria-hidden="true"></span>
-            {{ t('header.friends', '好友') }} {{ uniqueCallsigns }}
-          </span>
-          <span class="command-stat today-stat" :title="t('header.today', '今日通联数量')">
-            <span class="stat-light" aria-hidden="true"></span>
-            {{ t('header.today', '今日') }} {{ todayLogs || todayContactCount }}
+            <span class="stat-icon" aria-hidden="true">👥</span>
+            {{ uniqueCallsigns }}
           </span>
         </div>
       </div>
