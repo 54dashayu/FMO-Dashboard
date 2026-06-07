@@ -172,14 +172,33 @@
           <button
             type="button"
             class="contact-detail-card relay-detail-card"
-            :title="t('dashboard.relaySearch', '中继列表 / 搜索')"
-            @click="openStationList"
+            :disabled="Boolean(recentActiveRelayName && switchingRelay === recentActiveRelayName)"
+            :title="
+              recentActiveRelayName
+                ? t('dashboard.switchToRelay', `切换到 ${recentActiveRelayName}`, {
+                    name: recentActiveRelayName
+                  })
+                : t('dashboard.relaySearch', '中继列表 / 搜索')
+            "
+            @click="handleRelayDetailAction"
           >
             <span>{{ t('dashboard.relay', '中继 / 服务器') }}</span>
             <strong>
-              {{ activeContact?.relayName || currentStation?.name || t('common.unknown', '未知') }}
+              {{
+                activeContact?.relayName ||
+                recentActiveRelayName ||
+                currentStation?.name ||
+                t('common.unknown', '未知')
+              }}
               <small v-if="currentStation?.uid">#{{ currentStation.uid }}</small>
             </strong>
+            <em>{{
+              recentActiveRelayName
+                ? switchingRelay === recentActiveRelayName
+                  ? t('common.switching', '切换中...')
+                  : t('dashboard.switchRecentRelay', '切到最近活跃')
+                : t('dashboard.relaySearch', '中继列表 / 搜索')
+            }}</em>
           </button>
           <div>
             <span>{{ t('dashboard.frequency', '频率 / 模式') }}</span>
@@ -722,6 +741,24 @@ const activeContact = computed(() => {
     contactCount: getContactCount(callsign),
     hasLoggedContact: hasLoggedContact(callsign, matchedLog)
   }
+})
+
+const recentActiveRelayName = computed(() => {
+  const liveRelay = getSpeakingRelayName(currentSpeakingRecord.value)
+  if (liveRelay) return liveRelay
+
+  const recentRelay = getSpeakingRelayName(recentEndedSpeakingRecord.value)
+  if (recentRelay) return recentRelay
+
+  const latestRelayRecord = [...speakingHistory.value]
+    .filter((item) => item.callsign && (item.serverName || findMatchingLog(item)?.relayName))
+    .sort((a, b) => {
+      const aTime = a.endTime || a.startTime || 0
+      const bTime = b.endTime || b.startTime || 0
+      return bTime - aTime
+    })[0]
+
+  return getSpeakingRelayName(latestRelayRecord)
 })
 
 const displayRecords = computed(() => {
@@ -1714,6 +1751,20 @@ async function switchRelay(relayName) {
   } finally {
     switchingRelay.value = ''
   }
+}
+
+function getSpeakingRelayName(speakingRecord) {
+  if (!speakingRecord) return ''
+  const matchedLog = findMatchingLog(speakingRecord)
+  return speakingRecord.serverName || matchedLog?.relayName || ''
+}
+
+function handleRelayDetailAction() {
+  if (recentActiveRelayName.value) {
+    switchRelay(recentActiveRelayName.value)
+    return
+  }
+  openStationList()
 }
 
 onMounted(() => {
@@ -2886,6 +2937,11 @@ onUnmounted(() => {
   background: var(--surface-primary);
 }
 
+.relay-detail-card:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
 .contact-details span {
   display: block;
   color: var(--text-tertiary);
@@ -2905,6 +2961,21 @@ onUnmounted(() => {
   color: var(--text-tertiary);
   font-size: 0.76rem;
   font-weight: 650;
+}
+
+.contact-details em {
+  display: inline-flex;
+  min-height: 1.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 0.16rem 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 45%, var(--border-light));
+  border-radius: 6px;
+  color: var(--color-primary);
+  background: var(--surface-accent);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 750;
 }
 
 .dashboard-actions {
