@@ -89,6 +89,8 @@
           :today-logs="todayLogs"
           :unique-callsigns="uniqueCallsigns"
           :voice-mode="dashboardVoiceMode"
+          :station-connected="speakingStatus.primaryConnected.value"
+          :station-busy="stationBusy"
           @update-dashboard-voice-mode="handleUpdateDashboardVoiceMode"
           @execute-query="executeQuery"
           @show-callsign-records="handleShowCallsignRecords"
@@ -112,6 +114,8 @@
           @validate-and-select="handleValidateAndSelect"
           @update-audio-volume="handleUpdateAudioVolume"
           @open-station-list="handleOpenStationList"
+          @station-prev="handleStationPrev"
+          @station-next="handleStationNext"
         />
       </router-view>
 
@@ -1787,10 +1791,6 @@ provide('protocol', settings.protocol)
   overflow-x: hidden;
   padding: 0 0.5rem 0.5rem;
   min-height: 0;
-}
-
-:global(.native-ios) .mobile-nav {
-  display: flex;
 }
 
 @media (min-width: 769px) {

@@ -9,27 +9,27 @@
         <button
           type="button"
           class="recent-relay-step"
-          :disabled="recentActiveRelayOptions.length <= 1"
+          :disabled="recentRelayBusy"
           :title="t('common.previous', '上一个')"
-          @click="stepRecentRelay(-1)"
+          @click="emit('station-prev')"
         >
           ‹
         </button>
         <button
           type="button"
           class="recent-relay-target"
-          :disabled="Boolean(recentActiveRelayName && switchingRelay === recentActiveRelayName)"
-          @click="handleRelayDetailAction"
+          :disabled="recentRelayBusy"
+          @click="openStationList"
         >
-          <span>{{ t('dashboard.switchRecentRelay', '切到最近活跃') }}</span>
-          <strong>{{ recentActiveRelayName || t('dashboard.relaySearch', '中继列表') }}</strong>
+          <span>{{ t('dashboard.recentActiveRelay', '最近活跃中继') }}</span>
+          <strong>{{ recentRelayControlName || t('dashboard.relaySearch', '中继列表') }}</strong>
         </button>
         <button
           type="button"
           class="recent-relay-step"
-          :disabled="recentActiveRelayOptions.length <= 1"
+          :disabled="recentRelayBusy"
           :title="t('common.next', '下一个')"
-          @click="stepRecentRelay(1)"
+          @click="emit('station-next')"
         >
           ›
         </button>
@@ -526,13 +526,23 @@ const props = defineProps({
   uniqueCallsigns: {
     type: Number,
     default: 0
+  },
+  stationBusy: {
+    type: Boolean,
+    default: false
+  },
+  stationConnected: {
+    type: Boolean,
+    default: false
   }
 })
 
 const emit = defineEmits([
   'show-callsign-records',
   'update-dashboard-voice-mode',
-  'open-station-list'
+  'open-station-list',
+  'station-prev',
+  'station-next'
 ])
 const router = useRouter()
 const { t, isEnglish, toggleLocale } = useLocale()
@@ -572,7 +582,6 @@ const qthCache = ref({})
 const fmoCoordinate = ref(null)
 const voiceStatus = ref('')
 const activeNow = ref(Date.now())
-const selectedRecentRelayIndex = ref(0)
 let timer = null
 let activeTimer = null
 let audioContext = null
@@ -759,34 +768,36 @@ const activeContact = computed(() => {
   }
 })
 
-const recentActiveRelayOptions = computed(() => {
-  const relays = []
-  const seen = new Set()
-  const sortedHistory = [...speakingHistory.value].sort((a, b) => {
-    const aTime = a.endTime || a.startTime || 0
-    const bTime = b.endTime || b.startTime || 0
-    return bTime - aTime
-  })
+const recentActiveRelayName = computed(() => {
+  const liveRelay = getSpeakingRelayName(currentSpeakingRecord.value)
+  if (liveRelay) return liveRelay
 
-  for (const item of sortedHistory) {
-    const relayName = getSpeakingRelayName(item)
-    const normalizedName = normalizeRelayName(relayName)
-    if (!normalizedName || seen.has(normalizedName)) continue
-    seen.add(normalizedName)
-    relays.push(relayName)
-  }
+  const recentRelay = getSpeakingRelayName(recentEndedSpeakingRecord.value)
+  if (recentRelay) return recentRelay
 
-  return relays
+  const latestRelayRecord = [...speakingHistory.value]
+    .filter((item) => item.callsign && (item.serverName || findMatchingLog(item)?.relayName))
+    .sort((a, b) => {
+      const aTime = a.endTime || a.startTime || 0
+      const bTime = b.endTime || b.startTime || 0
+      return bTime - aTime
+    })[0]
+
+  return getSpeakingRelayName(latestRelayRecord)
 })
 
-const recentActiveRelayName = computed(() => {
-  return recentActiveRelayOptions.value[selectedRecentRelayIndex.value] || ''
+const recentRelayControlName = computed(() => {
+  return currentStation.value?.name || recentActiveRelayName.value || ''
+})
+
+const recentRelayBusy = computed(() => {
+  return props.stationBusy || !props.stationConnected
 })
 
 const recentRelayCommandTitle = computed(() => {
-  if (recentActiveRelayName.value) {
-    return t('dashboard.switchToRelay', `切换到 ${recentActiveRelayName.value}`, {
-      name: recentActiveRelayName.value
+  if (recentRelayControlName.value) {
+    return t('dashboard.switchToRelay', `切换到 ${recentRelayControlName.value}`, {
+      name: recentRelayControlName.value
     })
   }
   return t('dashboard.relaySearch', '中继列表 / 搜索')
@@ -1761,15 +1772,6 @@ watch(
   }
 )
 
-watch(
-  () => recentActiveRelayOptions.value.join('\n'),
-  () => {
-    if (selectedRecentRelayIndex.value >= recentActiveRelayOptions.value.length) {
-      selectedRecentRelayIndex.value = 0
-    }
-  }
-)
-
 async function switchRelay(relayName) {
   if (!relayName || switchingRelay.value) return
   switchingRelay.value = relayName
@@ -1797,20 +1799,6 @@ function getSpeakingRelayName(speakingRecord) {
   if (!speakingRecord) return ''
   const matchedLog = findMatchingLog(speakingRecord)
   return speakingRecord.serverName || matchedLog?.relayName || ''
-}
-
-function handleRelayDetailAction() {
-  if (recentActiveRelayName.value) {
-    switchRelay(recentActiveRelayName.value)
-    return
-  }
-  openStationList()
-}
-
-function stepRecentRelay(direction) {
-  const total = recentActiveRelayOptions.value.length
-  if (total <= 1) return
-  selectedRecentRelayIndex.value = (selectedRecentRelayIndex.value + direction + total) % total
 }
 
 onMounted(() => {
