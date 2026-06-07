@@ -5,17 +5,16 @@
         <img src="/app-icon.png" alt="" class="dashboard-brand-mark" />
         <strong>{{ t('app.name', 'FMO 仪表盘') }}</strong>
         <div class="mobile-command-stats" aria-label="移动端统计">
-          <span class="command-stat total-stat" :title="t('header.total', '总通联数量')">
-            <span class="stat-star" aria-hidden="true">★</span>
-            {{ totalLogs || totalContactCount }}
+          <span
+            class="command-stat total-today-stat"
+            :title="`${t('header.total', '总通联数量')} / ${t('header.today', '今日通联数量')}`"
+          >
+            <span class="stat-icon" aria-hidden="true">✨</span>
+            {{ totalLogs || totalContactCount }}<small>/{{ todayLogs || todayContactCount }}</small>
           </span>
           <span class="command-stat friend-stat" :title="t('header.friends', '好友数量')">
-            <span class="stat-light" aria-hidden="true"></span>
+            <span class="stat-icon" aria-hidden="true">👥</span>
             {{ uniqueCallsigns }}
-          </span>
-          <span class="command-stat today-stat" :title="t('header.today', '今日通联数量')">
-            <span class="stat-light" aria-hidden="true"></span>
-            {{ todayLogs || todayContactCount }}
           </span>
         </div>
       </div>
@@ -3520,10 +3519,15 @@ onUnmounted(() => {
     font-size: 0.7rem;
   }
 
-  .mobile-command-stats .stat-light {
-    width: 0.42rem;
-    height: 0.42rem;
-    box-shadow: none;
+  .mobile-command-stats .stat-icon {
+    font-size: 0.72rem;
+    line-height: 1;
+  }
+
+  .mobile-command-stats small {
+    color: var(--text-tertiary);
+    font-size: 0.68rem;
+    font-weight: 750;
   }
 
   .dashboard-brand-mark {
@@ -3799,6 +3803,14 @@ onUnmounted(() => {
 
   .mobile-command-stats span {
     font-size: 0.68rem;
+  }
+
+  .mobile-command-stats .stat-icon {
+    font-size: 0.68rem;
+  }
+
+  .mobile-command-stats small {
+    font-size: 0.66rem;
   }
 
   .dashboard-brand-mark,
