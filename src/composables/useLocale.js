@@ -202,9 +202,6 @@ const messages = {
     'about.v2Title': 'V2 Web Experience',
     'about.v2Subtitle':
       'The desktop web version is the first V2 stage, reorganizing high-frequency information and actions.',
-    'about.next': 'Next',
-    'about.nextBody':
-      'V2 currently focuses on the web version, then will adapt Android, iOS, tablets, and local desktop builds while improving multi-server connection, alert strategy, and live contact information.',
     'about.coffee': 'Buy the author a coffee',
     'about.coffeeBody':
       'If FMO Dashboard helps you, you can support ongoing maintenance through the QR codes.',

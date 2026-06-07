@@ -18,8 +18,8 @@ V2 部署在 VPS 的独立路径 `/v2/`，没有覆盖旧版 `/stats/` 统计页
 当前 Git 基线：
 
 - 分支：`main`
-- 最新提交：`37b3210 Localize active server switcher`
-- 该提交已推送到 GitHub。
+- 最新提交：以 GitHub `main` 当前 HEAD 为准。
+- 当前 Web/Android V2.00 相关提交已推送到 GitHub。
 - 工作区仍有 iOS 接手相关未提交改动，见本文后面的「iOS 会话接手状态」。
 
 ## 已完成的 Web V2 重点
@@ -280,8 +280,8 @@ curl -sS --max-time 15 https://fmo.bh1jss.net/v2/ | rg -o '/v2/assets/index-[^"]
 
 最近一次远端部署资源：
 
-- `/v2/assets/index-dbLtMKIR.js`
-- `/v2/assets/index-BX6sIKL4.css`
+- `/v2/assets/index-CnlwpHjM.js`
+- `/v2/assets/index-CKHvckbF.css`
 
 验证过远端 JS 内包含：
 
@@ -296,7 +296,7 @@ Android V2.00 APK：
 - 本地文件：`release/android/FMO-Dashboard-Android-V2.00.apk`
 - VPS 文件：`/var/www/fmologs/downloads/FMO-Dashboard-Android-V2.00.apk`
 - 镜像文件：`/var/www/fmologs/dist/downloads/FMO-Dashboard-Android-V2.00.apk`
-- SHA256：`e92aaeab55001123c97deffc4a0bdbc41262b91a432b7dd07bbe269a39fb2e84`
+- SHA256：`cc4453aa15da35a82f8dc3b755e0abb7bf5210833d226a8633ba41ce3e510b04`
 - 包内已验证包含：
   - `Previous active`
   - `Next active`

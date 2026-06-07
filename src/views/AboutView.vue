@@ -68,11 +68,6 @@
       </div>
     </section>
 
-    <section class="roadmap-section">
-      <h2>{{ t('about.next', '接下来') }}</h2>
-      <p>{{ t('about.nextBody', nextBodyFallback) }}</p>
-    </section>
-
     <section class="coffee-section">
       <button type="button" class="coffee-toggle" @click="showCoffee = !showCoffee">
         <span>{{ t('about.coffee', '请作者喝杯咖啡') }}</span>
@@ -104,16 +99,13 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import packageInfo from '../../package.json'
 import { useLocale } from '../composables/useLocale'
 
-const appVersion = computed(() => `v${packageInfo.version}`)
+const appVersion = 'V2.00'
 const showCoffee = ref(false)
 const { t } = useLocale()
 const aboutIntroFallback =
   '面向 FMO 守听、通联和日志管理的多端控制台。它将实时呼叫、当前中继、方位距离和最近通联放在第一屏，让电脑、平板与移动设备都能快速掌握通联现场。'
-const nextBodyFallback =
-  'V2 当前优先完善网页版，随后将逐步适配 Android、iOS、平板与桌面本地版，并继续优化多服务器连接、提醒策略和通联现场信息。'
 
 const v1Features = computed(() => [
   {
@@ -222,7 +214,6 @@ const v2Features = computed(() => [
 
 .about-intro,
 .version-section,
-.roadmap-section,
 .coffee-section {
   border: 1px solid var(--border-light);
   border-radius: 8px;
@@ -235,6 +226,12 @@ const v2Features = computed(() => [
   gap: 1rem;
   align-items: center;
   padding: 1.2rem;
+}
+
+.about-intro > div,
+.version-heading > div,
+.feature-grid article > div {
+  min-width: 0;
 }
 
 .about-logo {
@@ -251,8 +248,7 @@ const v2Features = computed(() => [
 }
 
 .title-line h1,
-.version-heading h2,
-.roadmap-section h2 {
+.version-heading h2 {
   margin: 0;
   color: var(--text-primary);
   letter-spacing: 0;
@@ -272,9 +268,12 @@ const v2Features = computed(() => [
 
 .about-intro p,
 .version-heading p,
-.roadmap-section p,
 .feature-grid p {
   color: var(--text-secondary);
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .about-intro p {
@@ -313,13 +312,11 @@ const v2Features = computed(() => [
   border-bottom: 1px solid var(--border-light);
 }
 
-.version-heading h2,
-.roadmap-section h2 {
+.version-heading h2 {
   font-size: 1rem;
 }
 
-.version-heading p,
-.roadmap-section p {
+.version-heading p {
   margin: 0.18rem 0 0;
   font-size: 0.78rem;
   line-height: 1.55;
@@ -357,10 +354,12 @@ const v2Features = computed(() => [
   grid-template-columns: 2rem minmax(0, 1fr);
   gap: 0.55rem;
   min-width: 0;
+  max-width: 100%;
   padding: 0.7rem;
   border: 1px solid var(--border-light);
   border-radius: 7px;
   background: var(--bg-table-stripe);
+  box-sizing: border-box;
 }
 
 .feature-grid article > span {
@@ -380,17 +379,14 @@ const v2Features = computed(() => [
   color: var(--text-primary);
   font-size: 0.82rem;
   letter-spacing: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .feature-grid p {
   margin: 0.2rem 0 0;
   font-size: 0.72rem;
   line-height: 1.55;
-}
-
-.roadmap-section {
-  margin-top: 0.75rem;
-  padding: 0.9rem 1rem;
 }
 
 .coffee-section {
