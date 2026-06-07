@@ -15,17 +15,6 @@
             }}</strong
           >
         </div>
-        <button
-          type="button"
-          class="active-relay-switch"
-          :title="t('dashboard.relaySearch', '中继列表 / 搜索')"
-          @click="openStationList"
-        >
-          <span>{{ t('dashboard.relay', '中继') }}</span>
-          <strong>
-            {{ activeContact?.relayName || currentStation?.name || t('common.unknown', '未知') }}
-          </strong>
-        </button>
         <div class="command-stats">
           <span class="command-stat total-stat" :title="t('header.total', '总通联数量')">
             <span class="stat-star" aria-hidden="true">★</span>
@@ -2583,46 +2572,6 @@ onUnmounted(() => {
   font-size: 0.82rem;
 }
 
-.active-relay-switch {
-  display: inline-flex;
-  min-width: 0;
-  max-width: 13rem;
-  height: 2.25rem;
-  align-items: center;
-  gap: 0.42rem;
-  padding: 0 0.65rem;
-  border: 1px solid var(--border-light);
-  border-radius: 7px;
-  color: var(--text-secondary);
-  background: var(--bg-table-stripe);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.active-relay-switch:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 52%, var(--border-light));
-  color: var(--color-primary);
-  background: var(--surface-accent);
-}
-
-.active-relay-switch span {
-  color: var(--text-tertiary);
-  font-size: 0.7rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.active-relay-switch strong {
-  min-width: 0;
-  overflow: hidden;
-  color: inherit;
-  font-size: 0.82rem;
-  font-weight: 750;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .command-stats,
 .command-tools {
   display: flex;
@@ -3322,37 +3271,12 @@ onUnmounted(() => {
   }
 
   .connection-strip {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) minmax(7.5rem, 0.62fr);
-    gap: 0.55rem;
-    order: 3;
-    width: 100%;
-    padding: 0.25rem 0 0;
+    display: none;
   }
 
   .command-stats,
   .command-address {
     display: none;
-  }
-
-  .connection-copy strong {
-    font-size: 0.86rem;
-  }
-
-  .active-relay-switch {
-    width: 100%;
-    max-width: none;
-    height: 2.05rem;
-    padding: 0 0.52rem;
-  }
-
-  .active-relay-switch span {
-    font-size: 0.64rem;
-  }
-
-  .active-relay-switch strong {
-    font-size: 0.74rem;
   }
 
   .command-tools {
@@ -3708,21 +3632,12 @@ onUnmounted(() => {
     height: 2.1rem;
   }
 
+  .connection-strip,
   .command-stats,
   .command-select-wrap,
   .command-tools :deep(.public-tool-btn),
   .command-tools :deep(.download-tool-btn) {
     display: none;
-  }
-
-  .connection-strip {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) minmax(7.25rem, 0.48fr);
-    gap: 0.45rem;
-    order: 3;
-    width: 100%;
-    padding: 0.18rem 0 0;
   }
 
   .command-tool-wide {
