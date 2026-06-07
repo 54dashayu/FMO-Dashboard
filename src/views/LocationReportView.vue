@@ -4,7 +4,7 @@
       <!-- FMO 当前坐标 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">FMO 当前坐标</span>
+          <span class="card-title">{{ t('location.fmoCoord', 'FMO 当前坐标') }}</span>
           <button class="btn-refresh" :disabled="store.isFetchingFmo" @click="handleFetchFmo">
             <svg
               ref="fmoIconRef"
@@ -18,26 +18,28 @@
                 d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
               />
             </svg>
-            刷新
+            {{ t('common.refresh', '刷新') }}
           </button>
         </div>
         <div v-if="store.fmoCoordinate" class="coord-display">
           <div class="coord-row">
-            <span class="coord-label">纬度</span>
+            <span class="coord-label">{{ t('location.latitude', '纬度') }}</span>
             <span class="coord-value">{{ store.fmoCoordinate.lat.toFixed(6) }}</span>
           </div>
           <div class="coord-row">
-            <span class="coord-label">经度</span>
+            <span class="coord-label">{{ t('location.longitude', '经度') }}</span>
             <span class="coord-value">{{ store.fmoCoordinate.lng.toFixed(6) }}</span>
           </div>
         </div>
-        <div v-else class="card-empty">点击刷新获取 FMO 当前坐标</div>
+        <div v-else class="card-empty">
+          {{ t('location.fetchFmoHint', '点击刷新获取 FMO 当前坐标') }}
+        </div>
       </div>
 
       <!-- 当前 GPS 定位 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">当前 GPS 定位</span>
+          <span class="card-title">{{ t('location.gpsCoord', '当前 GPS 定位') }}</span>
           <button class="btn-refresh" :disabled="store.isRefreshingGps" @click="handleRefreshGps">
             <svg
               ref="gpsIconRef"
@@ -51,30 +53,32 @@
                 d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"
               />
             </svg>
-            获取定位
+            {{ t('location.fetchGps', '获取定位') }}
           </button>
         </div>
         <div v-if="store.currentGps" class="coord-display">
           <div class="coord-row">
-            <span class="coord-label">纬度</span>
+            <span class="coord-label">{{ t('location.latitude', '纬度') }}</span>
             <span class="coord-value">{{ store.currentGps.lat.toFixed(6) }}</span>
           </div>
           <div class="coord-row">
-            <span class="coord-label">经度</span>
+            <span class="coord-label">{{ t('location.longitude', '经度') }}</span>
             <span class="coord-value">{{ store.currentGps.lng.toFixed(6) }}</span>
           </div>
         </div>
-        <div v-else class="card-empty">点击获取当前 GPS 定位</div>
+        <div v-else class="card-empty">
+          {{ t('location.fetchGpsHint', '点击获取当前 GPS 定位') }}
+        </div>
       </div>
 
       <!-- 自动上报控制 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">自动上报</span>
+          <span class="card-title">{{ t('location.autoReport', '自动上报') }}</span>
         </div>
 
         <div class="setting-row">
-          <span class="setting-label">开启自动上报</span>
+          <span class="setting-label">{{ t('location.enableAuto', '开启自动上报') }}</span>
           <label class="toggle-switch">
             <input type="checkbox" :checked="store.enabled" @change="store.toggleEnabled()" />
             <span class="toggle-slider"></span>
@@ -82,7 +86,7 @@
         </div>
 
         <div class="setting-row interval-row">
-          <span class="setting-label">上报间隔</span>
+          <span class="setting-label">{{ t('location.interval', '上报间隔') }}</span>
           <input
             v-model="sliderValue"
             type="range"
@@ -98,7 +102,12 @@
         </div>
 
         <div v-if="isShortInterval" class="setting-hint">
-          短间隔（≤60秒）会启用 GPS 持续监听，定位更准，但耗电增加。
+          {{
+            t(
+              'location.shortIntervalHint',
+              '短间隔（≤60秒）会启用 GPS 持续监听，定位更准，但耗电增加。'
+            )
+          }}
         </div>
 
         <div class="setting-row-actions">
@@ -116,21 +125,21 @@
       <!-- 状态 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">上报状态</span>
+          <span class="card-title">{{ t('location.reportStatus', '上报状态') }}</span>
         </div>
         <div v-if="store.lastReportTime" class="status-info">
           <div class="status-row">
-            <span class="status-label">上次上报</span>
+            <span class="status-label">{{ t('location.lastReport', '上次上报') }}</span>
             <span class="status-value">{{ store.lastReportTime }}</span>
           </div>
           <div class="status-row">
-            <span class="status-label">结果</span>
+            <span class="status-label">{{ t('location.result', '结果') }}</span>
             <span class="status-value" :class="resultStatusClass">{{
               store.lastReportResult
             }}</span>
           </div>
         </div>
-        <div v-else class="card-empty">尚未上报</div>
+        <div v-else class="card-empty">{{ t('location.noReport', '尚未上报') }}</div>
       </div>
     </div>
   </div>
@@ -140,8 +149,10 @@
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import { useLocationStore } from '../stores/locationStore'
 import { SLIDER_POSITIONS } from '../stores/locationStore'
+import { useLocale } from '../composables/useLocale'
 
 const store = useLocationStore()
+const { t } = useLocale()
 const SLIDER_MAX = 100
 
 // 图标 DOM 引用，用于通过 JS 驱动旋转动画
@@ -269,16 +280,16 @@ const isShortInterval = computed(() => store.intervalSeconds <= 60)
 
 // 立即上报按钮文案（根据阶段变化）
 const manualReportLabel = computed(() => {
-  if (!store.isManualReporting) return '立即上报'
+  if (!store.isManualReporting) return t('location.reportNow', '立即上报')
   switch (store.reportingPhase) {
     case 'locating':
-      return '正在获取定位…'
+      return t('location.locating', '正在获取定位…')
     case 'reporting':
-      return '正在上报…'
+      return t('location.reporting', '正在上报…')
     case 'awaiting':
-      return '等待 FMO 回执…'
+      return t('location.awaiting', '等待 FMO 回执…')
     default:
-      return '处理中…'
+      return t('location.processing', '处理中…')
   }
 })
 

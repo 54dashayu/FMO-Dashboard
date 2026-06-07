@@ -47,7 +47,12 @@ async function findStationByRelayName(client, relayName) {
   return station
 }
 
-export async function switchStationByRelayName(relayName, host = '', protocol = 'ws') {
+export async function switchStationByRelayName(
+  relayName,
+  host = '',
+  protocol = 'ws',
+  options = {}
+) {
   const target = getControlTarget(host, protocol)
   if (!target.host) {
     throw new Error('请先设置 FMO 控制地址')
@@ -59,6 +64,7 @@ export async function switchStationByRelayName(relayName, host = '', protocol = 
     const station = await findStationByRelayName(client, relayName)
 
     await client.setCurrentStation(station.uid)
+    options.onSwitched?.(station)
     await wait(700)
 
     const current = await client.getCurrentStation()

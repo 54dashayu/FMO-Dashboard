@@ -33,5 +33,12 @@ makensis \
 
 cp "$OUTPUT_EXE" "$VERSIONED_OUTPUT_EXE"
 
+if [[ -n "${WINDOWS_SIGN_CERT_P12:-}" ]]; then
+  bash "$ROOT_DIR/scripts/sign-windows-artifact.sh" "$OUTPUT_EXE"
+  cp "$OUTPUT_EXE" "$VERSIONED_OUTPUT_EXE"
+else
+  echo "WINDOWS_SIGN_CERT_P12 is not set; created unsigned EXE artifacts"
+fi
+
 echo "Created: $OUTPUT_EXE"
 echo "Created: $VERSIONED_OUTPUT_EXE"

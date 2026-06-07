@@ -11,8 +11,8 @@
           <SvgIcon :name="route.icon" :size="20" />
         </div>
         <div class="menu-content">
-          <div class="menu-label">{{ route.label }}</div>
-          <div v-if="route.description" class="menu-desc">{{ route.description }}</div>
+          <div class="menu-label">{{ routeLabel(route) }}</div>
+          <div v-if="route.description" class="menu-desc">{{ routeDescription(route) }}</div>
         </div>
         <svg
           class="menu-arrow"
@@ -33,6 +33,17 @@
 <script setup>
 import { MORE_ROUTES } from '../components/home/constants'
 import SvgIcon from '../components/common/SvgIcon.vue'
+import { useLocale } from '../composables/useLocale'
+
+const { isEnglish, t } = useLocale()
+
+function routeLabel(route) {
+  return isEnglish.value ? t(`nav.${route.type}`, route.label) : route.label
+}
+
+function routeDescription(route) {
+  return isEnglish.value ? t(`navDesc.${route.type}`, route.description) : route.description
+}
 </script>
 
 <style scoped>

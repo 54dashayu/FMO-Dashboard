@@ -6,7 +6,7 @@
 
   <!-- 加载状态 -->
   <div v-if="loading" class="loading">
-    <slot name="loading">加载中...</slot>
+    <slot name="loading">{{ t('common.loading', '加载中...') }}</slot>
   </div>
 
   <!-- 错误提示 -->
@@ -16,11 +16,15 @@
 </template>
 
 <script setup>
+import { useLocale } from '../../composables/useLocale'
+
 defineProps({
   syncMessage: String,
   loading: Boolean,
   error: String
 })
+
+const { t } = useLocale()
 </script>
 
 <style scoped>

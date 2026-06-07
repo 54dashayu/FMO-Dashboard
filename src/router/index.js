@@ -6,6 +6,7 @@ import Top20View from '../views/Top20View.vue'
 import OldFriendsView from '../views/OldFriendsView.vue'
 import MessageView from '../views/MessageView.vue'
 import MoreView from '../views/MoreView.vue'
+import WishWallView from '../views/WishWallView.vue'
 import RemoteControlView from '../views/RemoteControlView.vue'
 import FriendLinksView from '../views/FriendLinksView.vue'
 import AboutView from '../views/AboutView.vue'
@@ -47,6 +48,11 @@ const children = [
     path: 'more',
     name: 'more',
     component: MoreView
+  },
+  {
+    path: 'wish-wall',
+    name: 'wishWall',
+    component: WishWallView
   },
   {
     path: 'remote-control',

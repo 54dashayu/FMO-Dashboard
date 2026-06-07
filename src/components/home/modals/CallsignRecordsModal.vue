@@ -31,11 +31,11 @@
             }"
           >
             <div class="record-row">
-              <span class="record-label">日期：</span>
+              <span class="record-label">{{ t('dashboard.date', '日期：') }}</span>
               <span class="record-value">{{ formatTimestamp(record.timestamp) }}</span>
             </div>
             <div class="record-row">
-              <span class="record-label">接收方：</span>
+              <span class="record-label">{{ t('dashboard.receiver', '接收方：') }}</span>
               <span class="record-value">
                 <a
                   v-if="record.toCallsign"
@@ -56,7 +56,7 @@
               <span class="record-value address-line">{{ gridAddressMap[record.toGrid] }}</span>
             </div>
             <div class="record-row">
-              <span class="record-label">发送方：</span>
+              <span class="record-label">{{ t('dashboard.sender', '发送方：') }}</span>
               <span class="record-value">
                 <a
                   v-if="record.fromCallsign"
@@ -77,17 +77,21 @@
               <span class="record-value address-line">{{ gridAddressMap[record.fromGrid] }}</span>
             </div>
             <div class="record-row">
-              <span class="record-label">频率：</span>
+              <span class="record-label">{{ t('dashboard.frequencyLabel', '频率：') }}</span>
               <span class="record-value">{{ formatFreqHz(record.freqHz) }} MHz</span>
             </div>
             <div class="record-row">
-              <span class="record-label">中继：</span>
+              <span class="record-label">{{ t('dashboard.relayLabel', '中继：') }}</span>
               <span class="record-value">
                 <button
                   v-if="record.relayName"
                   class="relay-link"
                   :disabled="switchingRelay === record.relayName"
-                  :title="`切换到 ${record.relayName}`"
+                  :title="
+                    t('dashboard.switchToRelay', `切换到 ${record.relayName}`, {
+                      name: record.relayName
+                    })
+                  "
                   @click.stop="handleRelaySwitch(record.relayName)"
                 >
                   {{ record.relayName }}
@@ -109,12 +113,12 @@
               </span>
             </div>
             <div v-if="record.toComment" class="record-row">
-              <span class="record-label">留言：</span>
+              <span class="record-label">{{ t('dashboard.commentLabel', '留言：') }}</span>
               <span class="record-value">{{ record.toComment }}</span>
             </div>
           </div>
         </div>
-        <div v-else class="empty-hint">暂无记录</div>
+        <div v-else class="empty-hint">{{ t('dashboard.noContacts', '暂无记录') }}</div>
       </div>
     </div>
   </div>
@@ -126,6 +130,7 @@ import { formatTimestamp, formatFreqHz, isTodayContact } from '../constants'
 import { gridToAddress } from '../../../services/gridService'
 import { switchStationByRelayName } from '../../../services/stationControl'
 import toast from '../../../composables/useToast'
+import { useLocale } from '../../../composables/useLocale'
 
 const props = defineProps({
   visible: {
@@ -154,11 +159,12 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close'])
+defineEmits(['close'])
 
 const cardRefs = ref([])
 const modalBodyRef = ref(null)
 const switchingRelay = ref('')
+const { t } = useLocale()
 
 const gridAddressMap = reactive({})
 
@@ -179,9 +185,13 @@ async function handleRelaySwitch(relayName) {
       props.fmoAddress,
       props.protocol
     )
-    toast.success(`已切换到：${current?.name || station.name}`)
+    toast.success(
+      t('remote.switchedTo', `已切换到：${current?.name || station.name}`, {
+        name: current?.name || station.name
+      })
+    )
   } catch (err) {
-    toast.error(err.message || '切换中继失败')
+    toast.error(err.message || t('remote.switchFailed', '切换中继失败'))
   } finally {
     switchingRelay.value = ''
   }

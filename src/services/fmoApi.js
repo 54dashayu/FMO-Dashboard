@@ -1,4 +1,12 @@
-import { normalizeHost } from '../utils/urlUtils'
+import { buildWebSocketUrl, isValidHostAddress, normalizeHost } from '../utils/urlUtils'
+
+function formatWebSocketCreateError(error, wsUrl) {
+  const message = error?.message || String(error)
+  if (/insecure WebSocket|loaded over HTTPS/i.test(message)) {
+    return `当前页面被浏览器按 HTTPS 处理，不能直接连接 ${wsUrl}。请用 http://fmo.bh1jss.net/ 打开网页后再同步；如果浏览器自动跳到 HTTPS，请换用本地版、Android/Win64 版，或关闭浏览器的“始终使用安全连接”。`
+  }
+  return message || `WebSocket connection failed: ${wsUrl}`
+}
 
 export class FmoApiClient {
   constructor(baseUrl) {
@@ -11,30 +19,7 @@ export class FmoApiClient {
 
   // 检查是否为有效的IP地址或域名（可带端口号）
   isValidAddress(address) {
-    // 分离主机名和端口号
-    let host = address
-    let port = null
-
-    // 检查是否包含端口号
-    const portMatch = address.match(/^(.+):(\d+)$/)
-    if (portMatch) {
-      host = portMatch[1]
-      port = parseInt(portMatch[2], 10)
-
-      // 验证端口号范围
-      if (port < 1 || port > 65535) {
-        return false
-      }
-    }
-
-    // 检查是否为IPv4地址
-    const ipv4Regex =
-      /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
-    // 检查是否为域名（包括.fmo.local等）
-    const domainRegex =
-      /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/
-
-    return ipv4Regex.test(host) || domainRegex.test(host)
+    return isValidHostAddress(address)
   }
 
   async connect() {
@@ -51,11 +36,19 @@ export class FmoApiClient {
     // 兼容两种 baseUrl：
     //  1) 基础地址，如 'wss://host'           → 自动拼 /ws
     //  2) 完整地址，如 'wss://host/ws'        → 直接使用，避免拼成 /ws/ws
-    const wsUrl = host.endsWith('/ws') ? `${protocol}://${host}` : `${protocol}://${host}/ws`
+    const wsUrl = host.endsWith('/ws')
+      ? buildWebSocketUrl(host.replace(/\/ws$/i, ''), protocol, '/ws')
+      : buildWebSocketUrl(host, protocol, '/ws')
 
     this.connectPromise = new Promise((resolve, reject) => {
       console.log(`Connecting to FMO: ${wsUrl}`)
-      this.socket = new WebSocket(wsUrl)
+      try {
+        this.socket = new WebSocket(wsUrl)
+      } catch (error) {
+        this.connectPromise = null
+        reject(new Error(formatWebSocketCreateError(error, wsUrl)))
+        return
+      }
 
       // 内网穿透/移动网络下 WebSocket 握手偶尔会超过 5 秒，放宽一点减少误判。
       const connectTimeout = setTimeout(() => {

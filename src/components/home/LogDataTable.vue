@@ -14,8 +14,10 @@
         <line x1="9" y1="13" x2="15" y2="13" />
         <line x1="9" y1="17" x2="13" y2="17" />
       </svg>
-      <p class="empty-title">暂无通联数据</p>
-      <p class="empty-desc">导入数据库文件或同步FMO服务器即可查看</p>
+      <p class="empty-title">{{ t('common.noContactData', '暂无通联数据') }}</p>
+      <p class="empty-desc">
+        {{ t('common.importOrSync', '导入数据库文件或同步FMO服务器即可查看') }}
+      </p>
     </div>
 
     <!-- 已加载但无匹配数据 -->
@@ -31,8 +33,8 @@
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
         <line x1="8" y1="11" x2="14" y2="11" />
       </svg>
-      <p class="empty-title">暂无匹配结果</p>
-      <p class="empty-desc">尝试调整筛选条件或导入更多数据</p>
+      <p class="empty-title">{{ t('common.noMatch', '暂无匹配结果') }}</p>
+      <p class="empty-desc">{{ t('common.adjustFilters', '尝试调整筛选条件或导入更多数据') }}</p>
     </div>
 
     <!-- 有数据时显示表格 -->
@@ -95,7 +97,9 @@
                     v-if="row.relayName"
                     class="relay-link"
                     :disabled="switchingRelay === row.relayName"
-                    :title="`切换到 ${row.relayName}`"
+                    :title="
+                      t('remote.switchTo', `切换到 ${row.relayName}`, { name: row.relayName })
+                    "
                     @click.stop="handleRelaySwitch(row.relayName)"
                   >
                     {{ row.relayName }}
@@ -136,9 +140,9 @@
       >
         <template v-if="loadingMore">
           <span class="loading-spinner"></span>
-          加载中...
+          {{ t('common.loading', '加载中...') }}
         </template>
-        <template v-else-if="!hasMore"> 没有更多数据 </template>
+        <template v-else-if="!hasMore"> {{ t('common.noMoreData', '没有更多数据') }} </template>
       </div>
     </template>
   </div>
@@ -151,6 +155,7 @@ import { ColumnNames, formatTimestamp, formatFreqHz, isTodayContact } from './co
 import { gridToAddress } from '../../services/gridService.js'
 import { switchStationByRelayName } from '../../services/stationControl'
 import toast from '../../composables/useToast'
+import { useLocale } from '../../composables/useLocale'
 
 const props = defineProps({
   queryResult: {
@@ -188,6 +193,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['show-callsign-records', 'load-more'])
+const { t } = useLocale()
 
 function handleRowClick(row) {
   emit('show-callsign-records', { callsign: row.toCallsign, timestamp: row.timestamp })
@@ -206,9 +212,13 @@ async function handleRelaySwitch(relayName) {
       props.fmoAddress,
       props.protocol
     )
-    toast.success(`已切换到：${current?.name || station.name}`)
+    toast.success(
+      t('remote.switchedTo', `已切换到：${current?.name || station.name}`, {
+        name: current?.name || station.name
+      })
+    )
   } catch (err) {
-    toast.error(err.message || '切换中继失败')
+    toast.error(err.message || t('remote.switchFailed', '切换中继失败'))
   } finally {
     switchingRelay.value = ''
   }
@@ -452,18 +462,24 @@ function formatTimePart(dateTimeStr) {
 
 .callsign-main {
   display: flex;
-  align-items: center;
-  gap: 0.2rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 0.35rem;
+  row-gap: 0.1rem;
+  max-width: 100%;
 }
 
 .callsign-text {
   display: inline-block;
-  width: 6.2ch;
+  min-width: 6.2ch;
+  max-width: 100%;
   text-align: left;
-  white-space: nowrap;
-  flex-shrink: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  flex: 0 1 auto;
   font-weight: bold;
   font-size: 1.1rem;
+  line-height: 1.2;
 }
 
 .callsign-grid {
@@ -483,13 +499,17 @@ function formatTimePart(dateTimeStr) {
 }
 
 .contact-count {
-  font-size: 1rem;
-  font-weight: 400;
+  flex: 0 0 auto;
+  min-height: 1.35em;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: var(--text-tertiary);
-  line-height: 1;
+  background: var(--bg-secondary);
+  line-height: 1.2;
   display: inline-flex;
   align-items: center;
-  margin-left: 0.2rem;
 }
 
 .daily-index {
@@ -735,6 +755,19 @@ function formatTimePart(dateTimeStr) {
 
   .col-timestamp {
     width: 90px;
+  }
+
+  .col-toCallsign {
+    min-width: 120px;
+  }
+
+  .callsign-text {
+    min-width: 0;
+    font-size: 1rem;
+  }
+
+  .callsign-grid {
+    white-space: normal;
   }
 }
 </style>

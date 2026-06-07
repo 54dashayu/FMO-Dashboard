@@ -10,7 +10,7 @@
             <line x1="22" y1="2" x2="11" y2="13" />
             <polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
-          发送消息
+          {{ t('messages.sendMessage', '发送消息') }}
         </button>
 
         <!-- 操作按钮组 -->
@@ -21,7 +21,7 @@
               <polyline points="1 20 1 14 7 14" />
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
             </svg>
-            刷新
+            {{ t('common.refresh', '刷新') }}
           </button>
           <button
             v-if="messageList.length > 0"
@@ -35,7 +35,7 @@
                 d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
               />
             </svg>
-            清空
+            {{ t('messages.clear', '清空') }}
           </button>
         </div>
 
@@ -43,7 +43,7 @@
         <div class="message-list-container">
           <div v-if="loading && messageList.length === 0" class="loading-state">
             <div class="spinner"></div>
-            <span>加载中...</span>
+            <span>{{ t('common.loading', '加载中...') }}</span>
           </div>
 
           <div v-else-if="messageList.length === 0" class="empty-state">
@@ -52,8 +52,10 @@
                 d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"
               />
             </svg>
-            <p>暂无消息</p>
-            <span class="empty-hint">点击上方按钮发送第一条消息</span>
+            <p>{{ t('messages.empty', '暂无消息') }}</p>
+            <span class="empty-hint">{{
+              t('messages.emptyHint', '点击上方按钮发送第一条消息')
+            }}</span>
           </div>
 
           <div v-else class="message-list">
@@ -70,9 +72,13 @@
               <div class="message-item-header">
                 <div class="message-item-sender">
                   <span class="sender">{{ msg.from }}</span>
-                  <span v-if="!msg.isRead" class="unread-indicator">未读</span>
+                  <span v-if="!msg.isRead" class="unread-indicator">{{
+                    t('messages.unread', '未读')
+                  }}</span>
                 </div>
-                <span v-if="!msg.message && !msg.preview" class="detail-tag">点击查看详情</span>
+                <span v-if="!msg.message && !msg.preview" class="detail-tag">{{
+                  t('messages.viewDetail', '点击查看详情')
+                }}</span>
               </div>
               <div class="message-item-time">
                 <span class="time">{{ formatTime(msg.timestamp) }}</span>
@@ -86,7 +92,13 @@
               :disabled="loadingMore || !hasMore"
               @click="loadMore"
             >
-              {{ loadingMore ? '加载中...' : hasMore ? '加载更多' : '没有更多消息了' }}
+              {{
+                loadingMore
+                  ? t('common.loading', '加载中...')
+                  : hasMore
+                    ? t('messages.loadMore', '加载更多')
+                    : t('messages.noMore', '没有更多消息了')
+              }}
             </button>
           </div>
         </div>
@@ -99,7 +111,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="15 18 9 12 15 6" />
             </svg>
-            返回列表
+            {{ t('messages.backList', '返回列表') }}
           </button>
           <button
             v-if="currentDetail && !currentDetail.isRead"
@@ -107,7 +119,7 @@
             :disabled="markingRead"
             @click="markAsRead"
           >
-            标记已读
+            {{ t('messages.markRead', '标记已读') }}
           </button>
         </div>
 
@@ -119,22 +131,26 @@
           <!-- 邮件头部信息 -->
           <div class="email-header">
             <div class="email-subject-line">
-              <span class="email-label">主题:</span>
-              <span class="email-subject">消息来自 {{ currentDetail.from }}</span>
+              <span class="email-label">{{ t('messages.subject', '主题:') }}</span>
+              <span class="email-subject">{{
+                t('messages.subjectFrom', `消息来自 ${currentDetail.from}`, {
+                  from: currentDetail.from
+                })
+              }}</span>
             </div>
             <div class="email-meta-line">
-              <span class="email-label">来自:</span>
+              <span class="email-label">{{ t('messages.from', '来自:') }}</span>
               <button class="email-sender-btn" @click="replyToSender">
                 <span class="sender-name-highlight">{{ formatSender(currentDetail.from) }}</span>
-                <span class="reply-hint">点击回复</span>
+                <span class="reply-hint">{{ t('messages.replyHint', '点击回复') }}</span>
               </button>
             </div>
             <div class="email-meta-line">
-              <span class="email-label">时间:</span>
+              <span class="email-label">{{ t('messages.time', '时间:') }}</span>
               <span class="email-time">{{ formatDateTime(currentDetail.timestamp) }}</span>
             </div>
             <div v-if="currentDetail.to" class="email-meta-line">
-              <span class="email-label">至:</span>
+              <span class="email-label">{{ t('messages.to', '至:') }}</span>
               <span class="email-recipient">{{ currentDetail.to }}</span>
             </div>
           </div>
@@ -149,11 +165,11 @@
           <!-- 底部元信息和操作 -->
           <div class="email-footer">
             <div v-if="currentDetail.rig" class="footer-line">
-              <span class="footer-label">设备:</span>
+              <span class="footer-label">{{ t('messages.device', '设备:') }}</span>
               <span class="footer-value">{{ currentDetail.rig }}</span>
             </div>
             <div v-if="currentDetail.path" class="footer-line">
-              <span class="footer-label">路径:</span>
+              <span class="footer-label">{{ t('messages.path', '路径:') }}</span>
               <span class="footer-value">{{ currentDetail.path }}</span>
             </div>
             <div class="email-actions">
@@ -168,7 +184,7 @@
                     d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
                   />
                 </svg>
-                删除此消息
+                {{ t('messages.deleteThis', '删除此消息') }}
               </button>
             </div>
           </div>
@@ -180,17 +196,17 @@
     <div v-if="showSendModal" class="modal-overlay" @click.self="closeSendModal">
       <div class="modal-content send-modal">
         <div class="modal-header">
-          <h3>发送消息</h3>
+          <h3>{{ t('messages.sendMessage', '发送消息') }}</h3>
           <button class="close-btn" @click="closeSendModal">&times;</button>
         </div>
 
         <div class="modal-body">
           <div class="form-group">
-            <label>目标呼号</label>
+            <label>{{ t('messages.targetCallsign', '目标呼号') }}</label>
             <CallsignInput
               id="target-callsign"
               v-model="sendForm.callsign"
-              placeholder="输入呼号 (如: BG1AAA)"
+              :placeholder="t('messages.callsignPlaceholder', '输入呼号 (如: BG1AAA)')"
               maxlength="15"
             />
             <span v-if="callsignError" class="error-text">{{ callsignError }}</span>
@@ -204,12 +220,12 @@
           </div>
 
           <div class="form-group">
-            <label>消息内容</label>
+            <label>{{ t('messages.content', '消息内容') }}</label>
             <textarea
               id="message-content"
               v-model="sendForm.message"
               rows="4"
-              placeholder="输入消息内容..."
+              :placeholder="t('messages.contentPlaceholder', '输入消息内容...')"
               maxlength="500"
             ></textarea>
             <span class="char-count">{{ sendForm.message.length }}/500</span>
@@ -217,10 +233,12 @@
         </div>
 
         <div class="modal-footer">
-          <button class="btn-secondary" @click="closeSendModal">取消</button>
+          <button class="btn-secondary" @click="closeSendModal">
+            {{ t('common.cancel', '取消') }}
+          </button>
           <button class="btn-primary" :disabled="!canSend || sending" @click="handleSend">
             <span v-if="sending" class="spinner-small"></span>
-            <span v-else>发送</span>
+            <span v-else>{{ t('messages.send', '发送') }}</span>
           </button>
         </div>
 
@@ -234,16 +252,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
-import { getMessageService, validateCallsign, validateSSID } from '../services/messageService'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
+import { getMessageService, validateCallsign } from '../services/messageService'
 import toast from '../composables/useToast'
 import confirmDialog from '../composables/useConfirm'
 import { useModalBackHandler, registerModal } from '../composables/useModalBackHandler'
 import CallsignInput from '../components/common/CallsignInput.vue'
+import { useLocale } from '../composables/useLocale'
 
 // 注入父组件提供的状态
 const fmoAddress = inject('fmoAddress', ref(''))
 const protocol = inject('protocol', ref('http'))
+const { t } = useLocale()
 
 // 消息服务
 const messageService = getMessageService()
@@ -335,10 +355,14 @@ async function selectMessage(msg) {
         await messageService.setRead(fmoAddress.value, protocol.value, msg.messageId)
       }
     } else {
-      toast.error('获取消息详情失败')
+      toast.error(t('messages.detailFailed', '获取消息详情失败'))
     }
   } catch (err) {
-    toast.error(`获取详情失败: ${err.message}`)
+    toast.error(
+      t('messages.detailFailedWithReason', `获取详情失败: ${err.message}`, {
+        message: err.message
+      })
+    )
   } finally {
     detailLoading.value = false
   }
@@ -395,10 +419,10 @@ async function markAsRead() {
     )
     if (result.status === 'success') {
       currentDetail.value.isRead = true
-      toast.success('已标记为已读')
+      toast.success(t('messages.markedRead', '已标记为已读'))
     }
-  } catch (err) {
-    toast.error('标记失败')
+  } catch {
+    toast.error(t('messages.markFailed', '标记失败'))
   } finally {
     markingRead.value = false
   }
@@ -411,8 +435,8 @@ async function loadMore() {
   try {
     const nextAnchorId = messageService.nextAnchorId.value
     await messageService.getList(fmoAddress.value, protocol.value, nextAnchorId)
-  } catch (err) {
-    toast.error('加载更多失败')
+  } catch {
+    toast.error(t('messages.loadMoreFailed', '加载更多失败'))
   } finally {
     loadingMore.value = false
   }
@@ -424,31 +448,31 @@ async function refreshMessages() {
   loading.value = true
   try {
     await messageService.getList(fmoAddress.value, protocol.value, 0)
-    toast.success('消息已刷新')
-  } catch (err) {
-    toast.error('刷新失败')
+    toast.success(t('messages.refreshed', '消息已刷新'))
+  } catch {
+    toast.error(t('messages.refreshFailed', '刷新失败'))
   } finally {
     loading.value = false
   }
 }
 
 async function handleDeleteItem(messageId) {
-  const confirmed = await confirmDialog.show('确定要删除这条消息吗？')
+  const confirmed = await confirmDialog.show(t('messages.confirmDelete', '确定要删除这条消息吗？'))
   if (!confirmed) return
 
   deletingId.value = messageId
   try {
     const result = await messageService.deleteItem(fmoAddress.value, protocol.value, messageId)
     if (result.status === 'success') {
-      toast.success('删除成功')
+      toast.success(t('messages.deleteSuccess', '删除成功'))
       if (selectedMessageId.value === messageId) {
         closeDetail()
       }
     } else {
-      toast.error('删除失败')
+      toast.error(t('messages.deleteFailed', '删除失败'))
     }
-  } catch (err) {
-    toast.error('删除失败')
+  } catch {
+    toast.error(t('messages.deleteFailed', '删除失败'))
   } finally {
     deletingId.value = null
   }
@@ -460,20 +484,22 @@ async function handleDeleteCurrentMessage() {
 }
 
 async function handleDeleteAll() {
-  const confirmed = await confirmDialog.show('确定要清空所有消息吗？此操作不可恢复。')
+  const confirmed = await confirmDialog.show(
+    t('messages.confirmDeleteAll', '确定要清空所有消息吗？此操作不可恢复。')
+  )
   if (!confirmed) return
 
   deletingAll.value = true
   try {
     const result = await messageService.deleteAll(fmoAddress.value, protocol.value)
     if (result.status === 'success') {
-      toast.success('已清空所有消息')
+      toast.success(t('messages.clearSuccess', '已清空所有消息'))
       closeDetail()
     } else {
-      toast.error('清空失败')
+      toast.error(t('messages.clearFailed', '清空失败'))
     }
-  } catch (err) {
-    toast.error('清空失败')
+  } catch {
+    toast.error(t('messages.clearFailed', '清空失败'))
   } finally {
     deletingAll.value = false
   }
@@ -492,11 +518,6 @@ function closeSendModal() {
   if (sendResultTimer.value) {
     clearTimeout(sendResultTimer.value)
   }
-}
-
-function replyMessage() {
-  if (!currentDetail.value) return
-  replyToSender()
 }
 
 function replyToSender() {
@@ -533,7 +554,7 @@ async function handleSend() {
   const callsign = sendForm.value.callsign.toUpperCase().trim()
 
   if (!validateCallsign(callsign)) {
-    callsignError.value = '呼号格式不正确 (1-15位字母数字)'
+    callsignError.value = t('messages.invalidCallsign', '呼号格式不正确 (1-15位字母数字)')
     return
   }
 
@@ -550,17 +571,20 @@ async function handleSend() {
     )
 
     if (result.status === 'success' && result.result === 0) {
-      sendResult.value = { type: 'success', message: '发送成功！' }
+      sendResult.value = { type: 'success', message: t('messages.sendSuccess', '发送成功！') }
       sendForm.value.message = ''
       // 3秒后关闭弹窗
       sendResultTimer.value = setTimeout(() => {
         closeSendModal()
       }, 2000)
     } else {
-      sendResult.value = { type: 'error', message: '发送失败，请重试' }
+      sendResult.value = { type: 'error', message: t('messages.sendRetry', '发送失败，请重试') }
     }
   } catch (err) {
-    sendResult.value = { type: 'error', message: `发送失败: ${err.message}` }
+    sendResult.value = {
+      type: 'error',
+      message: t('common.sendFailed', `发送失败: ${err.message}`, { message: err.message })
+    }
   } finally {
     sending.value = false
   }

@@ -10,7 +10,7 @@ import {
 // @ts-ignore - legacy JS
 import { FmoApiClient } from '../services/fmoApi'
 // @ts-ignore - legacy JS
-import { normalizeHost } from '../utils/urlUtils'
+import { buildWebSocketUrl, normalizeHost } from '../utils/urlUtils'
 // @ts-ignore - legacy JS
 import { downloadRemoteFile } from '../utils/exportFile'
 import { getPlatform } from '../platform'
@@ -190,7 +190,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   async function validateConnection(host: string, proto: string): Promise<boolean> {
     const normalizedHost = normalizeHost(host)
-    const wsUrl = `${proto}://${normalizedHost}/ws`
+    const wsUrl = buildWebSocketUrl(normalizedHost, proto, '/ws')
     return new Promise((resolve) => {
       let settled = false
       let socket: WebSocket
@@ -365,46 +365,32 @@ export const useSettingsStore = defineStore('settings', () => {
       return { success: false, message: '地址不存在' }
     }
 
-    const isConnected = await validateConnection(address.host, address.protocol)
+    fmoAddressStorage.value.activeId = id
 
-    if (isConnected) {
-      fmoAddressStorage.value.activeId = id
+    try {
+      const host = normalizeHost(address.host)
+      const fullAddress = `${address.protocol}://${host}`
+      const client = new FmoApiClient(fullAddress)
+      const userInfo = await client.getUserInfo()
 
-      try {
-        const host = normalizeHost(address.host)
-        const fullAddress = `${address.protocol}://${host}`
-        const client = new FmoApiClient(fullAddress)
-        const userInfo = await client.getUserInfo()
-
-        const index = fmoAddressStorage.value.addresses.findIndex((a) => a.id === id)
-        if (index !== -1) {
-          fmoAddressStorage.value.addresses[index] = {
-            ...fmoAddressStorage.value.addresses[index],
-            userInfo: {
-              callsign: userInfo.callsign || '',
-              uid: userInfo.uid || null,
-              wlanIP: userInfo.wlanIP || ''
-            }
+      const index = fmoAddressStorage.value.addresses.findIndex((a) => a.id === id)
+      if (index !== -1) {
+        fmoAddressStorage.value.addresses[index] = {
+          ...fmoAddressStorage.value.addresses[index],
+          userInfo: {
+            callsign: userInfo.callsign || '',
+            uid: userInfo.uid || null,
+            wlanIP: userInfo.wlanIP || ''
           }
         }
-        client.close()
-      } catch (err) {
-        console.log('获取用户信息失败:', err)
       }
-
-      await saveFmoAddresses(fmoAddressStorage.value)
-      return { success: true, message: '已切换到: ' + address.name, reconnect: true }
-    } else {
-      if (isHttps && address.protocol === 'ws') {
-        return {
-          success: false,
-          message:
-            '连接失败。提示：HTTPS 网站无法直接连接局域网设备，请开启浏览器"不安全内容"访问权限，或选择 wss:// 协议。'
-        }
-      } else {
-        return { success: false, message: '连接失败，请确认地址是否正确' }
-      }
+      client.close()
+    } catch (err) {
+      console.log('切换地址后获取用户信息失败:', err)
     }
+
+    await saveFmoAddresses(fmoAddressStorage.value)
+    return { success: true, message: '已切换到: ' + address.name, reconnect: true }
   }
 
   async function clearAllAddresses(): Promise<ActionResult> {

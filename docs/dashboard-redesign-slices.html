@@ -1,0 +1,2117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FMO Dashboard 页面切片草案</title>
+    <style>
+      :root,
+      body[data-theme='dark'] {
+        color-scheme: dark;
+        --page: #101418;
+        --panel: #171d22;
+        --panel-strong: #20272d;
+        --panel-soft: #13191e;
+        --border: #2c363f;
+        --text: #eef4f7;
+        --muted: #91a2ac;
+        --subtle: #657680;
+        --primary: #45b6ff;
+        --primary-soft: rgba(69, 182, 255, 0.14);
+        --success: #65d47e;
+        --success-soft: rgba(101, 212, 126, 0.14);
+        --warning: #ffbf5f;
+        --warning-soft: rgba(255, 191, 95, 0.13);
+        --danger: #ff7676;
+        --shadow: rgba(0, 0, 0, 0.28);
+        --control-height: 42px;
+        --button-weight: 650;
+        --brand-border: rgba(69, 182, 255, 0.5);
+        --call-card-accent: rgba(69, 182, 255, 0.15);
+        --primary-button-text: #dff4ff;
+        --primary-button-bg: rgba(69, 182, 255, 0.2);
+        --primary-button-border: rgba(69, 182, 255, 0.45);
+      }
+
+      body[data-theme='light'] {
+        color-scheme: light;
+        --page: #f4f7f8;
+        --panel: #ffffff;
+        --panel-strong: #edf3f7;
+        --panel-soft: #f7fafb;
+        --border: #d9e3e9;
+        --text: #15222b;
+        --muted: #5c6f7a;
+        --subtle: #82939d;
+        --primary: #087fc4;
+        --primary-soft: rgba(8, 127, 196, 0.11);
+        --success: #2f9d55;
+        --success-soft: rgba(47, 157, 85, 0.12);
+        --warning: #b97008;
+        --warning-soft: rgba(185, 112, 8, 0.12);
+        --danger: #d94d4d;
+        --shadow: rgba(37, 55, 66, 0.14);
+        --control-height: 42px;
+        --button-weight: 650;
+        --brand-border: rgba(8, 127, 196, 0.38);
+        --call-card-accent: rgba(8, 127, 196, 0.1);
+        --primary-button-text: #053a5a;
+        --primary-button-bg: rgba(8, 127, 196, 0.13);
+        --primary-button-border: rgba(8, 127, 196, 0.36);
+      }
+
+      body[data-theme='car'] {
+        color-scheme: dark;
+        --page: #050708;
+        --panel: #0b1012;
+        --panel-strong: #141b1e;
+        --panel-soft: #090d0f;
+        --border: #2d3a3f;
+        --text: #f5fbfb;
+        --muted: #a7bbbf;
+        --subtle: #779096;
+        --primary: #00d1ff;
+        --primary-soft: rgba(0, 209, 255, 0.17);
+        --success: #7cff82;
+        --success-soft: rgba(124, 255, 130, 0.16);
+        --warning: #ffd166;
+        --warning-soft: rgba(255, 209, 102, 0.16);
+        --danger: #ff6262;
+        --shadow: rgba(0, 0, 0, 0.48);
+        --control-height: 50px;
+        --button-weight: 760;
+        --brand-border: rgba(0, 209, 255, 0.58);
+        --call-card-accent: rgba(0, 209, 255, 0.18);
+        --primary-button-text: #e8fbff;
+        --primary-button-bg: rgba(0, 209, 255, 0.19);
+        --primary-button-border: rgba(0, 209, 255, 0.48);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        color: var(--text);
+        background: var(--page);
+      }
+
+      main {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0 48px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .page-header h1 {
+        font-size: 28px;
+        line-height: 1.2;
+      }
+
+      .page-header p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 20px;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .toolbar-label {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .theme-switcher {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .theme-button {
+        min-height: 34px;
+        padding: 0 12px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        color: var(--muted);
+        background: var(--panel-soft);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 650;
+        cursor: pointer;
+      }
+
+      .theme-button.active {
+        color: var(--text);
+        border-color: var(--primary);
+        background: var(--primary-soft);
+      }
+
+      .legend span,
+      .tag,
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        padding: 0 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--muted);
+        background: var(--panel-soft);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .slice {
+        margin-top: 20px;
+      }
+
+      .slice-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+
+      .slice-title h2 {
+        font-size: 18px;
+      }
+
+      .slice-title p {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .frame {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--page);
+        box-shadow: 0 16px 32px var(--shadow);
+      }
+
+      .app-shell {
+        min-height: 720px;
+        background: var(--page);
+      }
+
+      .top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 58px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--border);
+        background: var(--panel);
+      }
+
+      .top-bar .connection-main {
+        flex: 1;
+      }
+
+      .top-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .top-actions button {
+        min-height: 34px;
+        padding: 0 12px;
+        font-size: 13px;
+      }
+
+      .select-control {
+        min-height: 34px;
+        padding: 0 30px 0 12px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        color: var(--text);
+        background: var(--panel-strong);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border: 1px solid var(--brand-border);
+        border-radius: 7px;
+        color: var(--primary);
+        background: var(--primary-soft);
+        font-size: 12px;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .nav span {
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .nav span.active {
+        color: var(--text);
+        background: var(--panel-strong);
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.8fr);
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .connection-strip {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 14px;
+      }
+
+      .connection-main {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--success);
+        box-shadow: 0 0 0 5px var(--success-soft);
+      }
+
+      .connection-main strong {
+        font-size: 15px;
+      }
+
+      .connection-main span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .top-stats {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: 6px;
+      }
+
+      .stat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 850;
+        white-space: nowrap;
+      }
+
+      .stat-chip span {
+        color: var(--muted);
+        font-size: 17px;
+      }
+
+      .connection-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .icon-button {
+        display: grid;
+        width: 38px;
+        min-height: 38px;
+        place-items: center;
+        padding: 0;
+        font-size: 18px;
+      }
+
+      .call-card {
+        min-height: 0;
+        padding: 18px;
+        background: linear-gradient(135deg, var(--call-card-accent), transparent 45%), var(--panel);
+      }
+
+      .dashboard .call-card .action-row {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .section-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .callsign {
+        margin-top: 16px;
+        font-size: 68px;
+        line-height: 1;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .callsign-wrap {
+        display: inline-flex;
+        align-items: flex-end;
+        gap: 10px;
+        max-width: 100%;
+      }
+
+      .grid-square {
+        margin-bottom: 8px;
+        color: var(--subtle);
+        font-size: 13px;
+        font-weight: 750;
+        white-space: nowrap;
+      }
+
+      .call-top-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 148px;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .call-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .compass-card {
+        display: grid;
+        place-items: center;
+        gap: 8px;
+        min-height: 148px;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.12);
+      }
+
+      .compass {
+        position: relative;
+        width: 92px;
+        height: 92px;
+        border: 2px solid var(--border);
+        border-radius: 999px;
+        background:
+          radial-gradient(circle at center, var(--primary-soft) 0 18%, transparent 19%),
+          conic-gradient(
+            from 0deg,
+            transparent 0 22%,
+            var(--primary-soft) 23% 28%,
+            transparent 29% 100%
+          );
+      }
+
+      .compass::before {
+        content: 'N';
+        position: absolute;
+        top: 7px;
+        left: 50%;
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: 800;
+        transform: translateX(-50%);
+      }
+
+      .compass::after {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        width: 4px;
+        height: 36px;
+        border-radius: 999px;
+        background: var(--primary);
+        transform: translateX(-50%) rotate(42deg);
+        transform-origin: 50% 31px;
+        box-shadow: 0 0 14px var(--primary-soft);
+      }
+
+      .compass-meta {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        text-align: center;
+      }
+
+      .compass-meta strong {
+        font-size: 14px;
+      }
+
+      .compass-meta span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .detail {
+        min-height: 64px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.12);
+      }
+
+      .detail span {
+        display: block;
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      .detail strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 18px;
+      }
+
+      .contact-list-card {
+        margin-top: 12px;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      .dashboard > .contact-list-card {
+        grid-column: 1 / -1;
+        margin-top: 0;
+      }
+
+      .scroll-table {
+        overflow: auto;
+        max-height: 236px;
+        margin-top: 12px;
+        padding-bottom: 2px;
+      }
+
+      .contact-table {
+        min-width: 760px;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        width: 100%;
+      }
+
+      .contact-table th,
+      .contact-table td {
+        padding: 9px 12px;
+        text-align: left;
+        white-space: nowrap;
+        font-size: 13px;
+      }
+
+      .contact-table th {
+        color: var(--subtle);
+        font-weight: 650;
+      }
+
+      .contact-table td {
+        color: var(--muted);
+        background: var(--panel-soft);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .contact-table td:first-child {
+        border-left: 1px solid var(--border);
+        border-radius: 7px 0 0 7px;
+      }
+
+      .contact-table td:last-child {
+        border-right: 1px solid var(--border);
+        border-radius: 0 7px 7px 0;
+      }
+
+      .contact-table strong {
+        color: var(--text);
+      }
+
+      .action-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      button {
+        min-height: var(--control-height);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        color: var(--text);
+        background: var(--panel-strong);
+        font: inherit;
+        font-weight: var(--button-weight);
+      }
+
+      button.primary {
+        border-color: var(--primary-button-border);
+        color: var(--primary-button-text);
+        background: var(--primary-button-bg);
+      }
+
+      .side-stack {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 10px;
+      }
+
+      .previous-card {
+        min-height: 0;
+        padding: 16px;
+      }
+
+      .previous-card .callsign {
+        margin-top: 12px;
+        font-size: 34px;
+      }
+
+      .previous-card .call-top-grid {
+        grid-template-columns: minmax(0, 1fr) 94px;
+        gap: 12px;
+      }
+
+      .previous-card .compass-card {
+        min-height: 94px;
+        padding: 8px;
+      }
+
+      .previous-card .compass {
+        width: 54px;
+        height: 54px;
+      }
+
+      .previous-card .compass::after {
+        top: 10px;
+        height: 20px;
+        transform-origin: 50% 17px;
+      }
+
+      .previous-card .grid-square {
+        margin-bottom: 4px;
+        font-size: 11px;
+      }
+
+      .previous-card .compass-meta strong,
+      .previous-card .compass-meta span {
+        font-size: 11px;
+      }
+
+      .previous-card .detail-grid {
+        grid-template-columns: 1fr;
+        margin-top: 14px;
+        gap: 8px;
+      }
+
+      .quick-card,
+      .activity-card,
+      .server-card,
+      .friend-card {
+        padding: 16px;
+      }
+
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .activity-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .activity-item {
+        display: grid;
+        grid-template-columns: 68px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 38px;
+        padding: 0 10px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        color: var(--muted);
+        background: var(--panel-soft);
+        font-size: 13px;
+      }
+
+      .activity-item strong {
+        color: var(--text);
+      }
+
+      .server-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+        max-height: none;
+        overflow: auto;
+      }
+
+      .server-card {
+        min-height: 0;
+      }
+
+      .server-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        color: var(--muted);
+        background: var(--panel-soft);
+        font-size: 13px;
+      }
+
+      .server-item strong {
+        display: block;
+        color: var(--text);
+        font-size: 14px;
+        text-align: center;
+      }
+
+      .server-item span {
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      .section-link {
+        min-height: 30px;
+        padding: 0 10px;
+        font-size: 12px;
+      }
+
+      .friend-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .friend-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 48px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: var(--panel-soft);
+      }
+
+      .friend-item strong {
+        display: block;
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      .friend-item span {
+        color: var(--subtle);
+        font-size: 12px;
+      }
+
+      .friend-status {
+        color: var(--success);
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .phone-stage,
+      .car-stage {
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--page);
+      }
+
+      .phone {
+        width: min(390px, 100%);
+        min-height: 760px;
+        border: 1px solid var(--border);
+        border-radius: 26px;
+        background: var(--page);
+        overflow: hidden;
+        box-shadow: 0 18px 40px var(--shadow);
+      }
+
+      .phone .top-bar {
+        height: auto;
+        min-height: 52px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 8px 10px;
+        padding: 10px 12px;
+      }
+
+      .phone .top-bar .brand {
+        flex: 0 0 auto;
+        min-width: 0;
+      }
+
+      .phone .top-bar .brand span {
+        font-size: 17px;
+      }
+
+      .phone .top-bar .connection-main {
+        flex: 1 1 170px;
+        justify-content: flex-start;
+        min-width: 0;
+      }
+
+      .phone .top-bar .connection-main strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .phone .top-stats {
+        flex: 0 0 auto;
+        gap: 6px;
+        margin-left: 4px;
+      }
+
+      .phone .stat-chip,
+      .phone .stat-chip span {
+        font-size: 15px;
+      }
+
+      .phone .connection-actions {
+        display: grid;
+        flex: 1 0 100%;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 38px;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .phone .select-control {
+        width: 100%;
+        min-height: 34px;
+        font-size: 12px;
+      }
+
+      .phone .icon-button {
+        width: 38px;
+        min-height: 34px;
+      }
+
+      .phone .nav {
+        display: none;
+      }
+
+      .phone-body {
+        display: grid;
+        gap: 10px;
+        padding: 10px;
+      }
+
+      .phone .connection-strip {
+        display: none;
+      }
+
+      .phone .call-card {
+        width: 100%;
+        min-height: 0;
+        padding: 11px;
+        overflow: hidden;
+      }
+
+      .phone .callsign-wrap {
+        min-width: 0;
+      }
+
+      .phone .callsign {
+        min-width: 0;
+        margin-top: 10px;
+        font-size: 36px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .phone .grid-square {
+        flex: 0 0 auto;
+        margin-bottom: 4px;
+        font-size: 11px;
+      }
+
+      .phone .call-meta {
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .phone .tag {
+        min-height: 24px;
+        padding: 0 8px;
+        font-size: 11px;
+      }
+
+      .phone .detail-grid {
+        margin-top: 12px;
+      }
+
+      .phone .detail {
+        min-height: 48px;
+        padding: 8px 10px;
+      }
+
+      .phone .detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .phone .detail {
+        min-width: 0;
+      }
+
+      .phone .detail strong {
+        overflow: hidden;
+        font-size: 16px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .phone .call-top-grid {
+        grid-template-columns: minmax(0, 1fr) 92px;
+        gap: 8px;
+      }
+
+      .phone .compass-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 104px;
+        padding: 6px;
+      }
+
+      .phone .compass {
+        width: 52px;
+        height: 52px;
+      }
+
+      .phone .compass::after {
+        top: 9px;
+        height: 19px;
+        transform-origin: 50% 16px;
+      }
+
+      .phone .compass-meta {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2px;
+        justify-items: center;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .phone .compass-meta strong,
+      .phone .compass-meta span {
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        font-size: 11px;
+        text-align: center;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .phone .contact-list-card {
+        width: 100%;
+        margin-top: 0;
+        overflow: hidden;
+      }
+
+      .phone .scroll-table {
+        max-height: 300px;
+      }
+
+      .phone .contact-table {
+        min-width: 0;
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      .phone .contact-table th,
+      .phone .contact-table td {
+        overflow: hidden;
+        padding: 7px 6px;
+        font-size: 11px;
+        text-overflow: ellipsis;
+      }
+
+      .phone .contact-table th:nth-child(1),
+      .phone .contact-table td:nth-child(1) {
+        width: 26%;
+      }
+
+      .phone .contact-table th:nth-child(2),
+      .phone .contact-table td:nth-child(2) {
+        width: 18%;
+      }
+
+      .phone .contact-table th:nth-child(3),
+      .phone .contact-table td:nth-child(3) {
+        width: 26%;
+      }
+
+      .phone .contact-table th:nth-child(4),
+      .phone .contact-table td:nth-child(4) {
+        width: 30%;
+      }
+
+      .phone .action-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .phone .previous-card {
+        width: 100%;
+        min-height: auto;
+        overflow: hidden;
+      }
+
+      .phone .previous-card .callsign {
+        font-size: 28px;
+      }
+
+      .phone .previous-card .call-top-grid {
+        display: block;
+      }
+
+      .phone .previous-card .compass-card {
+        display: none;
+      }
+
+      .phone .previous-card .call-meta {
+        flex-wrap: wrap;
+      }
+
+      .bottom-tabs {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        height: 58px;
+        border-top: 1px solid var(--border);
+        background: var(--panel);
+      }
+
+      .bottom-tabs span {
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .bottom-tabs span.active {
+        color: var(--primary);
+      }
+
+      .car {
+        width: min(980px, 100%);
+        aspect-ratio: 16 / 9;
+        min-height: 520px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--page);
+        box-shadow: 0 18px 40px var(--shadow);
+      }
+
+      .car .top-bar {
+        height: 48px;
+        min-height: 48px;
+        padding: 0 12px;
+      }
+
+      .car-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1.42fr) minmax(280px, 0.78fr);
+        grid-template-rows: minmax(0, 1fr) 142px;
+        gap: 10px;
+        height: calc(100% - 48px);
+        padding: 12px;
+      }
+
+      .car .connection-strip {
+        grid-column: 1 / -1;
+        padding: 8px 12px;
+      }
+
+      .car .call-card {
+        grid-row: 1;
+        min-height: 0;
+        padding: 10px;
+        overflow: hidden;
+      }
+
+      .car .callsign {
+        margin-top: 6px;
+        font-size: 40px;
+      }
+
+      .car .call-top-grid {
+        grid-template-columns: minmax(0, 1fr) 100px;
+        gap: 10px;
+      }
+
+      .car .call-meta {
+        gap: 5px;
+        margin-top: 6px;
+      }
+
+      .car .tag {
+        min-height: 22px;
+        padding: 0 7px;
+        font-size: 11px;
+      }
+
+      .car .compass-card {
+        min-height: 88px;
+        padding: 6px;
+      }
+
+      .car .compass {
+        width: 48px;
+        height: 48px;
+      }
+
+      .car .compass::after {
+        top: 8px;
+        height: 18px;
+        transform-origin: 50% 15px;
+      }
+
+      .car .detail-grid {
+        margin-top: 8px;
+        gap: 8px;
+      }
+
+      .car .detail {
+        min-height: 38px;
+        padding: 6px 9px;
+      }
+
+      .car .detail strong {
+        font-size: 16px;
+      }
+
+      .car .action-row {
+        margin-top: 8px;
+        gap: 6px;
+      }
+
+      .car .action-row button {
+        min-height: 34px;
+        font-size: 16px;
+      }
+
+      .car .side-stack {
+        grid-row: 1;
+        gap: 8px;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .car .previous-card {
+        min-height: 0;
+        padding: 10px;
+      }
+
+      .car .previous-card .callsign {
+        margin-top: 6px;
+        font-size: 28px;
+      }
+
+      .car .previous-card .call-top-grid {
+        grid-template-columns: minmax(0, 1fr) 90px;
+        gap: 8px;
+      }
+
+      .car .previous-card .compass-card {
+        min-height: 78px;
+      }
+
+      .car .previous-card .compass {
+        width: 44px;
+        height: 44px;
+      }
+
+      .car .activity-card {
+        min-height: 0;
+      }
+
+      .car .call-card > .contact-list-card {
+        display: none;
+      }
+
+      .car .contact-list-card {
+        display: block;
+        margin-top: 8px;
+        padding: 8px;
+      }
+
+      .car .car-secondary-screen {
+        display: block;
+        grid-column: 1 / -1;
+        margin-top: 0;
+      }
+
+      .car .scroll-table {
+        max-height: 94px;
+        margin-top: 0;
+      }
+
+      .car .contact-table {
+        min-width: 760px;
+      }
+
+      .car .contact-table th,
+      .car .contact-table td {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+
+      .car .server-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-height: 104px;
+        padding-right: 2px;
+        overflow: auto;
+      }
+
+      .car .server-card {
+        padding: 10px;
+        overflow: hidden;
+      }
+
+      .car .server-item {
+        min-height: 36px;
+      }
+
+      .notes {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .note {
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--panel);
+      }
+
+      .note h3 {
+        font-size: 15px;
+      }
+
+      .note p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      @media (max-width: 860px) {
+        main {
+          width: min(100% - 20px, 1180px);
+          padding-top: 20px;
+        }
+
+        .page-header,
+        .slice-title {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .legend {
+          justify-content: flex-start;
+        }
+
+        .dashboard {
+          grid-template-columns: 1fr;
+        }
+
+        .connection-strip {
+          grid-template-columns: 1fr;
+        }
+
+        .callsign {
+          font-size: 54px;
+        }
+
+        .action-row,
+        .quick-grid,
+        .notes {
+          grid-template-columns: 1fr;
+        }
+
+        .car {
+          min-height: 560px;
+          aspect-ratio: auto;
+        }
+
+        .car-body {
+          grid-template-columns: 1fr;
+          height: auto;
+        }
+
+        .car .call-card,
+        .car .side-stack {
+          grid-row: auto;
+        }
+
+        .car .callsign {
+          font-size: 58px;
+        }
+      }
+    </style>
+  </head>
+  <body data-theme="dark">
+    <main>
+      <header class="page-header">
+        <div>
+          <h1>FMO Dashboard 页面切片草案</h1>
+          <p>目标：把仪表盘第一屏从数据展示改成通联现场屏，优先服务手机、平板和车机横屏。</p>
+        </div>
+        <div class="legend">
+          <span>当前呼叫优先</span>
+          <span>上一个呼号跟随</span>
+          <span>高频操作前置</span>
+        </div>
+      </header>
+
+      <div class="toolbar" aria-label="主题切换">
+        <div>
+          <strong>CSS 主题预览</strong>
+          <div class="toolbar-label">先用原型确认视觉方向，后续再迁移为正式主题系统。</div>
+        </div>
+        <div class="theme-switcher">
+          <button class="theme-button active" type="button" data-theme-value="dark">
+            沉浸深色
+          </button>
+          <button class="theme-button" type="button" data-theme-value="light">清爽浅色</button>
+          <button class="theme-button" type="button" data-theme-value="car">车机高对比</button>
+        </div>
+      </div>
+
+      <section class="slice">
+        <div class="slice-title">
+          <div>
+            <h2>桌面/平板通用第一屏</h2>
+            <p>左侧是当前通讯核心和最近10个通联，右侧放上个通联和收藏服务器。</p>
+          </div>
+          <span class="pill">Dashboard First Screen</span>
+        </div>
+        <div class="frame">
+          <div class="app-shell">
+            <header class="top-bar">
+              <div class="brand">
+                <div class="brand-mark">FMO</div>
+                <span>FMO 仪表盘</span>
+              </div>
+              <div class="connection-main">
+                <span class="status-dot"></span>
+                <strong>BG5FMO 正在通联</strong>
+                <div class="top-stats" aria-label="统计">
+                  <div class="stat-chip" title="通联数量">★ <span>7156</span></div>
+                  <div class="stat-chip" title="好友数量">😁 <span>89</span></div>
+                </div>
+              </div>
+              <div class="connection-actions">
+                <select class="select-control" aria-label="通联播报">
+                  <option>通联播报：开启</option>
+                  <option>通联播报：仅好友</option>
+                  <option>关闭所有播报</option>
+                </select>
+                <select class="select-control" aria-label="主题选择">
+                  <option>主题：沉浸深色</option>
+                  <option>主题：清爽浅色</option>
+                  <option>主题：车机高对比</option>
+                </select>
+                <button class="icon-button" aria-label="设置" title="设置">⚙</button>
+              </div>
+            </header>
+            <div class="dashboard">
+              <section class="panel call-card">
+                <div class="section-label">
+                  <span>当前呼叫</span>
+                </div>
+                <div class="call-top-grid">
+                  <div>
+                    <div class="callsign-wrap">
+                      <div class="callsign">BG5XXX</div>
+                      <span class="grid-square">PM01</span>
+                    </div>
+                    <div class="call-meta">
+                      <span class="tag">收藏好友</span>
+                      <span class="tag">今日第 2 次</span>
+                      <span class="tag">QTH：上海浦东</span>
+                    </div>
+                  </div>
+                  <div class="compass-card">
+                    <div class="compass"></div>
+                    <div class="compass-meta">
+                      <strong>东北 42°</strong>
+                      <span>18.6 km</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="detail-grid">
+                  <div class="detail">
+                    <span>中继 / 服务器</span>
+                    <strong>沪东 FMO</strong>
+                  </div>
+                  <div class="detail">
+                    <span>频率 / 模式</span>
+                    <strong>439.625 · FM/APRS</strong>
+                  </div>
+                </div>
+                <div class="action-row">
+                  <button>日志</button>
+                  <button>好友</button>
+                  <button>排行榜</button>
+                  <button>消息</button>
+                  <button>设置</button>
+                  <button class="primary">FMO控制</button>
+                  <button>愿望墙</button>
+                  <button>更多</button>
+                </div>
+              </section>
+
+              <aside class="side-stack">
+                <section class="panel previous-card">
+                  <div class="section-label">
+                    <span>上个通联</span>
+                    <span>2 分钟前</span>
+                  </div>
+                  <div class="call-top-grid">
+                    <div>
+                      <div class="callsign-wrap">
+                        <div class="callsign">BH5XXX</div>
+                        <span class="grid-square">PM01</span>
+                      </div>
+                      <div class="call-meta">
+                        <span class="tag">今日第 3 次</span>
+                        <span class="tag">QTH：上海闵行</span>
+                      </div>
+                    </div>
+                    <div class="compass-card">
+                      <div class="compass"></div>
+                      <div class="compass-meta">
+                        <strong>西南 218°</strong>
+                        <span>24.2 km</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="panel server-card">
+                  <div class="section-label">
+                    <span>收藏中继 / 服务器</span>
+                    <button class="section-link">中继列表 / 搜索</button>
+                  </div>
+                  <div class="server-list">
+                    <div class="server-item">
+                      <strong>沪东 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>浦西 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>苏南 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>浙北 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>沪西 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>远程入口</strong>
+                    </div>
+                  </div>
+                </section>
+              </aside>
+
+              <section class="contact-list-card">
+                <div class="section-label">
+                  <span>最近10个通联</span>
+                </div>
+                <div class="scroll-table">
+                  <table class="contact-table">
+                    <thead>
+                      <tr>
+                        <th>呼号</th>
+                        <th>时间</th>
+                        <th>QTH</th>
+                        <th>留言</th>
+                        <th>模式</th>
+                        <th>中继</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>BG5XXX</strong></td>
+                        <td>12:31</td>
+                        <td>上海浦东</td>
+                        <td>移动台，信号清晰</td>
+                        <td>FM</td>
+                        <td>沪东 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH5XXX</strong></td>
+                        <td>12:28</td>
+                        <td>上海闵行</td>
+                        <td>同中继</td>
+                        <td>FM</td>
+                        <td>沪东 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BD5XXX</strong></td>
+                        <td>12:20</td>
+                        <td>上海浦西</td>
+                        <td>APRS 消息</td>
+                        <td>APRS</td>
+                        <td>浦西 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BG4XXX</strong></td>
+                        <td>12:15</td>
+                        <td>苏州</td>
+                        <td>远程接入</td>
+                        <td>FM</td>
+                        <td>远程入口</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH4XXX</strong></td>
+                        <td>12:09</td>
+                        <td>无锡</td>
+                        <td>短暂通联</td>
+                        <td>FM</td>
+                        <td>苏南 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BG5ABC</strong></td>
+                        <td>12:04</td>
+                        <td>上海嘉定</td>
+                        <td>常用好友</td>
+                        <td>FM</td>
+                        <td>沪西 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BD4XYZ</strong></td>
+                        <td>11:58</td>
+                        <td>南通</td>
+                        <td>位置上报</td>
+                        <td>APRS</td>
+                        <td>远程入口</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH5DEF</strong></td>
+                        <td>11:52</td>
+                        <td>上海松江</td>
+                        <td>晚些再呼叫</td>
+                        <td>FM</td>
+                        <td>沪东 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BG5GHI</strong></td>
+                        <td>11:48</td>
+                        <td>上海宝山</td>
+                        <td>测试音频</td>
+                        <td>FM</td>
+                        <td>沪北 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH4JKL</strong></td>
+                        <td>11:40</td>
+                        <td>嘉兴</td>
+                        <td>跨区通联</td>
+                        <td>FM</td>
+                        <td>浙北 FMO</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slice">
+        <div class="slice-title">
+          <div>
+            <h2>手机竖屏切片</h2>
+            <p>第一屏优先保证当前呼叫、上个通联和最近通联能直接看到。</p>
+          </div>
+          <span class="pill">Mobile Portrait</span>
+        </div>
+        <div class="frame phone-stage">
+          <div class="phone">
+            <header class="top-bar">
+              <div class="brand">
+                <div class="brand-mark">FMO</div>
+                <span>FMO 仪表盘</span>
+              </div>
+              <div class="connection-main">
+                <span class="status-dot"></span>
+                <strong>BG5FMO</strong>
+                <div class="top-stats" aria-label="统计">
+                  <div class="stat-chip" title="通联数量">★ <span>7156</span></div>
+                  <div class="stat-chip" title="好友数量">😁 <span>89</span></div>
+                </div>
+              </div>
+              <div class="connection-actions">
+                <select class="select-control" aria-label="通联播报">
+                  <option>通联播报：开启</option>
+                  <option>通联播报：仅好友</option>
+                  <option>关闭所有播报</option>
+                </select>
+                <select class="select-control" aria-label="主题选择">
+                  <option>主题：沉浸深色</option>
+                  <option>主题：浅色</option>
+                  <option>主题：车机高对比</option>
+                </select>
+                <button class="icon-button" aria-label="设置" title="设置">⚙</button>
+              </div>
+            </header>
+            <div class="phone-body">
+              <section class="panel call-card">
+                <div class="section-label">
+                  <span>当前呼叫</span>
+                </div>
+                <div class="call-top-grid">
+                  <div>
+                    <div class="callsign-wrap">
+                      <div class="callsign">BG5XXX</div>
+                      <span class="grid-square">PM01</span>
+                    </div>
+                    <div class="call-meta">
+                      <span class="tag">收藏好友</span>
+                      <span class="tag">今日第 2 次</span>
+                      <span class="tag">QTH：上海浦东</span>
+                    </div>
+                  </div>
+                  <div class="compass-card">
+                    <div class="compass"></div>
+                    <div class="compass-meta">
+                      <strong>东北 42°</strong>
+                      <span>18.6 km</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="detail-grid">
+                  <div class="detail">
+                    <span>中继 / 服务器</span>
+                    <strong>沪东 FMO</strong>
+                  </div>
+                  <div class="detail">
+                    <span>频率 / 模式</span>
+                    <strong>439.625 · FM</strong>
+                  </div>
+                </div>
+              </section>
+
+              <section class="panel previous-card">
+                <div class="section-label">
+                  <span>上个通联</span>
+                  <span>2 分钟前</span>
+                </div>
+                <div class="call-top-grid">
+                  <div>
+                    <div class="callsign-wrap">
+                      <div class="callsign">BH5XXX</div>
+                      <span class="grid-square">PM01</span>
+                    </div>
+                    <div class="call-meta">
+                      <span class="tag">沪东 FMO</span>
+                      <span class="tag">QTH：上海闵行</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="contact-list-card">
+                <div class="section-label">
+                  <span>最近10个通联</span>
+                </div>
+                <div class="scroll-table">
+                  <table class="contact-table">
+                    <thead>
+                      <tr>
+                        <th>呼号</th>
+                        <th>时间</th>
+                        <th>QTH</th>
+                        <th>中继</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>BG5XXX</strong></td>
+                        <td>12:31</td>
+                        <td>上海浦东</td>
+                        <td>沪东</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH5XXX</strong></td>
+                        <td>12:28</td>
+                        <td>上海闵行</td>
+                        <td>沪东</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BD5XXX</strong></td>
+                        <td>12:20</td>
+                        <td>上海浦西</td>
+                        <td>浦西</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BG4XXX</strong></td>
+                        <td>12:15</td>
+                        <td>苏州</td>
+                        <td>远程</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH4XXX</strong></td>
+                        <td>12:09</td>
+                        <td>无锡</td>
+                        <td>苏南</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BG5ABC</strong></td>
+                        <td>12:04</td>
+                        <td>上海嘉定</td>
+                        <td>沪西</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BD4XYZ</strong></td>
+                        <td>11:58</td>
+                        <td>南通</td>
+                        <td>远程</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH5DEF</strong></td>
+                        <td>11:52</td>
+                        <td>上海松江</td>
+                        <td>沪东</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BG5GHI</strong></td>
+                        <td>11:48</td>
+                        <td>上海宝山</td>
+                        <td>沪北</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH4JKL</strong></td>
+                        <td>11:40</td>
+                        <td>嘉兴</td>
+                        <td>浙北</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+            <nav class="bottom-tabs">
+              <span class="active">仪表盘</span>
+              <span>控制</span>
+              <span>日志</span>
+              <span>好友</span>
+              <span>更多</span>
+            </nav>
+          </div>
+        </div>
+      </section>
+
+      <section class="slice">
+        <div class="slice-title">
+          <div>
+            <h2>车机横屏切片</h2>
+            <p>横屏压缩上方左右两栏，底部保留最近通联列表，适合 16:9 车机屏。</p>
+          </div>
+          <span class="pill">Android Head Unit</span>
+        </div>
+        <div class="frame car-stage">
+          <div class="car">
+            <header class="top-bar">
+              <div class="brand">
+                <div class="brand-mark">FMO</div>
+                <span>FMO 仪表盘</span>
+              </div>
+              <div class="connection-main">
+                <span class="status-dot"></span>
+                <strong>BG5FMO 正在通联</strong>
+                <div class="top-stats" aria-label="统计">
+                  <div class="stat-chip" title="通联数量">★ <span>7156</span></div>
+                  <div class="stat-chip" title="好友数量">😁 <span>89</span></div>
+                </div>
+              </div>
+              <div class="connection-actions">
+                <select class="select-control" aria-label="通联播报">
+                  <option>通联播报：开启</option>
+                  <option>通联播报：仅好友</option>
+                  <option>关闭所有播报</option>
+                </select>
+                <select class="select-control" aria-label="主题选择">
+                  <option>主题：车机高对比</option>
+                  <option>主题：沉浸深色</option>
+                </select>
+                <button class="icon-button" aria-label="设置" title="设置">⚙</button>
+              </div>
+            </header>
+            <div class="car-body">
+              <section class="panel call-card">
+                <div class="section-label">
+                  <span>当前呼叫</span>
+                </div>
+                <div class="call-top-grid">
+                  <div>
+                    <div class="callsign-wrap">
+                      <div class="callsign">BG5XXX</div>
+                      <span class="grid-square">PM01</span>
+                    </div>
+                    <div class="call-meta">
+                      <span class="tag">收藏好友</span>
+                      <span class="tag">今日已通联</span>
+                      <span class="tag">QTH：上海浦东</span>
+                    </div>
+                  </div>
+                  <div class="compass-card">
+                    <div class="compass"></div>
+                    <div class="compass-meta">
+                      <strong>东北 42°</strong>
+                      <span>18.6 km</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="detail-grid">
+                  <div class="detail">
+                    <span>中继 / 服务器</span>
+                    <strong>沪东 FMO</strong>
+                  </div>
+                  <div class="detail">
+                    <span>频率 / 模式</span>
+                    <strong>439.625 · FM/APRS</strong>
+                  </div>
+                </div>
+                <div class="action-row">
+                  <button>日志</button>
+                  <button>好友</button>
+                  <button>排行</button>
+                  <button>消息</button>
+                  <button>设置</button>
+                  <button class="primary">FMO控制</button>
+                  <button>定位</button>
+                  <button>更多</button>
+                </div>
+                <section class="contact-list-card">
+                  <div class="scroll-table">
+                    <table class="contact-table">
+                      <thead>
+                        <tr>
+                          <th>呼号</th>
+                          <th>时间</th>
+                          <th>QTH</th>
+                          <th>中继</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong>BG5XXX</strong></td>
+                          <td>12:31</td>
+                          <td>上海浦东</td>
+                          <td>沪东 FMO</td>
+                        </tr>
+                        <tr>
+                          <td><strong>BH5XXX</strong></td>
+                          <td>12:28</td>
+                          <td>上海闵行</td>
+                          <td>沪东 FMO</td>
+                        </tr>
+                        <tr>
+                          <td><strong>BD5XXX</strong></td>
+                          <td>12:20</td>
+                          <td>上海浦西</td>
+                          <td>浦西 FMO</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              </section>
+
+              <aside class="side-stack">
+                <section class="panel previous-card">
+                  <div class="section-label">
+                    <span>上个通联</span>
+                    <span>2 分钟前</span>
+                  </div>
+                  <div class="call-top-grid">
+                    <div>
+                      <div class="callsign-wrap">
+                        <div class="callsign">BH5XXX</div>
+                        <span class="grid-square">PM01</span>
+                      </div>
+                      <div class="call-meta">
+                        <span class="tag">今日第 3 次</span>
+                        <span class="tag">QTH：上海闵行</span>
+                      </div>
+                    </div>
+                    <div class="compass-card">
+                      <div class="compass"></div>
+                      <div class="compass-meta">
+                        <strong>西南</strong>
+                        <span>24.2 km</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+                <section class="panel server-card">
+                  <div class="section-label">
+                    <span>收藏中继 / 服务器</span>
+                    <button class="section-link">中继列表 / 搜索</button>
+                  </div>
+                  <div class="server-list">
+                    <div class="server-item">
+                      <strong>沪东 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>浦西 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>苏南 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>浙北 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>沪西 FMO</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>远程入口</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>移动入口</strong>
+                    </div>
+                    <div class="server-item">
+                      <strong>备用 FMO</strong>
+                    </div>
+                  </div>
+                </section>
+              </aside>
+
+              <section class="contact-list-card car-secondary-screen">
+                <div class="section-label">
+                  <span>最近10个通联</span>
+                </div>
+                <div class="scroll-table">
+                  <table class="contact-table">
+                    <thead>
+                      <tr>
+                        <th>呼号</th>
+                        <th>时间</th>
+                        <th>QTH</th>
+                        <th>留言</th>
+                        <th>模式</th>
+                        <th>中继</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>BG5XXX</strong></td>
+                        <td>12:31</td>
+                        <td>上海浦东</td>
+                        <td>移动台，信号清晰</td>
+                        <td>FM</td>
+                        <td>沪东 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH5XXX</strong></td>
+                        <td>12:28</td>
+                        <td>上海闵行</td>
+                        <td>同中继</td>
+                        <td>FM</td>
+                        <td>沪东 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BD5XXX</strong></td>
+                        <td>12:20</td>
+                        <td>上海浦西</td>
+                        <td>APRS 消息</td>
+                        <td>APRS</td>
+                        <td>浦西 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BG4XXX</strong></td>
+                        <td>12:15</td>
+                        <td>苏州</td>
+                        <td>远程接入</td>
+                        <td>FM</td>
+                        <td>远程入口</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH4XXX</strong></td>
+                        <td>12:09</td>
+                        <td>无锡</td>
+                        <td>短暂通联</td>
+                        <td>FM</td>
+                        <td>苏南 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BG5ABC</strong></td>
+                        <td>12:04</td>
+                        <td>上海嘉定</td>
+                        <td>常用好友</td>
+                        <td>FM</td>
+                        <td>沪西 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BD4XYZ</strong></td>
+                        <td>11:58</td>
+                        <td>南通</td>
+                        <td>位置上报</td>
+                        <td>APRS</td>
+                        <td>远程入口</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH5DEF</strong></td>
+                        <td>11:52</td>
+                        <td>上海松江</td>
+                        <td>晚些再呼叫</td>
+                        <td>FM</td>
+                        <td>沪东 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BG5GHI</strong></td>
+                        <td>11:48</td>
+                        <td>上海宝山</td>
+                        <td>测试音频</td>
+                        <td>FM</td>
+                        <td>沪北 FMO</td>
+                      </tr>
+                      <tr>
+                        <td><strong>BH4JKL</strong></td>
+                        <td>11:40</td>
+                        <td>嘉兴</td>
+                        <td>跨区通联</td>
+                        <td>FM</td>
+                        <td>浙北 FMO</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="notes">
+        <article class="note">
+          <h3>第一屏目标</h3>
+          <p>优先展示当前呼叫、上一个呼号和连接状态，让用户打开软件立刻知道现场发生了什么。</p>
+        </article>
+        <article class="note">
+          <h3>入口前置</h3>
+          <p>把 FMO 控制、消息、日志、连接诊断等高频入口放到仪表盘，减少进入“更多”的次数。</p>
+        </article>
+        <article class="note">
+          <h3>车机主题</h3>
+          <p>车机模式优先考虑横屏、大字号、高对比和大按钮，后续可扩展为独立主题配置。</p>
+        </article>
+      </section>
+    </main>
+    <script>
+      const themeButtons = document.querySelectorAll('.theme-button')
+
+      themeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          document.body.dataset.theme = button.dataset.themeValue
+          themeButtons.forEach((item) => item.classList.toggle('active', item === button))
+        })
+      })
+    </script>
+  </body>
+</html>

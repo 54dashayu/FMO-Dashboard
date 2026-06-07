@@ -6,11 +6,11 @@
         <!-- FMO地址管理 -->
         <div class="setting-group">
           <div class="setting-item">
-            <span class="setting-label">FMO地址</span>
+            <span class="setting-label">{{ t('settings.fmoAddress', 'FMO地址') }}</span>
             <div class="setting-actions">
               <!-- 多选同步开关 -->
               <div v-if="addressList.length > 0" class="multi-select-toggle">
-                <span class="toggle-label">多选同步</span>
+                <span class="toggle-label">{{ t('settings.multiSync', '多选同步') }}</span>
                 <label class="toggle-switch">
                   <input
                     id="multi-select-toggle"
@@ -26,12 +26,12 @@
                 class="btn-text-danger"
                 @click="handleClearAllAddresses"
               >
-                <span class="text-desktop">清空FMO地址</span>
-                <span class="text-mobile">清空</span>
+                <span class="text-desktop">{{ t('settings.clearFmoAddress', '清空FMO地址') }}</span>
+                <span class="text-mobile">{{ t('settings.clear', '清空') }}</span>
               </button>
               <button class="btn-add" @click="showAddForm">
-                <span class="text-desktop">+ 添加地址</span>
-                <span class="text-mobile">添加</span>
+                <span class="text-desktop">{{ t('settings.addAddress', '+ 添加地址') }}</span>
+                <span class="text-mobile">{{ t('settings.add', '添加') }}</span>
               </button>
             </div>
           </div>
@@ -71,8 +71,10 @@
                   </span>
                   {{ addr.name }}
                   <!-- 主服务器标签 -->
-                  <span v-if="multiSelectMode && addr.id === activeAddressId" class="primary-badge"
-                    >主服务器</span
+                  <span
+                    v-if="multiSelectMode && addr.id === activeAddressId"
+                    class="primary-badge"
+                    >{{ t('settings.primaryServer', '主服务器') }}</span
                   >
                 </div>
                 <div class="address-url">{{ addr.protocol }}://{{ addr.host }}</div>
@@ -90,7 +92,7 @@
                 <button
                   v-if="multiSelectMode && addr.id !== activeAddressId"
                   class="btn-icon"
-                  title="设为主服务器"
+                  :title="t('settings.setPrimary', '设为主服务器')"
                   :disabled="connectingId === addr.id"
                   @click="handleSetPrimary(addr.id)"
                 >
@@ -104,7 +106,7 @@
                   v-if="addr.id === activeAddressId"
                   class="btn-icon"
                   :class="{ 'btn-icon-loading': refreshingId === addr.id }"
-                  title="刷新用户信息"
+                  :title="t('settings.refreshUser', '刷新用户信息')"
                   :disabled="refreshingId === addr.id"
                   @click="handleRefreshUserInfo(addr.id)"
                 >
@@ -114,14 +116,22 @@
                     />
                   </svg>
                 </button>
-                <button class="btn-icon" title="打开FMO页面" @click="openFmoPage(addr)">
+                <button
+                  class="btn-icon"
+                  :title="t('settings.openFmo', '打开FMO页面')"
+                  @click="openFmoPage(addr)"
+                >
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                     <path
                       d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
                     />
                   </svg>
                 </button>
-                <button class="btn-icon" title="编辑" @click="editAddress(addr)">
+                <button
+                  class="btn-icon"
+                  :title="t('settings.edit', '编辑')"
+                  @click="editAddress(addr)"
+                >
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                     <path
                       d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
@@ -130,7 +140,7 @@
                 </button>
                 <button
                   class="btn-icon btn-icon-danger"
-                  title="删除"
+                  :title="t('common.delete', '删除')"
                   @click="handleDeleteAddress(addr.id)"
                 >
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
@@ -145,7 +155,7 @@
 
           <!-- 无地址时的提示 -->
           <div v-else class="no-address">
-            <p>暂无FMO地址，点击上方"添加地址"按钮添加</p>
+            <p>{{ t('settings.noAddress', '暂无FMO地址，点击上方"添加地址"按钮添加') }}</p>
           </div>
 
           <!-- 操作按钮 -->
@@ -156,10 +166,10 @@
               class="sync-days-select"
               :disabled="syncing"
             >
-              <option :value="1">今天</option>
-              <option :value="3">最近3天</option>
-              <option :value="7">最近7天</option>
-              <option :value="30">最近30天</option>
+              <option :value="1">{{ t('settings.today', '今天') }}</option>
+              <option :value="3">{{ t('settings.lastDays', '最近3天', { count: 3 }) }}</option>
+              <option :value="7">{{ t('settings.lastDays', '最近7天', { count: 7 }) }}</option>
+              <option :value="30">{{ t('settings.lastDays', '最近30天', { count: 30 }) }}</option>
             </select>
             <button
               class="btn-secondary"
@@ -197,7 +207,7 @@
               :disabled="!fmoAddress || syncing"
               @click="$emit('backup-logs')"
             >
-              备份FMO日志
+              {{ t('settings.backupLogs', '备份FMO日志') }}
             </button>
           </div>
           <div v-if="syncStatus" class="sync-status">
@@ -207,9 +217,9 @@
 
         <!-- 播放设置 -->
         <div class="setting-group-audio">
-          <div class="setting-group-title">播放设置</div>
+          <div class="setting-group-title">{{ t('settings.audioSettings', '播放设置') }}</div>
           <div class="setting-item">
-            <label class="setting-label-normal">播放音量</label>
+            <label class="setting-label-normal">{{ t('settings.volume', '播放音量') }}</label>
             <div class="volume-control">
               <input
                 type="range"
@@ -227,13 +237,13 @@
             </div>
           </div>
           <div class="setting-item voice-test-item">
-            <label class="setting-label-normal">语音测试</label>
+            <label class="setting-label-normal">{{ t('settings.voiceTest', '语音测试') }}</label>
             <div class="voice-test-control">
               <input
                 v-model.trim="voiceTestCallsign"
                 class="voice-test-input"
                 type="text"
-                placeholder="输入呼号"
+                :placeholder="t('settings.callsignPlaceholder', '输入呼号')"
                 autocomplete="off"
                 autocapitalize="characters"
                 @keyup.enter="handleVoiceTest"
@@ -243,7 +253,11 @@
                 :disabled="voiceTesting"
                 @click="handleVoiceTest"
               >
-                {{ voiceTesting ? '播放中...' : '测试播报' }}
+                {{
+                  voiceTesting
+                    ? t('settings.playing', '播放中...')
+                    : t('settings.testVoice', '测试播报')
+                }}
               </button>
             </div>
             <div v-if="voiceTestStatus" class="voice-test-status">{{ voiceTestStatus }}</div>
@@ -253,29 +267,39 @@
         <!-- 数据管理 -->
         <div class="setting-group-data">
           <div class="setting-item-data-header">
-            <span class="setting-label">数据管理</span>
+            <span class="setting-label">{{ t('settings.dataManagement', '数据管理') }}</span>
           </div>
           <div class="setting-item-data-row">
-            <button class="btn-primary btn-full" @click="$emit('select-files')">导入FMO日志</button>
+            <button class="btn-primary btn-full" @click="$emit('select-files')">
+              {{ t('settings.importLogs', '导入FMO日志') }}
+            </button>
           </div>
           <div class="setting-item-data-row">
             <button class="btn-secondary" :disabled="!dbLoaded" @click="$emit('export-data')">
-              导出数据库文件
+              {{ t('settings.exportDb', '导出数据库文件') }}
             </button>
             <button class="btn-secondary" :disabled="!dbLoaded" @click="$emit('export-adif')">
-              导出ADIF
+              {{ t('settings.exportAdif', '导出ADIF') }}
             </button>
           </div>
           <div v-if="dbLoaded" class="setting-item-data-clear">
             <div class="data-clear-info">
-              <span class="data-clear-warning">此操作将永久删除所有本地通联日志，不可恢复！</span>
-              <button class="btn-danger" @click="$emit('clear-all-data')">清空通联日志</button>
+              <span class="data-clear-warning">{{
+                t('settings.clearDataWarning', '此操作将永久删除所有本地通联日志，不可恢复！')
+              }}</span>
+              <button class="btn-danger" @click="$emit('clear-all-data')">
+                {{ t('settings.clearLogs', '清空通联日志') }}
+              </button>
             </div>
           </div>
           <div class="setting-item-data-clear setting-item-data-clear-mt">
             <div class="grid-cache-info">
-              <span class="grid-cache-desc">清理网格地址本地缓存，下次查询将重新请求远程接口</span>
-              <button class="btn-secondary" @click="handleClearGridCache">清理地址缓存</button>
+              <span class="grid-cache-desc">{{
+                t('settings.clearGridCacheDesc', '清理网格地址本地缓存，下次查询将重新请求远程接口')
+              }}</span>
+              <button class="btn-secondary" @click="handleClearGridCache">
+                {{ t('settings.clearGridCache', '清理地址缓存') }}
+              </button>
             </div>
           </div>
         </div>
@@ -286,38 +310,43 @@
     <div v-if="showAddressDialog" class="dialog-overlay" @click.self="cancelAddressDialog">
       <div class="dialog">
         <div class="dialog-header">
-          <span class="dialog-title">{{ editingId ? '编辑地址' : '添加地址' }}</span>
+          <span class="dialog-title">{{
+            editingId
+              ? t('settings.editAddress', '编辑地址')
+              : t('settings.addAddressTitle', '添加地址')
+          }}</span>
           <button class="close-btn" @click="cancelAddressDialog">&times;</button>
         </div>
         <div class="dialog-body">
           <div class="form-group">
-            <label class="form-label">名称（可选）</label>
+            <label class="form-label">{{ t('settings.nameOptional', '名称（可选）') }}</label>
             <input
               id="address-name"
               v-model="formData.name"
               type="text"
-              placeholder="如：家里的FMO"
+              :placeholder="t('settings.namePlaceholder', '如：家里的FMO')"
               class="form-input"
             />
           </div>
           <div class="form-group">
-            <label class="form-label">地址</label>
-            <div class="form-row">
-              <select id="address-protocol" v-model="formData.protocol" class="protocol-select">
-                <option value="ws">ws://</option>
-                <option value="wss">wss://</option>
-              </select>
-              <input
-                id="address-host"
-                v-model="formData.host"
-                type="text"
-                :placeholder="isMobileDevice ? '输入设备IP' : '输入设备IP或域名(fmo.local)'"
-                class="form-input-flex"
-              />
-            </div>
+            <label class="form-label">{{ t('settings.connectionType', '连接方式') }}</label>
+            <select id="address-type" v-model="formData.addressType" class="connection-select">
+              <option value="local">{{ t('settings.localLan', '本地IP / 局域网') }}</option>
+              <option value="ddns">{{ t('settings.ddnsRemote', 'DDNS动态域名远程') }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ addressHostLabel }}</label>
+            <input
+              id="address-host"
+              v-model="formData.host"
+              type="text"
+              :placeholder="addressHostPlaceholder"
+              class="form-input"
+            />
           </div>
           <div v-if="!isMobileDevice" class="form-hint">
-            支持mDNS服务，可直接输入 <code>fmo.local</code> 连接设备
+            {{ addressTypeHelpText }}
           </div>
           <div v-if="formError" class="form-error">
             {{ formError }}
@@ -325,10 +354,12 @@
         </div>
         <div class="dialog-footer">
           <button class="btn-secondary" :disabled="formValidating" @click="cancelAddressDialog">
-            取消
+            {{ t('common.cancel', '取消') }}
           </button>
           <button class="btn-primary" :disabled="formValidating" @click="submitAddressForm">
-            {{ formValidating ? '验证中...' : '确定' }}
+            {{
+              formValidating ? t('settings.validating', '验证中...') : t('common.confirm', '确定')
+            }}
           </button>
         </div>
       </div>
@@ -337,13 +368,17 @@
     <div v-if="showFmoPreview" class="dialog-overlay" @click.self="closeFmoPreview">
       <div class="fmo-preview-dialog">
         <div class="fmo-preview-toolbar">
-          <button class="btn-icon" title="上一页" @click="fmoPreviewGoBack">
+          <button class="btn-icon" :title="t('common.back', '上一页')" @click="fmoPreviewGoBack">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
               <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" />
             </svg>
           </button>
           <div class="fmo-preview-toolbar-spacer"></div>
-          <button class="btn-icon" title="在浏览器中打开" @click="openFmoExternal">
+          <button
+            class="btn-icon"
+            :title="t('common.openInBrowser', '在浏览器中打开')"
+            @click="openFmoExternal"
+          >
             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
               <path
                 d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"
@@ -369,18 +404,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, watch } from 'vue'
 import { Capacitor, registerPlugin } from '@capacitor/core'
-import { normalizeHost } from '../utils/urlUtils'
+import { getProtocolFromAddress, isValidHostAddress, normalizeHost } from '../utils/urlUtils'
 import confirmDialog from '../composables/useConfirm'
 import { clearGridCache } from '../services/gridService'
 import { addDiagnosticLog } from '../services/diagnosticLog'
 import { playCallsignSpeech } from '../services/callsignSpeech'
 import { formatCallsignForSpeech as formatCallsignForNatoSpeech } from '../utils/callsignSpeechText'
 import { useModalBackHandler, registerModal } from '../composables/useModalBackHandler'
+import { useLocale } from '../composables/useLocale'
 
 const FmoSpeech = registerPlugin('FmoSpeech')
 const IOS_SPEECH_RATE = 1
+const { t } = useLocale()
 
 const props = defineProps({
   dbLoaded: {
@@ -559,6 +596,7 @@ const editingId = ref(null)
 const formData = ref({
   name: '',
   host: '',
+  addressType: 'local',
   protocol: 'ws'
 })
 const formValidating = ref(false)
@@ -576,14 +614,25 @@ const getSyncDaysButtonText = computed(() => {
       props.selectedAddressIds.length > 1 &&
       props.multiSyncProgress.total > 0
     ) {
-      return `正在同步 ${props.multiSyncProgress.current}/${props.multiSyncProgress.total}...`
+      return t(
+        'settings.syncingProgress',
+        `正在同步 ${props.multiSyncProgress.current}/${props.multiSyncProgress.total}...`,
+        {
+          current: props.multiSyncProgress.current,
+          total: props.multiSyncProgress.total
+        }
+      )
     }
-    return '正在同步...'
+    return t('settings.syncing', '正在同步...')
   }
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
-    return `同步已选地址(${props.selectedAddressIds.length})`
+    return t('settings.syncSelected', `同步已选地址(${props.selectedAddressIds.length})`, {
+      count: props.selectedAddressIds.length
+    })
   }
-  return syncDays.value === 1 ? '同步今日通联' : `同步${syncDays.value}天通联`
+  return syncDays.value === 1
+    ? t('settings.syncToday', '同步今日通联')
+    : t('settings.syncDays', `同步${syncDays.value}天通联`, { count: syncDays.value })
 })
 
 const getSyncIncrementalButtonText = computed(() => {
@@ -593,14 +642,23 @@ const getSyncIncrementalButtonText = computed(() => {
       props.selectedAddressIds.length > 1 &&
       props.multiSyncProgress.total > 0
     ) {
-      return `正在同步 ${props.multiSyncProgress.current}/${props.multiSyncProgress.total}...`
+      return t(
+        'settings.syncingProgress',
+        `正在同步 ${props.multiSyncProgress.current}/${props.multiSyncProgress.total}...`,
+        {
+          current: props.multiSyncProgress.current,
+          total: props.multiSyncProgress.total
+        }
+      )
     }
-    return '正在同步...'
+    return t('settings.syncing', '正在同步...')
   }
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
-    return `增量同步已选(${props.selectedAddressIds.length})`
+    return t('settings.incrementalSelected', `增量同步已选(${props.selectedAddressIds.length})`, {
+      count: props.selectedAddressIds.length
+    })
   }
-  return '增量同步'
+  return t('settings.incrementalSync', '增量同步')
 })
 
 const getSyncFullButtonText = computed(() => {
@@ -610,63 +668,84 @@ const getSyncFullButtonText = computed(() => {
       props.selectedAddressIds.length > 1 &&
       props.multiSyncProgress.total > 0
     ) {
-      return `正在同步 ${props.multiSyncProgress.current}/${props.multiSyncProgress.total}...`
+      return t(
+        'settings.syncingProgress',
+        `正在同步 ${props.multiSyncProgress.current}/${props.multiSyncProgress.total}...`,
+        {
+          current: props.multiSyncProgress.current,
+          total: props.multiSyncProgress.total
+        }
+      )
     }
-    return '正在同步...'
+    return t('settings.syncing', '正在同步...')
   }
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
-    return `全量同步已选(${props.selectedAddressIds.length})`
+    return t('settings.fullSelected', `全量同步已选(${props.selectedAddressIds.length})`, {
+      count: props.selectedAddressIds.length
+    })
   }
-  return '全量同步'
+  return t('settings.fullSync', '全量同步')
 })
 
-// 验证WebSocket连接
-async function validateConnection(host, proto) {
-  const normalizedHost = normalizeHost(host)
-  const wsUrl = `${proto}://${normalizedHost}/ws`
+const addressHostLabel = computed(() => {
+  return formData.value.addressType === 'ddns'
+    ? t('settings.ddnsAddress', '动态域名地址')
+    : t('settings.localAddress', '本地地址')
+})
 
-  return new Promise((resolve) => {
-    let socket
-    let settled = false
-    const finish = (ok) => {
-      if (settled) return
-      settled = true
-      clearTimeout(timeout)
-      resolve(ok)
-    }
-    try {
-      socket = new WebSocket(wsUrl)
-    } catch {
-      resolve(false)
+const addressHostPlaceholder = computed(() => {
+  if (formData.value.addressType === 'ddns') return 'xxxx.ddns.xxx:40088'
+  return t('settings.localPlaceholder', '例如 192.168.31.146 或 fmo.local')
+})
+
+const addressTypeHelpText = computed(() => {
+  if (formData.value.addressType === 'ddns') {
+    return t(
+      'settings.ddnsHelp',
+      '填写动态域名和端口。鉴于某些浏览器会自动开启安全连接，建议在浏览器设置中关掉“一律使用安全连接”，并确认地址栏完整输入 http://fmo.bh1jss.net/。'
+    )
+  }
+  return t(
+    'settings.localHelp',
+    '手机、电脑和 FMO 在同一个局域网时选择这个，填写 FMO 的本地 IP 或 fmo.local。'
+  )
+})
+
+watch(
+  () => formData.value.addressType,
+  (type) => {
+    if (!showAddressDialog.value) return
+    const host = formData.value.host.trim()
+    if (type === 'ddns') {
+      if (!host || host === 'fmo.local' || /^192\.168\./.test(host)) {
+        formData.value.host = ''
+      }
       return
     }
-
-    const timeout = setTimeout(() => {
-      socket.close()
-      finish(false)
-    }, 8000)
-
-    socket.onopen = () => {
-      socket.close()
-      finish(true)
+    if (!host) {
+      formData.value.host = 'fmo.local'
     }
+  }
+)
 
-    socket.onerror = () => {
-      socket.close()
-      finish(false)
-    }
-
-    socket.onclose = () => {
-      finish(false)
-    }
-  })
+function guessAddressType(host) {
+  const normalized = normalizeHost(host).replace(/:\d+$/, '').toLowerCase()
+  if (!normalized || normalized === 'fmo.local' || normalized.endsWith('.local')) return 'local'
+  const parts = normalized.split('.').map((part) => Number(part))
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part))) return 'ddns'
+  const [a, b] = parts
+  if (a === 10 || a === 127 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)) {
+    return 'local'
+  }
+  return 'ddns'
 }
 
 function showAddForm() {
   editingId.value = null
   formData.value = {
     name: '',
-    host: isMobileDevice.value ? '' : 'fmo.local',
+    host: 'fmo.local',
+    addressType: 'local',
     protocol: 'ws'
   }
   formError.value = ''
@@ -678,6 +757,7 @@ function editAddress(addr) {
   formData.value = {
     name: addr.name,
     host: addr.host,
+    addressType: guessAddressType(addr.host),
     protocol: addr.protocol
   }
   formError.value = ''
@@ -687,33 +767,29 @@ function editAddress(addr) {
 function cancelAddressDialog() {
   showAddressDialog.value = false
   editingId.value = null
-  formData.value = { name: '', host: '', protocol: 'ws' }
+  formData.value = { name: '', host: '', addressType: 'local', protocol: 'ws' }
   formError.value = ''
 }
 
 async function submitAddressForm() {
-  const { name, host, protocol } = formData.value
+  const { name, host } = formData.value
+  const protocol = getProtocolFromAddress(host, formData.value.protocol || 'ws')
   const normalizedHost = normalizeHost(host)
 
   if (!normalizedHost) {
-    formError.value = '请输入地址'
+    formError.value = t('settings.enterAddress', '请输入地址')
+    return
+  }
+
+  if (!isValidHostAddress(normalizedHost)) {
+    formError.value = t('settings.invalidAddress', '请输入有效的IP地址或域名')
     return
   }
 
   formError.value = ''
-  formValidating.value = true
 
-  // 验证连接
-  const isConnected = await validateConnection(normalizedHost, protocol)
-
-  formValidating.value = false
-
-  if (!isConnected) {
-    formError.value = '连接失败，请检查地址'
-    return
-  }
-
-  // 连接成功，保存地址
+  // 临时测试：只校验地址格式，不用 WebSocket 探测结果阻止保存。
+  // DDNS、反向代理或 HTTPS 页面连接 ws:// 时，浏览器可能拦截前置探测。
   if (editingId.value) {
     emit('update-address', {
       id: editingId.value,
@@ -787,27 +863,37 @@ function handleSetPrimary(id) {
 }
 
 async function handleDeleteAddress(id) {
-  const confirmed = await confirmDialog.show('确定要删除这个地址吗？')
+  const confirmed = await confirmDialog.show(
+    t('settings.confirmDeleteAddress', '确定要删除这个地址吗？')
+  )
   if (confirmed) {
     emit('delete-address', id)
   }
 }
 
 async function handleClearAllAddresses() {
-  const confirmed = await confirmDialog.show('确定要清除全部FMO地址吗？')
+  const confirmed = await confirmDialog.show(
+    t('settings.confirmClearAddresses', '确定要清除全部FMO地址吗？')
+  )
   if (confirmed) {
     emit('clear-all-addresses')
   }
 }
 
 async function handleClearGridCache() {
-  const confirmed = await confirmDialog.show('确定要清理网格地址本地缓存吗？')
+  const confirmed = await confirmDialog.show(
+    t('settings.confirmClearGrid', '确定要清理网格地址本地缓存吗？')
+  )
   if (confirmed) {
     try {
       await clearGridCache()
-      confirmDialog.show('地址缓存已清理')
+      confirmDialog.show(t('settings.gridCacheCleared', '地址缓存已清理'))
     } catch (err) {
-      confirmDialog.show(`清理失败: ${err.message}`)
+      confirmDialog.show(
+        t('settings.gridCacheFailed', `清理失败: ${err.message}`, {
+          message: err.message
+        })
+      )
     }
   }
 }
@@ -824,7 +910,14 @@ async function handleSyncDays() {
   // 多选模式且选中多个地址
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
     const confirmed = await confirmDialog.show(
-      `确定要同步选中的 ${props.selectedAddressIds.length} 个地址的最近${syncDays.value}天数据吗？`
+      t(
+        'settings.confirmSyncSelected',
+        `确定要同步选中的 ${props.selectedAddressIds.length} 个地址的最近${syncDays.value}天数据吗？`,
+        {
+          count: props.selectedAddressIds.length,
+          days: syncDays.value
+        }
+      )
     )
     if (confirmed) {
       emit('sync-multiple', { syncType: 'today', days: syncDays.value })
@@ -839,7 +932,11 @@ async function handleSyncIncremental() {
   // 多选模式且选中多个地址
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
     const confirmed = await confirmDialog.show(
-      `确定要对选中的 ${props.selectedAddressIds.length} 个地址执行增量同步吗？将从各FMO服务器获取所有日志，并补充本地缺失的记录。`
+      t(
+        'settings.confirmIncrementalSelected',
+        `确定要对选中的 ${props.selectedAddressIds.length} 个地址执行增量同步吗？将从各FMO服务器获取所有日志，并补充本地缺失的记录。`,
+        { count: props.selectedAddressIds.length }
+      )
     )
     if (confirmed) {
       emit('sync-multiple', { syncType: 'incremental', days: 1 })
@@ -848,7 +945,10 @@ async function handleSyncIncremental() {
   }
   // 单选模式
   const confirmed = await confirmDialog.show(
-    '确定要执行增量同步吗？将从FMO服务器获取所有日志，并补充本地缺失的记录。'
+    t(
+      'settings.confirmIncremental',
+      '确定要执行增量同步吗？将从FMO服务器获取所有日志，并补充本地缺失的记录。'
+    )
   )
   if (confirmed) {
     emit('sync-incremental')
@@ -859,7 +959,11 @@ async function handleSyncFull() {
   // 多选模式且选中多个地址
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
     const confirmed = await confirmDialog.show(
-      `确定要对选中的 ${props.selectedAddressIds.length} 个地址执行全量同步吗？将用各FMO服务器的数据完全替换本地数据库中的所有记录。`
+      t(
+        'settings.confirmFullSelected',
+        `确定要对选中的 ${props.selectedAddressIds.length} 个地址执行全量同步吗？将用各FMO服务器的数据完全替换本地数据库中的所有记录。`,
+        { count: props.selectedAddressIds.length }
+      )
     )
     if (confirmed) {
       emit('sync-multiple', { syncType: 'full', days: 1 })
@@ -868,7 +972,10 @@ async function handleSyncFull() {
   }
   // 单选模式
   const confirmed = await confirmDialog.show(
-    '确定要执行全量同步吗？将用FMO服务器的数据完全替换本地数据库中的所有记录。'
+    t(
+      'settings.confirmFull',
+      '确定要执行全量同步吗？将用FMO服务器的数据完全替换本地数据库中的所有记录。'
+    )
   )
   if (confirmed) {
     emit('sync-full')
@@ -1106,14 +1213,21 @@ async function handleVoiceTest() {
 
 <style scoped>
 .settings-view {
+  width: 100%;
+  min-width: 0;
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1.5rem;
+  box-sizing: border-box;
 }
 
 .settings-content {
+  width: 100%;
   max-width: 800px;
+  min-width: 0;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .tab-content {
@@ -1197,6 +1311,7 @@ async function handleVoiceTest() {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.65rem;
   width: 100%;
+  min-width: 0;
 }
 
 .voice-test-input {
@@ -1230,6 +1345,9 @@ async function handleVoiceTest() {
 .setting-actions {
   display: flex;
   gap: 0.5rem;
+  min-width: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .setting-info {
@@ -1730,8 +1848,9 @@ async function handleVoiceTest() {
   background: var(--bg-card);
   border-radius: 8px;
   width: 420px;
-  max-width: 90%;
+  max-width: calc(100vw - 2rem);
   box-shadow: 0 4px 20px var(--shadow-modal);
+  box-sizing: border-box;
 }
 
 .dialog-header {
@@ -1775,6 +1894,8 @@ async function handleVoiceTest() {
 
 .form-input {
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--border-primary);
   border-radius: 4px;
@@ -1803,6 +1924,7 @@ async function handleVoiceTest() {
   border-color: var(--color-primary);
 }
 
+.connection-select,
 .protocol-select {
   padding: 0.6rem 0.5rem;
   border: 1px solid var(--border-primary);
@@ -1811,9 +1933,12 @@ async function handleVoiceTest() {
   background: var(--bg-input);
   color: var(--text-primary);
   cursor: pointer;
-  min-width: 85px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
+.connection-select:focus,
 .protocol-select:focus {
   outline: none;
   border-color: var(--color-primary);
@@ -1924,6 +2049,8 @@ async function handleVoiceTest() {
 
   .setting-item {
     gap: 0.4rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
   }
 
   .setting-label {
@@ -1933,6 +2060,7 @@ async function handleVoiceTest() {
 
   .setting-actions {
     gap: 0.3rem;
+    flex: 1 1 auto;
   }
 
   .btn-text-danger {
@@ -1971,6 +2099,14 @@ async function handleVoiceTest() {
   .btn-icon svg {
     width: 14px;
     height: 14px;
+  }
+
+  .voice-test-control {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .voice-test-btn {
+    width: 100%;
   }
 
   .address-name {

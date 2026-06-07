@@ -47,7 +47,9 @@
       <span class="page-sep">/</span>
       <span class="page-total">{{ totalPages }}</span>
       <template v-if="totalRecords !== undefined">
-        <span class="page-total-records">共 {{ totalRecords }} 条</span>
+        <span class="page-total-records">{{
+          t('common.totalRecords', `共 ${totalRecords} 条`, { count: totalRecords })
+        }}</span>
       </template>
     </div>
     <button
@@ -87,6 +89,8 @@
 </template>
 
 <script setup>
+import { useLocale } from '../../composables/useLocale'
+
 const props = defineProps({
   currentPage: {
     type: Number,
@@ -107,6 +111,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['page-change'])
+const { t } = useLocale()
 
 function handleJump(event) {
   const val = parseInt(event.target.value, 10)

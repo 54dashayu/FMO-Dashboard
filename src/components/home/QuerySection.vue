@@ -14,7 +14,7 @@
           <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
-        老友数：{{ totalCount }}
+        {{ t('query.oldFriendCount', `老友数：${totalCount}`, { count: totalCount }) }}
       </div>
       <div v-if="currentQueryType === 'all'" class="search-box">
         <svg
@@ -30,7 +30,7 @@
         <CallsignInput
           id="search-keyword"
           :model-value="searchKeyword"
-          placeholder="对方呼号"
+          :placeholder="t('query.targetCallsign', '对方呼号')"
           :disabled="!dbLoaded"
           @update:model-value="$emit('update:searchKeyword', $event)"
         />
@@ -39,7 +39,7 @@
         <DatePicker
           :model-value="filterDate"
           :from-callsign="fromCallsign"
-          placeholder="筛选日期"
+          :placeholder="t('common.filterDate', '筛选日期')"
           @update:model-value="$emit('update:filterDate', $event)"
         />
       </div>
@@ -50,7 +50,7 @@
           :disabled="!dbLoaded"
           @click="$emit('quickFilter', 'today')"
         >
-          今日
+          {{ t('common.today', '今日') }}
         </button>
         <button
           class="quick-filter-chip"
@@ -58,7 +58,7 @@
           :disabled="!dbLoaded"
           @click="$emit('quickFilter', 'week')"
         >
-          本周
+          {{ t('common.thisWeek', '本周') }}
         </button>
         <button
           class="quick-filter-chip"
@@ -66,7 +66,7 @@
           :disabled="!dbLoaded"
           @click="$emit('quickFilter', 'month')"
         >
-          本月
+          {{ t('common.thisMonth', '本月') }}
         </button>
       </div>
       <div v-if="currentQueryType === 'oldFriends'" class="search-box">
@@ -83,7 +83,7 @@
         <CallsignInput
           id="old-friends-search"
           :model-value="oldFriendsSearchKeyword"
-          placeholder="搜索呼号"
+          :placeholder="t('common.searchCallsign', '搜索呼号')"
           :disabled="!dbLoaded"
           @update:model-value="$emit('update:oldFriendsSearchKeyword', $event)"
         />
@@ -109,7 +109,7 @@
             <line x1="4" y1="12" x2="14" y2="12" />
             <line x1="4" y1="18" x2="8" y2="18" />
           </svg>
-          今日已通联
+          {{ t('query.todayContacted', '今日已通联') }}
         </button>
       </div>
     </div>
@@ -122,6 +122,7 @@ import { storeToRefs } from 'pinia'
 import { useSettingsStore } from '../../stores/settingsStore'
 import DatePicker from '../common/DatePicker.vue'
 import CallsignInput from '../common/CallsignInput.vue'
+import { useLocale } from '../../composables/useLocale'
 
 const props = defineProps({
   currentQueryType: {
@@ -167,6 +168,7 @@ defineEmits([
 
 const settingsStore = useSettingsStore()
 const { prioritizeToday } = storeToRefs(settingsStore)
+const { t } = useLocale()
 
 function togglePrioritizeToday() {
   settingsStore.setPrioritizeToday(!prioritizeToday.value)

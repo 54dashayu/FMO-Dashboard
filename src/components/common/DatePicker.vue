@@ -11,11 +11,11 @@
         <button class="nav-btn" @click="prevMonth">&lt;</button>
         <div class="nav-title">
           <div class="nav-year">
-            {{ currentYear }}年
+            {{ t('common.year', `${currentYear}年`, { year: currentYear }) }}
             <span v-if="yearStats > 0" class="stats-badge">⭐{{ yearStats }}</span>
           </div>
           <div class="nav-month">
-            {{ currentMonth + 1 }}月
+            {{ t('common.month', `${currentMonth + 1}月`, { month: currentMonth + 1 }) }}
             <span v-if="monthStats > 0" class="stats-badge">⭐{{ monthStats }}</span>
           </div>
         </div>
@@ -54,6 +54,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { getMonthlyContactStatsFromIndexedDB } from '../../services/db'
+import { useLocale } from '../../composables/useLocale'
 
 const props = defineProps({
   modelValue: {
@@ -71,6 +72,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue'])
+const { t } = useLocale()
 
 const showCalendar = ref(false)
 const currentYear = ref(new Date().getUTCFullYear())
@@ -82,7 +84,15 @@ const yearStats = ref(0)
 const monthStats = ref(0)
 const loading = ref(false)
 
-const weekDays = ['日', '一', '二', '三', '四', '五', '六']
+const weekDays = computed(() => [
+  t('common.weekSun', '日'),
+  t('common.weekMon', '一'),
+  t('common.weekTue', '二'),
+  t('common.weekWed', '三'),
+  t('common.weekThu', '四'),
+  t('common.weekFri', '五'),
+  t('common.weekSat', '六')
+])
 
 const selectedDate = computed({
   get: () => props.modelValue,
@@ -93,7 +103,7 @@ const displayText = computed(() => {
   if (selectedDate.value) {
     return selectedDate.value
   }
-  return props.placeholder
+  return props.placeholder === '选择日期' ? t('common.chooseDate', '选择日期') : props.placeholder
 })
 
 // 加载当前月份的统计数据

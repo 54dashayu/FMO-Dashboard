@@ -14,8 +14,10 @@
           <line x1="9" y1="13" x2="15" y2="13" />
           <line x1="9" y1="17" x2="13" y2="17" />
         </svg>
-        <p class="empty-title">暂无通联数据</p>
-        <p class="empty-desc">导入数据库文件或同步FMO服务器即可查看</p>
+        <p class="empty-title">{{ t('common.noContactData', '暂无通联数据') }}</p>
+        <p class="empty-desc">
+          {{ t('common.importOrSync', '导入数据库文件或同步FMO服务器即可查看') }}
+        </p>
       </div>
     </div>
     <template v-else-if="oldFriendsResult && oldFriendsResult.data.length > 0">
@@ -42,8 +44,12 @@
             <span v-if="!item.toGrid">-</span>
           </div>
           <div class="friend-time">
-            <div class="time-label">首次：{{ formatTimestampMinute(item.firstTime) }}</div>
-            <div class="time-label">最新：{{ formatTimestampMinute(item.latestTime) }}</div>
+            <div class="time-label">
+              {{ t('common.first', '首次') }}：{{ formatTimestampMinute(item.firstTime) }}
+            </div>
+            <div class="time-label">
+              {{ t('common.latest', '最新') }}：{{ formatTimestampMinute(item.latestTime) }}
+            </div>
           </div>
         </div>
       </div>
@@ -51,9 +57,9 @@
       <div ref="loadMoreRef" class="load-more-trigger">
         <template v-if="loadingMore">
           <span class="loading-spinner"></span>
-          加载中...
+          {{ t('common.loading', '加载中...') }}
         </template>
-        <template v-else-if="!hasMore"> 没有更多数据 </template>
+        <template v-else-if="!hasMore"> {{ t('common.noMoreData', '没有更多数据') }} </template>
       </div>
     </template>
     <div v-else-if="oldFriendsResult" class="empty-hint">
@@ -69,8 +75,10 @@
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
           <line x1="8" y1="11" x2="14" y2="11" />
         </svg>
-        <p class="empty-title">暂无老朋友</p>
-        <p class="empty-desc">导入数据后即可查看老朋友统计</p>
+        <p class="empty-title">{{ t('common.noOldFriends', '暂无老朋友') }}</p>
+        <p class="empty-desc">
+          {{ t('common.importForOldFriends', '导入数据后即可查看老朋友统计') }}
+        </p>
       </div>
     </div>
   </div>
@@ -81,6 +89,9 @@
 import { ref, onMounted, onUnmounted, watch, reactive, computed } from 'vue'
 import { formatTimestampMinute, isTodayContact } from './constants'
 import { gridToAddress } from '../../services/gridService.js'
+import { useLocale } from '../../composables/useLocale'
+
+const { t } = useLocale()
 
 const props = defineProps({
   oldFriendsResult: {

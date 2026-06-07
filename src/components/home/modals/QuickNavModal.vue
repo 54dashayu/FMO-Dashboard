@@ -2,21 +2,21 @@
   <div v-if="visible" class="modal-overlay" @click.self="$emit('close')">
     <div class="modal modal-quick-nav">
       <div class="modal-header">
-        <h3>页面导航</h3>
+        <h3>{{ t('dashboard.pageNav', '页面导航') }}</h3>
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
       <div class="modal-body">
         <nav class="nav-list">
           <router-link
-            v-for="route in ALL_PAGE_ROUTES"
-            :key="route.path"
-            :to="route.path"
+            v-for="navRoute in ALL_PAGE_ROUTES"
+            :key="navRoute.path"
+            :to="navRoute.path"
             class="nav-item"
-            :class="{ active: currentRoute === route.path }"
-            @click="handleNavClick(route)"
+            :class="{ active: currentRoute === navRoute.path }"
+            @click="handleNavClick"
           >
-            <SvgIcon :name="route.icon" :size="20" class="nav-icon" />
-            <span class="nav-label">{{ route.label }}</span>
+            <SvgIcon :name="navRoute.icon" :size="20" class="nav-icon" />
+            <span class="nav-label">{{ routeLabel(navRoute) }}</span>
           </router-link>
         </nav>
       </div>
@@ -29,8 +29,9 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ALL_PAGE_ROUTES } from '../constants'
 import SvgIcon from '../../common/SvgIcon.vue'
+import { useLocale } from '../../../composables/useLocale'
 
-const props = defineProps({
+defineProps({
   visible: {
     type: Boolean,
     default: false
@@ -44,10 +45,15 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const route = useRoute()
+const { t, isEnglish } = useLocale()
 
 const currentRoute = computed(() => route.path)
 
-function handleNavClick(_routeItem) {
+function routeLabel(navRoute) {
+  return isEnglish.value ? t(`nav.${navRoute.type}`, navRoute.label) : navRoute.label
+}
+
+function handleNavClick() {
   emit('close')
 }
 </script>

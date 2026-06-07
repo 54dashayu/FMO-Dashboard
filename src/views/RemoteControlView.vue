@@ -3,7 +3,7 @@
     <section class="control-section">
       <div class="section-header">
         <div>
-          <h2>FMO 中继控制</h2>
+          <h2>{{ t('remote.title', 'FMO 中继控制') }}</h2>
           <p>{{ activeAddressLabel }}</p>
         </div>
         <button
@@ -11,12 +11,12 @@
           :disabled="!canControl || stationLoading"
           @click="refreshStation"
         >
-          {{ stationLoading ? '刷新中...' : '刷新' }}
+          {{ stationLoading ? t('remote.refreshing', '刷新中...') : t('remote.refresh', '刷新') }}
         </button>
       </div>
 
       <div class="control-address-row">
-        <label>控制地址</label>
+        <label>{{ t('remote.controlAddress', '控制地址') }}</label>
         <select v-model="manualProtocol" class="protocol-select">
           <option value="ws">ws://</option>
           <option value="wss">wss://</option>
@@ -25,25 +25,34 @@
           v-model="manualHost"
           class="host-input"
           type="text"
-          placeholder="输入 FMO IP 或域名"
+          :placeholder="t('remote.hostPlaceholder', '输入 FMO IP 或域名')"
           @change="saveManualAddress"
         />
       </div>
 
-      <div v-if="!canControl" class="empty-panel">请输入 FMO 地址</div>
+      <div v-if="!canControl" class="empty-panel">
+        {{ t('remote.needAddress', '请输入 FMO 地址') }}
+      </div>
 
       <div v-else class="station-panel">
         <div class="current-station">
-          <span class="label">当前中继</span>
-          <strong>{{ currentStation?.name || (stationLoading ? '读取中...' : '未知') }}</strong>
+          <span class="label">{{ t('remote.currentRelay', '当前中继') }}</span>
+          <strong>{{
+            currentStation?.name ||
+            (stationLoading ? t('remote.reading', '读取中...') : t('common.unknown', '未知'))
+          }}</strong>
           <span v-if="currentStation?.uid" class="uid">#{{ currentStation.uid }}</span>
         </div>
 
         <div class="station-actions">
-          <button class="btn-primary" :disabled="stationBusy" @click="switchPrev">上一中继</button>
-          <button class="btn-primary" :disabled="stationBusy" @click="switchNext">下一中继</button>
+          <button class="btn-primary" :disabled="stationBusy" @click="switchPrev">
+            {{ t('remote.prevRelay', '上一中继') }}
+          </button>
+          <button class="btn-primary" :disabled="stationBusy" @click="switchNext">
+            {{ t('remote.nextRelay', '下一中继') }}
+          </button>
           <button class="btn-primary" :disabled="stationBusy" @click="openStationList">
-            选择中继
+            {{ t('remote.selectRelay', '选择中继') }}
           </button>
         </div>
 
@@ -56,8 +65,8 @@
     <section class="control-section">
       <div class="section-header">
         <div>
-          <h2>APRS 远程控制</h2>
-          <p>发送 APRS 控制指令</p>
+          <h2>{{ t('remote.aprsTitle', 'APRS 远程控制') }}</h2>
+          <p>{{ t('remote.aprsSubtitle', '发送 APRS 控制指令') }}</p>
         </div>
       </div>
       <AprsRemoteControl :active-address-id="activeAddressId" :address-list="addressList" />
@@ -83,6 +92,7 @@ import AprsRemoteControl from '../components/home/modals/AprsRemoteControl.vue'
 import StationListModal from '../components/home/modals/StationListModal.vue'
 import { FmoApiClient } from '../services/fmoApi'
 import { normalizeHost } from '../utils/urlUtils'
+import { useLocale } from '../composables/useLocale'
 
 const props = defineProps({
   activeAddressId: {
@@ -115,6 +125,7 @@ const manualHost = ref(
   localStorage.getItem('fmo_control_host') || props.fmoAddress || '192.168.31.146'
 )
 const manualProtocol = ref(localStorage.getItem('fmo_control_protocol') || props.protocol || 'ws')
+const { t } = useLocale()
 
 const activeAddress = computed(() => {
   if (!props.activeAddressId) return null
@@ -132,8 +143,8 @@ const controlProtocol = computed(() => {
 const canControl = computed(() => Boolean(controlHost.value))
 
 const activeAddressLabel = computed(() => {
-  if (!canControl.value) return '未选择 FMO 设备'
-  const name = activeAddress.value?.name || '当前设备'
+  if (!canControl.value) return t('remote.noDevice', '未选择 FMO 设备')
+  const name = activeAddress.value?.name || t('remote.currentDevice', '当前设备')
   return `${name} · ${controlProtocol.value}://${controlHost.value}`
 })
 
@@ -163,7 +174,7 @@ function wait(ms) {
 async function runStationTask(task, successMessage) {
   const client = createClient()
   if (!client) {
-    setMessage('请先在设置中添加并选择 FMO 地址', true)
+    setMessage(t('remote.needSettings', '请先在设置中添加并选择 FMO 地址'), true)
     return null
   }
 
@@ -174,7 +185,12 @@ async function runStationTask(task, successMessage) {
     if (successMessage) setMessage(successMessage)
     return result
   } catch (err) {
-    setMessage(`操作失败：${err.message || err}`, true)
+    setMessage(
+      t('remote.operationFailed', `操作失败：${err.message || err}`, {
+        message: err.message || err
+      }),
+      true
+    )
     return null
   } finally {
     client.close()
@@ -183,7 +199,7 @@ async function runStationTask(task, successMessage) {
 }
 
 async function refreshStation(options = {}) {
-  const { message = '当前中继已更新', loading = true } = options
+  const { message = t('remote.stationUpdated', '当前中继已更新'), loading = true } = options
   stationLoading.value = true
   const station = await runStationTask((client) => client.getCurrentStation())
   if (station) {
@@ -218,7 +234,7 @@ async function loadStationList() {
 
   if (result) {
     stationList.value = result
-    setMessage(`已加载 ${result.length} 个中继`)
+    setMessage(t('remote.loadedRelays', `已加载 ${result.length} 个中继`, { count: result.length }))
   }
   stationLoading.value = false
 }
@@ -238,14 +254,18 @@ async function selectStation(uid) {
   if (station) {
     currentStation.value = station
   }
-  await refreshStationAfterSwitch(`已切换到：${station?.name || uid}`)
+  await refreshStationAfterSwitch(
+    t('remote.switchedTo', `已切换到：${station?.name || uid}`, {
+      name: station?.name || uid
+    })
+  )
 }
 
 async function favoriteStation(station) {
   if (!station?.uid || stationFavoriteBusyUid.value) return
   const client = createClient()
   if (!client) {
-    setMessage('请先在设置中添加并选择 FMO 地址', true)
+    setMessage(t('remote.needSettings', '请先在设置中添加并选择 FMO 地址'), true)
     return
   }
 
@@ -261,12 +281,12 @@ async function favoriteStation(station) {
       stationList.value = stationList.value.map((item) =>
         String(item.uid) === String(station.uid) ? { ...item, isPinned: true } : item
       )
-      setMessage(`已收藏：${station.name}`)
+      setMessage(t('remote.favoriteAdded', `已收藏：${station.name}`, { name: station.name }))
     } else {
-      setMessage('当前 FMO 固件没有开放远程添加收藏接口', true)
+      setMessage(t('remote.favoriteUnsupported', '当前 FMO 固件没有开放远程添加收藏接口'), true)
     }
   } catch {
-    setMessage('当前 FMO 固件没有开放远程添加收藏接口', true)
+    setMessage(t('remote.favoriteUnsupported', '当前 FMO 固件没有开放远程添加收藏接口'), true)
   } finally {
     client.close()
     stationFavoriteBusyUid.value = ''
@@ -276,13 +296,13 @@ async function favoriteStation(station) {
 async function switchPrev() {
   const result = await runStationTask((client) => client.prevStation())
   if (!result) return
-  await refreshStationAfterSwitch('已切换到上一中继')
+  await refreshStationAfterSwitch(t('remote.switchedPrev', '已切换到上一中继'))
 }
 
 async function switchNext() {
   const result = await runStationTask((client) => client.nextStation())
   if (!result) return
-  await refreshStationAfterSwitch('已切换到下一中继')
+  await refreshStationAfterSwitch(t('remote.switchedNext', '已切换到下一中继'))
 }
 
 watch(

@@ -26,7 +26,9 @@ function normalizeCallsignParts(callsign) {
 async function loadBuffer(char, context) {
   if (bufferCache.has(char)) return bufferCache.get(char)
 
-  const response = await fetch(`/speech/callsign/en/${encodeURIComponent(char)}.wav`)
+  const assetUrl = new URL(`speech/callsign/en/${encodeURIComponent(char)}.wav`, document.baseURI)
+    .href
+  const response = await fetch(assetUrl)
   if (!response.ok) {
     throw new Error(`缺少呼号语音片段：${char}`)
   }

@@ -59,6 +59,13 @@ export const MORE_ROUTES = [
     description: '业余无线电相关站点'
   },
   {
+    path: '/wish-wall',
+    label: '愿望墙',
+    type: 'wishWall',
+    icon: 'wishWall',
+    description: '收集与跟进新功能想法'
+  },
+  {
     path: '/diagnostic',
     label: '诊断日志',
     type: 'diagnostic',

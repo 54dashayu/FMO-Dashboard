@@ -14,14 +14,16 @@
           <line x1="9" y1="13" x2="15" y2="13" />
           <line x1="9" y1="17" x2="13" y2="17" />
         </svg>
-        <p class="empty-title">暂无通联数据</p>
-        <p class="empty-desc">导入数据库文件或同步FMO服务器即可查看</p>
+        <p class="empty-title">{{ t('common.noContactData', '暂无通联数据') }}</p>
+        <p class="empty-desc">
+          {{ t('common.importOrSync', '导入数据库文件或同步FMO服务器即可查看') }}
+        </p>
       </div>
     </div>
     <template v-else-if="top20Result">
       <!-- 对方呼号 TOP20 -->
       <div class="top20-card">
-        <h3>对方呼号 TOP20</h3>
+        <h3>{{ t('top20.callsignTitle', '对方呼号 TOP20') }}</h3>
         <div class="top20-list">
           <div
             v-for="(item, index) in top20Result.toCallsign"
@@ -34,13 +36,15 @@
               ><strong>{{ item.count }}</strong></span
             >
           </div>
-          <div v-if="top20Result.toCallsign.length === 0" class="empty-item">暂无数据</div>
+          <div v-if="top20Result.toCallsign.length === 0" class="empty-item">
+            {{ t('common.noData', '暂无数据') }}
+          </div>
         </div>
       </div>
 
       <!-- 接收网格 TOP20 -->
       <div class="top20-card">
-        <h3>接收网格 TOP20</h3>
+        <h3>{{ t('top20.gridTitle', '接收网格 TOP20') }}</h3>
         <div class="top20-list">
           <div
             v-for="(item, index) in top20Result.toGrid"
@@ -62,13 +66,15 @@
               ><strong>{{ item.count }}</strong></span
             >
           </div>
-          <div v-if="top20Result.toGrid.length === 0" class="empty-item">暂无数据</div>
+          <div v-if="top20Result.toGrid.length === 0" class="empty-item">
+            {{ t('common.noData', '暂无数据') }}
+          </div>
         </div>
       </div>
 
       <!-- 中继名称 TOP20 -->
       <div class="top20-card">
-        <h3>中继名称 TOP20</h3>
+        <h3>{{ t('top20.relayTitle', '中继名称 TOP20') }}</h3>
         <div class="top20-list">
           <div
             v-for="(item, index) in top20Result.relayName"
@@ -84,7 +90,9 @@
               ><strong>{{ item.count }}</strong></span
             >
           </div>
-          <div v-if="top20Result.relayName.length === 0" class="empty-item">暂无数据</div>
+          <div v-if="top20Result.relayName.length === 0" class="empty-item">
+            {{ t('common.noData', '暂无数据') }}
+          </div>
         </div>
       </div>
     </template>
@@ -94,6 +102,7 @@
 <script setup>
 import { watch, reactive } from 'vue'
 import { gridToAddress } from '../../services/gridService'
+import { useLocale } from '../../composables/useLocale'
 
 const props = defineProps({
   top20Result: {
@@ -107,6 +116,7 @@ const props = defineProps({
 })
 
 const gridAddressMap = reactive({})
+const { t } = useLocale()
 
 function formatAddress(data) {
   if (!data) return ''

@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 // @ts-ignore - legacy JS
 import { FmoApiClient } from '../services/fmoApi'
 // @ts-ignore - legacy JS
-import { normalizeHost } from '../utils/urlUtils'
+import { buildWebSocketUrl, normalizeHost } from '../utils/urlUtils'
 import { getPlatform } from '../platform'
 import { useSettingsStore } from './settingsStore'
 
@@ -99,7 +99,7 @@ export const useLocationStore = defineStore('location', () => {
     const addr = getActiveAddress()
     if (!addr) return ''
     const host = normalizeHost(addr.host)
-    return `${addr.protocol}://${host}/ws`
+    return buildWebSocketUrl(host, addr.protocol, '/ws')
   }
 
   /** 创建 FmoApiClient 连接当前活跃地址 */

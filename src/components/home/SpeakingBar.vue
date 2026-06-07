@@ -18,7 +18,9 @@
               class="speaker-item"
             >
               <strong>{{ speaker.callsign }}[{{ getServerName(speaker.addressId) }}]</strong>
-              <span v-if="speaker.callsign === selectedFromCallsign" class="self-tag">您</span>
+              <span v-if="speaker.callsign === selectedFromCallsign" class="self-tag">{{
+                t('header.you', '您')
+              }}</span>
               <span v-if="todayContactedCallsigns.has(speaker.callsign)" class="today-star">★</span>
               <span v-if="contactCounts.get(speaker.callsign)" class="contact-count">
                 x{{ contactCounts.get(speaker.callsign) }}
@@ -30,7 +32,9 @@
           <template v-else>
             <!-- 单选模式：只显示当前发言者，不加标记 -->
             {{ speakerLabel }}: <strong>{{ displaySpeaker }}</strong>
-            <span v-if="displaySpeaker === selectedFromCallsign" class="self-tag">您</span>
+            <span v-if="displaySpeaker === selectedFromCallsign" class="self-tag">{{
+              t('header.you', '您')
+            }}</span>
             <span v-if="todayContactedCallsigns.has(displaySpeaker)" class="today-star">★</span>
             <span v-if="contactCounts.get(displaySpeaker)" class="contact-count">
               x{{ contactCounts.get(displaySpeaker) }}
@@ -40,12 +44,18 @@
             }}</span>
           </template>
         </template>
-        <template v-else> 最后发言 </template>
+        <template v-else> {{ t('header.lastSpeaker', '最后发言') }} </template>
       </span>
       <button
         class="audio-toggle-btn"
         :class="{ playing: isAudioPlaying, muted: isAudioMuted }"
-        :title="isAudioPlaying ? (isAudioMuted ? '已静音' : '关闭所有播报') : '开启通联播报'"
+        :title="
+          isAudioPlaying
+            ? isAudioMuted
+              ? t('header.muted', '已静音')
+              : t('header.broadcastOff', '关闭所有播报')
+            : t('header.enableBroadcast', '开启通联播报')
+        "
         @click.stop="$emit('toggle-audio')"
       >
         <span class="audio-icon">{{ isAudioPlaying ? '■' : '▶' }}</span>
@@ -53,21 +63,22 @@
       <select
         class="voice-mode-select"
         :value="voiceMode"
-        title="声音模式"
+        :title="t('header.broadcastMode', '声音模式')"
         @click.stop
         @change.stop="$emit('update-voice-mode', $event.target.value)"
       >
-        <option value="alert">新呼号提示</option>
-        <option value="radio">通联播报</option>
-        <option value="off">关闭所有播报</option>
+        <option value="alert">{{ t('header.newCallsignAlert', '新呼号提示') }}</option>
+        <option value="radio">{{ t('header.contactBroadcast', '通联播报') }}</option>
+        <option value="off">{{ t('header.broadcastOff', '关闭所有播报') }}</option>
       </select>
-      <span class="speaking-expand">点击展开</span>
+      <span class="speaking-expand">{{ t('header.clickExpand', '点击展开') }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useLocale } from '../../composables/useLocale'
 
 const props = defineProps({
   currentSpeaker: {
@@ -134,6 +145,7 @@ const props = defineProps({
 })
 
 const LINGER_MS = 5000
+const { t } = useLocale()
 const lingeringSpeaker = ref('')
 const lingeringSpeakerAddress = ref('')
 let lingerTimer = null
@@ -143,7 +155,9 @@ const displaySpeakerAddress = computed(() =>
   props.currentSpeaker ? props.currentSpeakerAddress : lingeringSpeakerAddress.value
 )
 const isSpeakingNow = computed(() => Boolean(props.currentSpeaker))
-const speakerLabel = computed(() => (props.currentSpeaker ? '正在发言' : '最后发言'))
+const speakerLabel = computed(() =>
+  props.currentSpeaker ? t('header.speakingNow', '正在发言') : t('header.lastSpeaker', '最后发言')
+)
 
 function clearLingerTimer() {
   if (lingerTimer) {
@@ -195,7 +209,7 @@ onBeforeUnmount(() => {
 // 根据 addressId 获取服务器显示名称
 function getServerName(addressId) {
   // 主服务器显示"主"
-  if (addressId === props.activeAddressId) return '主'
+  if (addressId === props.activeAddressId) return t('common.primary', '主')
   const address = props.addressList.find((a) => a.id === addressId)
   if (!address) return '?'
   // 显示 numId，如果没有则降级显示在列表中的 index+1
@@ -210,9 +224,9 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
 <style scoped>
 .speaking-bar {
   flex-shrink: 0;
-  background: var(--bg-speaking-bar);
-  border-bottom: 2px solid var(--border-speaking-bar);
-  padding: 0.6rem 1rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+  padding: 0.45rem 1rem;
   cursor: pointer;
   transition: background 0.2s;
   min-width: 0;
@@ -220,31 +234,33 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
 }
 
 .speaking-bar:hover {
-  background: var(--bg-today-card);
+  background: var(--bg-table-stripe);
 }
 
 .speaking-bar-content {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: 1.5rem;
+  min-height: 2rem;
   min-width: 0;
 }
 
 .speaking-indicator {
-  width: 16px;
-  height: 16px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .speaking-indicator.speaking {
   background: var(--color-speaking);
+  box-shadow: 0 0 0 5px var(--surface-success);
   animation: pulse 1.5s infinite;
 }
 
 .speaking-indicator.idle {
   background: var(--text-disabled);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--text-disabled) 18%, transparent);
 }
 
 @keyframes pulse {
@@ -262,7 +278,7 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
 .speaking-text {
   flex: 1;
   min-width: 0;
-  font-size: 1.1rem;
+  font-size: 0.88rem;
   color: var(--text-primary);
   line-height: 1.3rem;
   overflow: hidden;
@@ -273,11 +289,11 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
 .speaking-text strong {
   color: var(--color-speaking);
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 0.92rem;
 }
 
 .speaking-expand {
-  font-size: 1rem;
+  font-size: 0.78rem;
   color: var(--text-tertiary);
   flex-shrink: 0;
 }
@@ -287,15 +303,15 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   margin: 0;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--border-light);
+  background: var(--bg-table-stripe);
   cursor: pointer;
   flex-shrink: 0;
-  border-radius: 4px;
+  border-radius: 7px;
   transition: background-color 0.2s;
 }
 
@@ -325,9 +341,10 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
 .voice-mode-select {
   flex-shrink: 0;
   max-width: 120px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.14);
+  min-height: 34px;
+  border: 1px solid var(--border-light);
+  border-radius: 7px;
+  background: var(--bg-table-header);
   color: var(--text-secondary);
   font-size: 0.85rem;
   padding: 0.25rem 0.35rem;
@@ -447,11 +464,11 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
   }
 
   .speaking-text {
-    font-size: 1.1rem;
+    font-size: 0.88rem;
   }
 
   .speaking-text strong {
-    font-size: 1.3rem;
+    font-size: 0.92rem;
   }
 
   .speaking-expand {
@@ -484,16 +501,16 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
   }
 
   .speaking-indicator {
-    width: 14px;
-    height: 14px;
+    width: 9px;
+    height: 9px;
   }
 
   .speaking-text {
-    font-size: 1rem;
+    font-size: 0.82rem;
   }
 
   .speaking-text strong {
-    font-size: 1.2rem;
+    font-size: 0.86rem;
   }
 
   .speaking-expand {

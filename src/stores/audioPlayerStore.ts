@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 // @ts-ignore - legacy JS
-import { normalizeHost } from '../utils/urlUtils'
+import { buildWebSocketUrl, normalizeHost } from '../utils/urlUtils'
 import { getPlatform } from '../platform'
 import type { AudioStatus } from '../platform/types/audio'
 
@@ -92,9 +92,8 @@ export const useAudioPlayerStore = defineStore('audioPlayer', () => {
     // 先停旧的
     await stopAudio()
 
-    const wsProtocol = protocol === 'wss' ? 'wss' : 'ws'
     const normalizedHost = normalizeHost(host)
-    const url = `${wsProtocol}://${normalizedHost}/audio`
+    const url = buildWebSocketUrl(normalizedHost, protocol, '/audio')
 
     currentVolumePercent = 100
     isPlaying.value = true

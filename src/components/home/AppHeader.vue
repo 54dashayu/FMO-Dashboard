@@ -1,47 +1,84 @@
 <template>
   <header class="header">
-    <div class="header-left">
-      <img
-        src="/app-icon.png"
-        alt="FMO仪表盘"
-        class="header-logo"
-        @click="$emit('open-nav-menu')"
-      />
-      <span class="header-divider"></span>
-      <h1 class="header-title" @click="$emit('open-nav-menu')">FMO仪表盘</h1>
-      <span class="total-logs">
-        <span class="star">&#11088;</span>
-        <strong>{{ todayLogs }}/{{ totalLogs }}</strong>
-      </span>
-      <span v-if="uniqueCallsigns > 0" class="total-logs">
-        <img src="/radio-contact.svg" alt="Radio contact" class="callsign-icon" />
-        <strong>{{ uniqueCallsigns }}</strong>
-      </span>
-    </div>
-    <nav class="header-nav">
-      <router-link v-for="route in NAV_ROUTES" :key="route.path" :to="route.path" class="nav-tab">
-        {{ route.label }}
-        <span v-if="route.type === 'messages' && hasUnreadMessages" class="unread-badge"></span>
-      </router-link>
-    </nav>
-    <div class="header-actions">
-      <a
-        href="https://github.com/54dashayu/FMO-Dashboard"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="icon-btn"
-        title="GitHub：54dashayu/FMO-Dashboard"
+    <button
+      class="brand-home"
+      type="button"
+      :title="t('header.backDashboard', '返回仪表盘')"
+      @click="router.push('/dashboard')"
+    >
+      <img src="/app-icon.png" alt="" class="header-logo" />
+      <span>{{ t('app.name', 'FMO 仪表盘') }}</span>
+    </button>
+
+    <div class="connection-summary">
+      <span class="status-light"></span>
+      <strong
+        >{{ currentSpeaker || ownCallsign || selectedFromCallsign || 'FMO' }}
+        {{
+          currentSpeaker ? t('header.onAir', '正在通联') : t('header.monitoring', '正在守听')
+        }}</strong
       >
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-          <path
-            d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"
-          />
+    </div>
+
+    <div class="header-stats">
+      <span :title="t('header.total', '总通联数量')"
+        ><b class="stat-star">★</b>{{ totalLogs }}</span
+      >
+      <span :title="t('header.friends', '好友数量')"
+        ><b class="stat-light friend"></b>{{ t('header.friends', '好友') }}
+        {{ uniqueCallsigns }}</span
+      >
+      <span :title="t('header.today', '今日通联数量')"
+        ><b class="stat-light today"></b>{{ t('header.today', '今日') }} {{ todayLogs }}</span
+      >
+    </div>
+
+    <div class="header-actions">
+      <label class="voice-select-wrap" :title="t('header.broadcastMode', '播报模式')">
+        <span class="voice-dot"></span>
+        <select
+          :value="voiceMode"
+          :aria-label="t('header.broadcastMode', '播报模式')"
+          @change="$emit('update-voice-mode', $event.target.value)"
+        >
+          <option value="alert">{{ t('header.newCallsignAlert', '新呼号提醒') }}</option>
+          <option value="radio">{{ t('header.contactBroadcast', '通联播报') }}</option>
+          <option value="off">{{ t('header.broadcastOff', '关闭所有播报') }}</option>
+        </select>
+      </label>
+
+      <button class="tool-btn theme-btn" type="button" @click="toggleTheme">
+        <span>{{ isDarkTheme ? '☾' : '☀' }}</span>
+        <span
+          >{{ t('header.theme', '主题') }}
+          {{ isDarkTheme ? t('header.dark', '深') : t('header.light', '浅') }}</span
+        >
+      </button>
+
+      <PublicSiteTools />
+
+      <button
+        class="tool-btn icon-btn"
+        type="button"
+        :title="t('common.language', '语言：简体中文')"
+        @click="toggleLocale"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
         </svg>
-      </a>
-      <button class="icon-btn" title="设置" @click="router.push('/settings')">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+      </button>
+
+      <button
+        class="tool-btn icon-btn"
+        type="button"
+        :title="t('common.settings', '设置')"
+        @click="router.push('/settings')"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
           <path
-            d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"
+            d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5v.2h-4v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3v-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3h4v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1h.2v4h-.2a1.7 1.7 0 0 0-1.4 1Z"
           />
         </svg>
       </button>
@@ -50,277 +87,268 @@
 </template>
 
 <script setup>
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { NAV_ROUTES } from './constants'
+import PublicSiteTools from './PublicSiteTools.vue'
+import { useLocale } from '../../composables/useLocale'
 
 const router = useRouter()
+const { t, toggleLocale } = useLocale()
+const storedTheme = localStorage.getItem('fmo_theme')
+const isDarkTheme = ref(
+  storedTheme === 'dark' ||
+    (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
+)
 
 defineProps({
-  todayLogs: {
-    type: Number,
-    default: 0
-  },
-  totalLogs: {
-    type: Number,
-    default: 0
-  },
-  uniqueCallsigns: {
-    type: Number,
-    default: 0
-  },
-  dbLoaded: {
-    type: Boolean,
-    default: false
-  },
-  hasUnreadMessages: {
-    type: Boolean,
-    default: false
-  }
+  todayLogs: { type: Number, default: 0 },
+  totalLogs: { type: Number, default: 0 },
+  uniqueCallsigns: { type: Number, default: 0 },
+  currentSpeaker: { type: String, default: '' },
+  ownCallsign: { type: String, default: '' },
+  selectedFromCallsign: { type: String, default: '' },
+  voiceMode: { type: String, default: 'off' }
 })
 
-defineEmits(['open-nav-menu'])
+defineEmits(['update-voice-mode'])
+
+function applyTheme() {
+  document.documentElement.dataset.theme = isDarkTheme.value ? 'dark' : 'light'
+  localStorage.setItem('fmo_theme', isDarkTheme.value ? 'dark' : 'light')
+}
+
+function toggleTheme() {
+  isDarkTheme.value = !isDarkTheme.value
+  applyTheme()
+}
+
+onMounted(applyTheme)
 </script>
 
 <style scoped>
 .header {
-  flex-shrink: 0;
   z-index: 100;
   display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  gap: 1.5rem;
-  background: var(--bg-header);
-  border-bottom: 1px solid var(--border-light);
   min-width: 0;
+  min-height: 3.9rem;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-light) 80%, var(--color-primary));
+  background: var(--bg-header);
+  box-sizing: border-box;
 }
 
-.header-left {
+.brand-home,
+.connection-summary,
+.header-stats,
+.header-actions,
+.header-stats span,
+.voice-select-wrap,
+.tool-btn {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  min-width: 0;
-  flex-shrink: 0;
 }
 
-.header-title {
-  margin: 0;
-  font-size: 1.1rem;
+.brand-home {
+  gap: 0.55rem;
+  padding: 0;
+  border: 0;
+  color: var(--text-primary);
+  background: transparent;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 750;
+  white-space: nowrap;
   cursor: pointer;
-  transition: color 0.2s;
-}
-
-.header-title:hover {
-  color: var(--color-success);
 }
 
 .header-logo {
-  display: none;
-  width: 28px;
-  height: 28px;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 7px;
+}
+
+.connection-summary {
+  min-width: 0;
+  gap: 0.55rem;
+}
+
+.connection-summary strong {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-light,
+.stat-light,
+.voice-dot {
+  width: 0.5rem;
+  height: 0.5rem;
   flex-shrink: 0;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.header-logo:hover {
-  opacity: 0.8;
-}
-
-.header-divider {
-  display: none;
-  width: 1px;
-  height: 20px;
-  background: var(--border-light);
-  flex-shrink: 0;
-}
-
-.total-logs {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-}
-
-.total-logs svg {
-  width: 24px;
-  height: 36px;
-}
-
-.callsign-icon {
-  width: 24px;
-  height: 36px;
-  display: block;
-}
-
-.star {
-  font-size: 1.5rem;
-}
-
-.callsign-icon {
-  font-size: 1.2rem;
-}
-
-.header-nav {
-  display: flex;
-  gap: 0;
-  align-items: center;
-}
-
-.nav-tab {
-  position: relative;
-  background: none;
-  border: none;
-  border-radius: 0;
-  padding: 0.5rem 1rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: color 0.2s;
-  font-family: inherit;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.nav-tab:hover:not(.disabled) {
-  color: var(--color-success);
-  background: none;
-}
-
-.nav-tab.router-link-active {
-  color: var(--color-success);
-}
-
-.nav-tab.router-link-active::after {
-  content: '';
-  position: absolute;
-  bottom: -0.75rem;
-  left: 0.5rem;
-  right: 0.5rem;
-  height: 2px;
-  background: var(--color-success);
-  border-radius: 1px 1px 0 0;
-}
-
-.nav-tab.disabled {
-  color: var(--text-disabled);
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.unread-badge {
-  position: absolute;
-  top: 0.35rem;
-  right: 0.25rem;
-  width: 7px;
-  height: 7px;
-  background: #ef4444;
   border-radius: 50%;
-  border: 1.5px solid var(--bg-header, var(--bg-page));
+}
+
+.status-light {
+  background: var(--color-success);
+  box-shadow: 0 0 0 4px var(--surface-success);
+}
+
+.header-stats {
+  gap: 0.55rem;
+}
+
+.header-stats span {
+  gap: 0.28rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.stat-star {
+  color: #f6b925;
+  font-size: 0.92rem;
+}
+
+.stat-light.friend {
+  background: #45b6ff;
+}
+
+.stat-light.today {
+  background: #65d47e;
 }
 
 .header-actions {
-  display: flex;
-  align-items: center;
   gap: 0.5rem;
-  flex-shrink: 0;
   margin-left: auto;
 }
 
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
+.voice-select-wrap,
+.tool-btn {
+  height: 2.25rem;
+  border: 1px solid var(--border-light);
+  border-radius: 7px;
   color: var(--text-secondary);
-  border-radius: 4px;
-  text-decoration: none;
+  background: var(--bg-table-stripe);
+  box-sizing: border-box;
 }
 
-.icon-btn:hover {
-  background: var(--bg-table-hover);
-  color: var(--color-success);
+.voice-select-wrap {
+  gap: 0.35rem;
+  padding-left: 0.6rem;
 }
 
-:global(.native-ios) .header {
-  padding: 0.5rem 0.75rem;
-  gap: 0.75rem;
+.voice-dot {
+  background: var(--color-primary);
 }
 
-:global(.native-ios) .header-title,
-:global(.native-ios) .header-nav {
-  display: none;
+.voice-select-wrap select {
+  width: 7.5rem;
+  height: 100%;
+  padding: 0 1.15rem 0 0;
+  border: 0;
+  outline: 0;
+  color: var(--text-primary);
+  background: transparent;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-:global(.native-ios) .header-logo,
-:global(.native-ios) .header-divider {
-  display: block;
+.tool-btn {
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.65rem;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-:global(.native-ios) .header-left {
-  gap: 0.5rem;
+.tool-btn:hover,
+.brand-home:hover {
+  color: var(--color-primary);
 }
 
-:global(.native-ios) .total-logs {
-  font-size: 0.95rem;
-  min-width: 0;
+.icon-btn {
+  width: 2.25rem;
+  padding: 0;
 }
 
-:global(.native-ios) .star {
-  font-size: 1.2rem;
+.icon-btn svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-:global(.native-ios) .callsign-icon {
-  font-size: 1.1rem;
+@media (min-width: 769px) and (max-width: 1000px) {
+  .header {
+    gap: 0.45rem;
+    padding-inline: 0.55rem;
+  }
+
+  .brand-home,
+  .connection-summary {
+    gap: 0.35rem;
+  }
+
+  .brand-home,
+  .connection-summary strong {
+    font-size: 0.82rem;
+  }
+
+  .header-stats {
+    gap: 0.3rem;
+  }
+
+  .header-stats span {
+    font-size: 0.68rem;
+  }
+
+  .theme-btn {
+    padding: 0 0.45rem;
+  }
+
+  .voice-select-wrap select {
+    width: 6.8rem;
+  }
 }
 
 @media (max-width: 768px) {
   .header {
+    min-height: 3.4rem;
     padding: 0.5rem 0.75rem;
-    gap: 0.75rem;
   }
 
-  .header-title {
+  .brand-home span,
+  .connection-summary,
+  .header-stats,
+  .voice-select-wrap {
+    display: none;
+  }
+
+  .theme-btn {
+    width: 2.25rem;
+    padding: 0;
+  }
+
+  .theme-btn span:last-child {
     display: none;
   }
 
   .header-logo {
-    display: block;
-  }
-
-  .header-divider {
-    display: block;
-  }
-
-  .header-left {
-    gap: 0.5rem;
-  }
-
-  .header-nav {
-    display: none;
-  }
-
-  .total-logs {
-    font-size: 0.95rem;
-    min-width: 0;
-  }
-
-  .star {
-    font-size: 1.2rem;
-  }
-
-  .callsign-icon {
-    font-size: 1.1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .header-title {
-    display: none;
+    width: 2rem;
+    height: 2rem;
   }
 }
 </style>

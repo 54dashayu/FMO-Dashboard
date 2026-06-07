@@ -40,9 +40,9 @@
                     }}</span>
                     <span class="callsign-text">{{ record.callsign }}</span>
                     <span class="callsign-badge">
-                      <span v-if="record.callsign === selectedFromCallsign" class="self-tag"
-                        >您</span
-                      >
+                      <span v-if="record.callsign === selectedFromCallsign" class="self-tag">{{
+                        t('header.you', '您')
+                      }}</span>
                       <span v-if="todayContactedCallsigns.has(record.callsign)" class="today-star"
                         >&#11088;</span
                       >
@@ -54,7 +54,9 @@
                 </div>
                 <div class="history-time">
                   <div class="speaking-time">
-                    <template v-if="!record.endTime">正在发言</template>
+                    <template v-if="!record.endTime">{{
+                      t('header.speakingNow', '正在发言')
+                    }}</template>
                     <template v-else>{{ formatTimeAgo(record.endTime) }}</template>
                   </div>
                   <div class="duration-time">
@@ -76,7 +78,9 @@
         </div>
         <div v-else class="speaking-history-empty">
           <div class="empty-divider"></div>
-          <div class="empty-text">暂无1小时内的发言记录</div>
+          <div class="empty-text">
+            {{ t('dashboard.noSpeakingHistory', '暂无1小时内的发言记录') }}
+          </div>
         </div>
       </div>
     </div>
@@ -88,9 +92,11 @@ import { ref, onMounted, onUnmounted, computed, watch, reactive } from 'vue'
 import { formatTimeAgo, formatDurationMmSs } from '../constants'
 import { gridToAddress } from '../../../services/gridService'
 import StationControl from '../StationControl.vue'
+import { useLocale } from '../../../composables/useLocale'
 
 const now = ref(Date.now())
 let nowTimer = null
+const { t } = useLocale()
 
 // grid -> 格式化地址的缓存映射
 const gridAddressMap = reactive({})
@@ -221,7 +227,7 @@ watch(
 // 根据 addressId 获取服务器显示名称
 function getServerName(addressId) {
   // 主服务器显示"主"
-  if (addressId === props.activeAddressId) return '主'
+  if (addressId === props.activeAddressId) return t('common.primary', '主')
   const address = props.addressList.find((a) => a.id === addressId)
   if (!address) return '?'
   // 显示 numId，如果没有则降级显示在列表中的 index+1

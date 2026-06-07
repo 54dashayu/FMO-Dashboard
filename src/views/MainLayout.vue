@@ -1,13 +1,15 @@
 <template>
-  <div class="container">
+  <div class="container" :class="{ 'dashboard-route': route.name === 'dashboard' }">
     <!-- 标题栏（含桌面端导航） -->
     <AppHeader
       :today-logs="todayLogs"
       :total-logs="totalLogs"
       :unique-callsigns="uniqueCallsigns"
-      :db-loaded="dbLoaded"
-      :has-unread-messages="hasUnreadMessages"
-      @open-nav-menu="showQuickNav = true"
+      :current-speaker="speakingStatus.currentSpeaker.value"
+      :own-callsign="ownCallsign"
+      :selected-from-callsign="selectedFromCallsign"
+      :voice-mode="dashboardVoiceMode"
+      @update-voice-mode="handleUpdateDashboardVoiceMode"
     />
 
     <!-- 发言状态条 -->
@@ -41,7 +43,11 @@
     >
       <span class="refresh-icon" :class="{ spinning: isRefreshing }">↻</span>
       <span class="refresh-text">{{
-        isRefreshing ? '刷新中...' : pullDistance >= PULL_THRESHOLD ? '松开刷新' : '下拉刷新'
+        isRefreshing
+          ? t('common.refreshing', '刷新中...')
+          : pullDistance >= PULL_THRESHOLD
+            ? t('common.releaseToRefresh', '松开刷新')
+            : t('common.pullToRefresh', '下拉刷新')
       }}</span>
     </div>
 
@@ -60,6 +66,7 @@
           :is="Component"
           :db-loaded="dbLoaded"
           :selected-from-callsign="selectedFromCallsign"
+          :own-callsign="ownCallsign"
           :loading="loading || dataQuery.loading.value"
           :error="error || dataQuery.error.value"
           :import-progress="importProgress"
@@ -78,7 +85,11 @@
           :audio-volume="settings.audioVolume.value"
           :contact-counts="settings.contactCounts.value"
           :today-contacted-callsigns="settings.todayContactedCallsigns.value"
+          :total-logs="totalLogs"
+          :today-logs="todayLogs"
+          :unique-callsigns="uniqueCallsigns"
           :voice-mode="dashboardVoiceMode"
+          @update-dashboard-voice-mode="handleUpdateDashboardVoiceMode"
           @execute-query="executeQuery"
           @show-callsign-records="handleShowCallsignRecords"
           @select-files="triggerFileInput"
@@ -100,8 +111,30 @@
           @refresh-user-info="handleRefreshUserInfo"
           @validate-and-select="handleValidateAndSelect"
           @update-audio-volume="handleUpdateAudioVolume"
+          @open-station-list="handleOpenStationList"
         />
       </router-view>
+
+      <footer class="app-footer">
+        <span>{{ t('footer.credit', 'FMO仪表盘 由 BH1JSS 机婶婶 贡献') }}</span>
+        <span class="footer-share-line">
+          {{ t('footer.openSource', '开源项目') }}
+          <a
+            href="https://github.com/54dashayu/FMO-Dashboard"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="t('footer.githubLabel', 'GitHub 项目主页')"
+            :title="t('footer.githubLabel', 'GitHub 项目主页')"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.68c-2.78.6-3.37-1.18-3.37-1.18-.45-1.15-1.1-1.45-1.1-1.45-.9-.62.07-.6.07-.6 1 .07 1.52 1.03 1.52 1.03.88 1.5 2.31 1.07 2.87.82.09-.64.35-1.07.63-1.32-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.57 9.57 0 0 1 12 6.98c.85 0 1.7.11 2.5.34 1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.02 1.59 1.02 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86v2.76c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"
+              />
+            </svg>
+          </a>
+          {{ t('footer.share', '欢迎分享') }}
+        </span>
+      </footer>
 
       <!-- 回到顶部按钮（仅移动端显示） -->
       <transition name="fade">
@@ -185,7 +218,7 @@
     <nav class="query-nav mobile-nav">
       <router-link v-for="route in NAV_ROUTES" :key="route.path" :to="route.path" class="nav-tab">
         <SvgIcon :name="route.icon" :size="22" class="nav-icon" />
-        <span class="nav-label">{{ route.label }}</span>
+        <span class="nav-label">{{ routeLabel(route) }}</span>
         <span
           v-if="route.type === 'messages' && hasUnreadMessages"
           class="mobile-unread-badge"
@@ -227,6 +260,7 @@ import {
 } from '../composables/useModalBackHandler'
 import toast from '../composables/useToast'
 import confirmDialog from '../composables/useConfirm'
+import { useLocale } from '../composables/useLocale'
 import { exportDataToDbFile, exportDataToAdif } from '../services/db'
 import { FmoApiClient } from '../services/fmoApi'
 import { normalizeHost } from '../utils/urlUtils'
@@ -238,6 +272,11 @@ import packageInfo from '../../package.json'
 const route = useRoute()
 const router = useRouter()
 const appVersion = packageInfo.version
+const { isEnglish, t } = useLocale()
+
+function routeLabel(item) {
+  return isEnglish.value ? t(`nav.${item.type}`, item.label) : item.label
+}
 
 // UI 状态
 const showSpeakingHistory = ref(false)
@@ -286,7 +325,7 @@ function isRangeSliderTarget(target) {
   return false
 }
 
-function sendUsageStatsBeacon(reason = 'init') {
+function sendUsageStatsBeacon(reason = 'init', options = {}) {
   if (!USAGE_STATS_HOSTS.has(window.location.hostname)) return
 
   const activeAddress = settings.activeAddress.value
@@ -297,10 +336,10 @@ function sendUsageStatsBeacon(reason = 'init') {
   const statsIdentity = callsign || 'anonymous'
   const lastKey = `${USAGE_STATS_KEY}:${activeAddress?.id || settings.fmoAddress.value || 'unknown'}:${statsIdentity}`
   const lastSent = Number(localStorage.getItem(lastKey) || 0)
-  if (now - lastSent < USAGE_STATS_INTERVAL_MS) return
+  if (!options.force && now - lastSent < USAGE_STATS_INTERVAL_MS) return
   localStorage.setItem(lastKey, String(now))
 
-  const params = new URLSearchParams({
+  const params = new window.URLSearchParams({
     callsign: callsign || '-',
     fmo: settings.fmoAddress.value ? normalizeHost(settings.fmoAddress.value) : '-',
     protocol: settings.protocol.value || '-',
@@ -313,7 +352,7 @@ function sendUsageStatsBeacon(reason = 'init') {
   if (navigator.sendBeacon) {
     navigator.sendBeacon(url)
   } else {
-    fetch(url, { method: 'GET', keepalive: true }).catch(() => {})
+    window.fetch(url, { method: 'GET', keepalive: true }).catch(() => {})
   }
 }
 
@@ -492,6 +531,9 @@ const settings = {
   setAudioVolume: _settingsStore.setAudioVolume,
   setAudioPlaying: _settingsStore.setAudioPlaying
 }
+const ownCallsign = computed(
+  () => settings.activeAddress.value?.userInfo?.callsign || selectedFromCallsign.value || ''
+)
 
 // speakingStatus：内联 useSpeakingStatus 薄层
 const _speakingStore = useSpeakingStatusStore()
@@ -788,6 +830,12 @@ async function handleStationSelect(uid) {
     if (result?.result === 0) {
       const primaryId = speakingStatus.primaryAddressId.value
       if (primaryId) {
+        const selectedStation = stationList.value.find(
+          (station) => String(station.uid) === String(uid)
+        )
+        if (selectedStation) {
+          speakingStatus.updateServerInfo(primaryId, selectedStation)
+        }
         await speakingStatus.getServerInfo(primaryId, true)
       }
     }
@@ -1053,6 +1101,7 @@ async function handleRefreshUserInfo(id, onDone) {
 async function handleSyncDays(days = 1) {
   try {
     await fmoSync.syncToday(settings.fmoAddress.value, settings.protocol.value, days)
+    sendUsageStatsBeacon('sync-days', { force: true })
   } catch (err) {
     dataQuery.error.value = `同步失败: ${err.message}`
   }
@@ -1061,6 +1110,7 @@ async function handleSyncDays(days = 1) {
 async function handleSyncIncremental() {
   try {
     await fmoSync.syncIncremental(settings.fmoAddress.value, settings.protocol.value)
+    sendUsageStatsBeacon('sync-incremental', { force: true })
   } catch (err) {
     dataQuery.error.value = `增量同步失败: ${err.message}`
   }
@@ -1069,6 +1119,7 @@ async function handleSyncIncremental() {
 async function handleSyncFull() {
   try {
     await fmoSync.syncFull(settings.fmoAddress.value, settings.protocol.value)
+    sendUsageStatsBeacon('sync-full', { force: true })
   } catch (err) {
     dataQuery.error.value = `全量同步失败: ${err.message}`
   }
@@ -1087,6 +1138,7 @@ async function handleSyncMultiple({ syncType, days }) {
 
   try {
     await fmoSync.syncMultiple(addresses, syncType, days)
+    sendUsageStatsBeacon(`sync-multiple-${syncType}`, { force: true })
 
     // 同步完成后，检查失败的地址并取消选中
     const failedResults = fmoSync.multiSyncProgress.value.results.filter((r) => !r.success)
@@ -1282,10 +1334,10 @@ watch(
 )
 
 // 音频控制
-function handleToggleAudio() {
+async function handleToggleAudio() {
   if (dashboardVoiceMode.value !== 'off') {
     if (isAudioPlaying.value) {
-      stopAudio()
+      await stopAudio()
     }
     const nextMode = 'off'
     dashboardVoiceMode.value = nextMode
@@ -1299,33 +1351,35 @@ function handleToggleAudio() {
   localStorage.setItem('fmo_dashboard_voice_mode', nextMode)
 
   if (!isAudioPlaying.value && settings.fmoAddress.value) {
-    toggleAudio(settings.fmoAddress.value, settings.protocol.value)
+    await resumeAudio().catch(() => {})
+    await toggleAudio(settings.fmoAddress.value, settings.protocol.value)
   }
   settings.setAudioPlaying(isAudioPlaying.value)
   if (isAudioPlaying.value && !isAudioMuted.value) {
-    setAudioVolumePlayer(settings.audioVolume.value)
+    await setAudioVolumePlayer(settings.audioVolume.value)
   }
 }
 
-function handleUpdateDashboardVoiceMode(mode) {
+async function handleUpdateDashboardVoiceMode(mode) {
   const nextMode = normalizeDashboardVoiceMode(mode)
   dashboardVoiceMode.value = nextMode
   localStorage.setItem('fmo_dashboard_voice_mode', nextMode)
 
   if (nextMode !== 'radio') {
     if (isAudioPlaying.value) {
-      stopAudio()
+      await stopAudio()
     }
     settings.setAudioPlaying(false)
     return
   }
 
   if (!isAudioPlaying.value && settings.fmoAddress.value) {
-    toggleAudio(settings.fmoAddress.value, settings.protocol.value)
+    await resumeAudio().catch(() => {})
+    await toggleAudio(settings.fmoAddress.value, settings.protocol.value)
   }
   settings.setAudioPlaying(isAudioPlaying.value)
   if (isAudioPlaying.value && !isAudioMuted.value) {
-    setAudioVolumePlayer(settings.audioVolume.value)
+    await setAudioVolumePlayer(settings.audioVolume.value)
   }
 }
 
@@ -1605,7 +1659,7 @@ provide('protocol', settings.protocol)
   display: none;
   flex-shrink: 0;
   background: var(--bg-header);
-  border-top: 1px solid var(--border-light);
+  border-top: 1px solid color-mix(in srgb, var(--border-light) 80%, var(--color-primary));
   padding: 0.25rem 0;
   padding-bottom: calc(0.25rem + var(--safe-inset-bottom, env(safe-area-inset-bottom, 0px)));
   justify-content: space-around;
@@ -1620,8 +1674,8 @@ provide('protocol', settings.protocol)
   gap: 0.1rem;
   background: none;
   border: none;
-  border-radius: 0;
-  padding: 0.2rem 0.8rem;
+  border-radius: 7px;
+  padding: 0.24rem 0.8rem;
   font-size: 1rem;
   color: var(--text-tertiary);
   cursor: pointer;
@@ -1631,11 +1685,12 @@ provide('protocol', settings.protocol)
 }
 
 .mobile-nav .nav-tab:hover:not(.disabled) {
-  background: none;
+  background: var(--surface-accent);
 }
 
 .mobile-nav .nav-tab.router-link-active {
-  color: var(--color-success);
+  color: var(--color-primary);
+  background: var(--surface-accent);
 }
 
 .mobile-nav .nav-tab.disabled {
@@ -1662,6 +1717,11 @@ provide('protocol', settings.protocol)
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-page) 84%, transparent),
+    var(--bg-page)
+  );
   display: flex;
   flex-direction: column;
   position: relative;
@@ -1676,6 +1736,46 @@ provide('protocol', settings.protocol)
 
 .back-to-top-btn {
   display: none;
+}
+
+.app-footer {
+  display: grid;
+  flex-shrink: 0;
+  justify-items: center;
+  gap: 0.35rem;
+  margin-top: auto;
+  padding: 1.5rem 0.5rem 0.25rem;
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.footer-share-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.footer-share-line a {
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  text-decoration: none;
+}
+
+.footer-share-line a:hover {
+  color: var(--color-primary);
+}
+
+.footer-share-line svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
 }
 
 :global(.native-ios) .container {
@@ -1693,15 +1793,47 @@ provide('protocol', settings.protocol)
   display: flex;
 }
 
+@media (min-width: 769px) {
+  .container :deep(.speaking-bar) {
+    display: none;
+  }
+
+  .dashboard-route :deep(.header),
+  .dashboard-route :deep(.speaking-bar) {
+    display: none;
+  }
+
+  .dashboard-route .content-area {
+    padding: 0;
+  }
+
+  .dashboard-route .app-footer {
+    padding: 1.5rem 1rem 1.25rem;
+  }
+}
+
 @media (max-width: 768px) {
+  .dashboard-route :deep(.header),
+  .dashboard-route :deep(.speaking-bar) {
+    display: none;
+  }
+
+  .dashboard-route .content-area {
+    padding: 0;
+  }
+
   .content-area {
-    padding: 0 0.5rem 0.5rem;
+    padding: 0.5rem;
     overflow-y: auto;
     min-height: 0;
   }
 
   .mobile-nav {
     display: flex;
+  }
+
+  .app-footer {
+    padding: 1rem 0.5rem 0.85rem;
   }
 
   .mobile-unread-badge {

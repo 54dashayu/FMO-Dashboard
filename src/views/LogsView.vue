@@ -146,13 +146,6 @@ function onSearchInput() {
   }, 300)
 }
 
-function onFilterDateChange() {
-  props.dataQuery.currentPage.value = 1
-  emit('execute-query')
-  // 手动改日期时清除快捷筛选状态
-  activeQuickFilter.value = ''
-}
-
 // DatePicker 手动选日期：同步到 pickerDate 和查询用的 filterDate
 function onPickerDateChange(val) {
   pickerDate.value = val

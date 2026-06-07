@@ -84,6 +84,13 @@
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
     </template>
 
+    <!-- wishWall: 愿望墙图标 -->
+    <template v-else-if="name === 'wishWall'">
+      <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14l-4-2-4 2-4-2-4 2V5Z" />
+      <path d="M8 8h8" />
+      <path d="M8 12h5" />
+    </template>
+
     <!-- diagnostic: 诊断日志图标 -->
     <template v-else-if="name === 'diagnostic'">
       <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7Z" />
@@ -131,6 +138,7 @@ defineProps({
         'more',
         'remoteControl',
         'friendLinks',
+        'wishWall',
         'diagnostic',
         'about',
         'settings',

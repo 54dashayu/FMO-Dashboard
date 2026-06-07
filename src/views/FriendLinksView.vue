@@ -44,6 +44,7 @@
 <script setup>
 import { computed } from 'vue'
 import { getProcessedLinks } from '../components/home/modals/friendLinks'
+import { useLocale } from '../composables/useLocale'
 
 const props = defineProps({
   fmoAddress: {
@@ -52,29 +53,30 @@ const props = defineProps({
   }
 })
 
-const friendLinksList = computed(() => getProcessedLinks(props.fmoAddress))
+const { t } = useLocale()
+const friendLinksList = computed(() => getProcessedLinks(props.fmoAddress, t))
 </script>
 
 <style scoped>
 .friend-links-view {
   height: 100%;
   overflow-y: auto;
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .links-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 0.75rem;
 }
 
 .link-card {
   display: flex;
   align-items: center;
-  padding: 1rem;
+  padding: 0.85rem;
   background: var(--bg-card);
   border: 1px solid var(--border-secondary);
-  border-radius: 12px;
+  border-radius: 8px;
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -82,7 +84,7 @@ const friendLinksList = computed(() => getProcessedLinks(props.fmoAddress))
 }
 
 .link-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   border-color: var(--color-primary);
   box-shadow: 0 8px 16px var(--shadow-card);
   background: var(--bg-table-hover);
@@ -101,7 +103,7 @@ const friendLinksList = computed(() => getProcessedLinks(props.fmoAddress))
   align-items: center;
   justify-content: center;
   background: var(--bg-input);
-  border-radius: 10px;
+  border-radius: 7px;
   font-size: 1.4rem;
   margin-right: 1rem;
   flex-shrink: 0;

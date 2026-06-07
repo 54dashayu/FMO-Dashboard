@@ -7,12 +7,13 @@ export default [
   ...pluginVue.configs['flat/recommended'],
   prettier,
   {
-    files: ['**/*.{js,vue}'],
+    files: ['**/*.{js,mjs,vue}'],
     languageOptions: {
       globals: {
         window: 'readonly',
         console: 'readonly',
         document: 'readonly',
+        process: 'readonly',
         indexedDB: 'readonly',
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
@@ -24,11 +25,20 @@ export default [
         IDBKeyRange: 'readonly',
         localStorage: 'readonly',
         Blob: 'readonly',
-        URL: 'readonly'
+        URL: 'readonly',
+        fetch: 'readonly',
+        AbortSignal: 'readonly',
+        TextDecoder: 'readonly',
+        TextEncoder: 'readonly',
+        history: 'readonly',
+        location: 'readonly',
+        FileReader: 'readonly',
+        atob: 'readonly'
       }
     },
     rules: {
-      'vue/multi-word-component-names': 'off'
+      'vue/multi-word-component-names': 'off',
+      'vue/no-mutating-props': 'off'
     }
   },
   {

@@ -6,11 +6,13 @@
     <div class="station-info" @click="handleOpenList">
       <span v-if="connected && currentStation" class="station-name clickable">
         {{ currentStation.name }}
-        <span v-if="showPrimaryBadge" class="primary-badge">主</span>
+        <span v-if="showPrimaryBadge" class="primary-badge">{{ t('common.primary', '主') }}</span>
         <span class="dropdown-arrow">▼</span>
       </span>
-      <span v-else-if="connected" class="station-loading"> 加载中... </span>
-      <span v-else class="station-disconnected"> 未连接 </span>
+      <span v-else-if="connected" class="station-loading">
+        {{ t('common.loading', '加载中...') }}
+      </span>
+      <span v-else class="station-disconnected"> {{ t('common.disconnected', '未连接') }} </span>
     </div>
     <button class="station-btn next-btn" :disabled="!connected || isBusy" @click="$emit('next')">
       &gt;
@@ -19,6 +21,8 @@
 </template>
 
 <script setup>
+import { useLocale } from '../../composables/useLocale'
+
 const props = defineProps({
   connected: {
     type: Boolean,
@@ -39,6 +43,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['prev', 'next', 'open-list'])
+const { t } = useLocale()
 
 function handleOpenList() {
   if (!props.connected || !props.currentStation) return

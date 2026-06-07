@@ -19,6 +19,19 @@
 - 如果浏览器没有自动打开，可改用 `start-windows.bat` 启动，查看命令行窗口里显示的地址，手动复制到浏览器。
 - 初次使用时，请在 FMO仪表盘的设置里确认你的 FMO 地址。
 
+## 安全提示与校验
+
+- 便携版会启动本机 Web 服务并自动打开浏览器，这是正常行为。
+- 如果 `.exe` 启动器暂未代码签名，Windows SmartScreen 或部分杀毒软件可能提示未知发布者。
+- 如果 `.exe` 被拦截，可下载 `.zip` 版本，解压后运行 `start-windows-hidden.vbs` 或 `start-windows.bat`。
+- 发布页会提供 SHA256 校验值。可在 PowerShell 中执行：
+
+```powershell
+Get-FileHash .\FMO-Dashboard-Windows-Portable-v1.0.1.exe -Algorithm SHA256
+```
+
+校验值应与发布页提供的一致。
+
 ## 本版本改进
 
 - V1.0.0 集中修复网页版、Win64 便携版和安卓端的实时通联状态同步问题。

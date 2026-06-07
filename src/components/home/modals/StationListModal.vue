@@ -7,7 +7,7 @@
             v-model="searchQuery"
             type="text"
             class="search-input"
-            placeholder="查询信道"
+            :placeholder="t('dashboard.searchRelay', '查询信道')"
             @keydown.enter.prevent
           />
         </div>
@@ -15,10 +15,10 @@
           <button
             class="refresh-btn"
             :disabled="loading"
-            title="刷新列表"
+            :title="t('dashboard.refreshRelayList', '刷新列表')"
             @click="$emit('refresh')"
           >
-            {{ loading ? '刷新中...' : '刷新' }}
+            {{ loading ? t('common.refreshing', '刷新中...') : t('common.refresh', '刷新') }}
           </button>
           <button class="close-btn" @click="$emit('close')">&times;</button>
         </div>
@@ -45,10 +45,14 @@
               class="pin-action"
               :class="{ pinned: station.isPinned }"
               :disabled="true"
-              :title="station.isPinned ? '已在 FMO 收藏中' : '添加收藏（功能尚未开放）'"
+              :title="
+                station.isPinned
+                  ? t('dashboard.inFmoFavorites', '已在 FMO 收藏中')
+                  : t('dashboard.addFavoriteDisabled', '添加收藏（功能尚未开放）')
+              "
               @click.stop="handleFavorite(station)"
             >
-              {{ station.isPinned ? '已收藏' : '☆' }}
+              {{ station.isPinned ? t('dashboard.favorite', '已收藏') : '☆' }}
             </button>
             <span class="station-name">{{ station.name }}</span>
             <span
@@ -58,12 +62,14 @@
                 String(currentStation.uid) === String(station.uid)
               "
               class="primary-badge"
-              >主</span
+              >{{ t('common.primary', '主') }}</span
             >
           </div>
         </div>
-        <div v-else-if="loading" class="station-loading">加载中...</div>
-        <div v-else class="station-empty">暂无服务器</div>
+        <div v-else-if="loading" class="station-loading">
+          {{ t('common.loading', '加载中...') }}
+        </div>
+        <div v-else class="station-empty">{{ t('dashboard.noServers', '暂无服务器') }}</div>
       </div>
     </div>
   </div>
@@ -71,6 +77,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import { useLocale } from '../../../composables/useLocale'
 
 const props = defineProps({
   visible: {
@@ -103,6 +110,7 @@ const emit = defineEmits(['close', 'select', 'refresh', 'favorite'])
 
 const searchQuery = ref('')
 const modalBodyRef = ref(null)
+const { t } = useLocale()
 
 // 弹框关闭后重置开关状态，打开时滚动到当前选中项
 watch(

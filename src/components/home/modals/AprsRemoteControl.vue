@@ -4,7 +4,7 @@
     <div v-if="!isNativeAprs" class="server-config-section">
       <div class="section-header">
         <div class="section-label-with-status">
-          <span class="section-label">远程控制服务器</span>
+          <span class="section-label">{{ t('remote.controlServer', '远程控制服务器') }}</span>
           <span
             class="connection-status"
             :class="{
@@ -15,7 +15,9 @@
             :title="statusMessage"
           ></span>
         </div>
-        <button class="btn-add-server" @click="showAddServerDialog = true">+ 添加</button>
+        <button class="btn-add-server" @click="showAddServerDialog = true">
+          {{ t('remote.add', '+ 添加') }}
+        </button>
       </div>
 
       <div class="server-selector">
@@ -34,7 +36,7 @@
             <button
               v-if="!currentServerIsDefault"
               class="btn-icon"
-              title="编辑"
+              :title="t('remote.edit', '编辑')"
               @click="editCurrentServer"
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
@@ -46,7 +48,7 @@
             <button
               v-if="!currentServerIsDefault"
               class="btn-icon btn-icon-danger"
-              title="删除"
+              :title="t('remote.delete', '删除')"
               @click="deleteCurrentServer"
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
@@ -64,12 +66,12 @@
     <div class="aprs-form">
       <!-- 呼号 -->
       <div class="form-group" :class="{ 'form-group-full': !advancedMode }">
-        <label class="form-label">呼号</label>
+        <label class="form-label">{{ t('remote.callsign', '呼号') }}</label>
         <div class="callsign-input">
           <CallsignInput
             id="callsign-base"
             v-model="callsignBase"
-            placeholder="如 BG5ESN"
+            :placeholder="t('remote.callsignPlaceholder', '如 BG5ESN')"
             class="form-input callsign-base"
             @input="onCallsignChange"
           />
@@ -78,12 +80,12 @@
 
       <!-- FMO呼号（高级选项） -->
       <div v-if="advancedMode" class="form-group form-group-fmo-callsign">
-        <label class="form-label">FMO呼号</label>
+        <label class="form-label">{{ t('remote.fmoCallsign', 'FMO呼号') }}</label>
         <div class="callsign-input">
           <CallsignInput
             id="fmo-callsign-base"
             v-model="fmoCallsignBase"
-            placeholder="如 BH5HSJ（默认与呼号相同）"
+            :placeholder="t('remote.fmoCallsignPlaceholder', '如 BH5HSJ（默认与呼号相同）')"
             class="form-input"
             @input="onFmoCallsignChange"
           />
@@ -92,7 +94,7 @@
 
       <!-- 控制尾缀 -->
       <div class="form-group form-group-ssid">
-        <label class="form-label">控制尾缀</label>
+        <label class="form-label">{{ t('remote.controlSsid', '控制尾缀') }}</label>
         <select
           id="control-ssid"
           v-model="controlSsid"
@@ -107,7 +109,7 @@
 
       <!-- FMO尾缀 -->
       <div class="form-group form-group-ssid">
-        <label class="form-label">FMO尾缀</label>
+        <label class="form-label">{{ t('remote.fmoSsid', 'FMO尾缀') }}</label>
         <select
           id="fmo-ssid"
           v-model="fmoSsid"
@@ -120,13 +122,13 @@
 
       <!-- APRS密钥 -->
       <div class="form-group form-group-password">
-        <label class="form-label">APRS密钥</label>
+        <label class="form-label">{{ t('remote.aprsPasscode', 'APRS密钥') }}</label>
         <div class="password-input-wrapper">
           <input
             id="aprs-passcode"
             v-model="passcode"
             :type="showPasscode ? 'text' : 'password'"
-            placeholder="5位数字"
+            :placeholder="t('remote.passcodePlaceholder', '5位数字')"
             class="form-input"
             @input="saveCurrentParams"
           />
@@ -153,13 +155,13 @@
 
       <!-- 设备密钥 -->
       <div class="form-group form-group-password">
-        <label class="form-label">设备密钥</label>
+        <label class="form-label">{{ t('remote.deviceSecret', '设备密钥') }}</label>
         <div class="password-input-wrapper">
           <input
             id="device-secret"
             v-model="secret"
             :type="showSecret ? 'text' : 'password'"
-            placeholder="在设备配置中设置的密钥"
+            :placeholder="t('remote.deviceSecretPlaceholder', '在设备配置中设置的密钥')"
             class="form-input"
             @input="saveCurrentParams"
           />
@@ -187,7 +189,7 @@
             type="checkbox"
             @change="onAdvancedModeChange"
           />
-          <span>高级选项（允许设置不同的FMO呼号）</span>
+          <span>{{ t('remote.advancedOptions', '高级选项（允许设置不同的FMO呼号）') }}</span>
         </label>
       </div>
     </div>
@@ -199,25 +201,27 @@
         :disabled="!canSend"
         @click="handleSendCommand('NORMAL')"
       >
-        普通模式
+        {{ t('remote.normalMode', '普通模式') }}
       </button>
       <button
         class="btn-control btn-standby"
         :disabled="!canSend"
         @click="handleSendCommand('STANDBY')"
       >
-        待机模式
+        {{ t('remote.standbyMode', '待机模式') }}
       </button>
       <button class="btn-control btn-reboot" :disabled="!canSend" @click="handleRebootCommand">
-        软重启
+        {{ t('remote.softReboot', '软重启') }}
       </button>
     </div>
 
     <!-- 历史记录 -->
     <div v-if="history.length > 0" class="aprs-history">
       <div class="history-header">
-        <span>操作记录</span>
-        <button class="btn-text-danger" @click="clearHistory">清空</button>
+        <span>{{ t('remote.operationHistory', '操作记录') }}</span>
+        <button class="btn-text-danger" @click="clearHistory">
+          {{ t('remote.clearHistory', '清空') }}
+        </button>
       </div>
       <div class="timeline">
         <div v-for="(item, index) in history" :key="index" class="timeline-item">
@@ -247,12 +251,16 @@
   >
     <div class="dialog">
       <div class="dialog-header">
-        <span class="dialog-title">{{ showEditServerDialog ? '编辑服务器' : '添加服务器' }}</span>
+        <span class="dialog-title">{{
+          showEditServerDialog
+            ? t('remote.editServer', '编辑服务器')
+            : t('remote.addServer', '添加服务器')
+        }}</span>
         <button class="close-btn" @click="closeServerDialog">&times;</button>
       </div>
       <div class="dialog-body">
         <div class="form-group">
-          <label class="form-label">服务器地址</label>
+          <label class="form-label">{{ t('remote.serverUrl', '服务器地址') }}</label>
           <input
             id="server-url"
             v-model="serverFormData.url"
@@ -266,9 +274,11 @@
         </div>
       </div>
       <div class="dialog-footer">
-        <button class="btn-secondary" @click="closeServerDialog">取消</button>
+        <button class="btn-secondary" @click="closeServerDialog">
+          {{ t('common.cancel', '取消') }}
+        </button>
         <button class="btn-primary" @click="submitServerForm">
-          {{ showEditServerDialog ? '保存' : '添加' }}
+          {{ showEditServerDialog ? t('remote.save', '保存') : t('remote.add', '添加') }}
         </button>
       </div>
     </div>
@@ -282,6 +292,7 @@ import { getPlatform } from '../../../platform'
 import { useAprsStore } from '../../../stores/aprsStore'
 import confirmDialog from '../../../composables/useConfirm'
 import { useModalBackHandler, registerModal } from '../../../composables/useModalBackHandler'
+import { useLocale } from '../../../composables/useLocale'
 import CallsignInput from '../../common/CallsignInput.vue'
 
 // 原生 APRS 直连模式：隐藏服务器列表/添加/编辑/删除等中转相关 UI
@@ -299,6 +310,7 @@ const props = defineProps({
 })
 
 const aprsStore = useAprsStore()
+const { t, isEnglish } = useLocale()
 
 // 提取响应式 state/getters（保持响应性）
 const {
@@ -566,7 +578,11 @@ function editCurrentServer() {
 async function deleteCurrentServer() {
   const server = serverList.value.find((s) => s.id === activeServerId.value)
   if (server && !server.isDefault) {
-    const confirmed = await confirmDialog.show(`确定要删除服务器"${server.url}"吗？`)
+    const confirmed = await confirmDialog.show(
+      t('remote.confirmDeleteServer', `确定要删除服务器"${server.url}"吗？`, {
+        url: server.url
+      })
+    )
     if (confirmed) {
       deleteServer(server.id)
     }
@@ -578,13 +594,13 @@ function submitServerForm() {
   const { url } = serverFormData.value
 
   if (!url.trim()) {
-    serverFormError.value = '请输入服务器地址'
+    serverFormError.value = t('remote.enterServerUrl', '请输入服务器地址')
     return
   }
 
   // 简单的URL格式验证
   if (!url.startsWith('ws://') && !url.startsWith('wss://')) {
-    serverFormError.value = '服务器地址必须以 ws:// 或 wss:// 开头'
+    serverFormError.value = t('remote.invalidServerUrl', '服务器地址必须以 ws:// 或 wss:// 开头')
     return
   }
 
@@ -622,8 +638,11 @@ function handleSendCommand(action) {
 // 处理软重启指令（需要二次确认）
 async function handleRebootCommand() {
   const confirmed = await confirmDialog.show(
-    '确定要执行软重启操作吗？\n\n此操作将重启设备，可能会中断当前的通信。',
-    '确认软重启'
+    t(
+      'remote.confirmReboot',
+      '确定要执行软重启操作吗？\n\n此操作将重启设备，可能会中断当前的通信。'
+    ),
+    t('remote.confirmRebootTitle', '确认软重启')
   )
 
   if (confirmed) {
@@ -646,6 +665,7 @@ function formatHistoryTime(timestamp) {
 
 function formatMessage(message) {
   if (!message) return ''
+  if (isEnglish.value) return message
   return message
     .replace(/\(NORMAL\)/g, '(普通模式)')
     .replace(/\(STANDBY\)/g, '(待机模式)')
