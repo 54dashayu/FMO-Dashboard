@@ -10,27 +10,18 @@
       <span>{{ t('app.name', 'FMO 仪表盘') }}</span>
     </button>
 
-    <div class="connection-summary">
-      <span class="status-light"></span>
-      <strong
-        >{{ currentSpeaker || ownCallsign || selectedFromCallsign || 'FMO' }}
-        {{
-          currentSpeaker ? t('header.onAir', '正在通联') : t('header.monitoring', '正在守听')
-        }}</strong
-      >
-    </div>
-
     <div class="header-stats">
-      <span :title="t('header.total', '总通联数量')"
-        ><b class="stat-star">★</b>{{ totalLogs }}</span
+      <span
+        class="header-stat total-today-stat"
+        :title="`${t('header.total', '总通联数量')} / ${t('header.today', '今日通联数量')}`"
       >
-      <span :title="t('header.friends', '好友数量')"
-        ><b class="stat-light friend"></b>{{ t('header.friends', '好友') }}
-        {{ uniqueCallsigns }}</span
-      >
-      <span :title="t('header.today', '今日通联数量')"
-        ><b class="stat-light today"></b>{{ t('header.today', '今日') }} {{ todayLogs }}</span
-      >
+        <span class="stat-icon" aria-hidden="true">✨</span>
+        {{ totalLogs }}<small>/{{ todayLogs }}</small>
+      </span>
+      <span class="header-stat friend-stat" :title="t('header.friends', '好友数量')">
+        <span class="stat-icon" aria-hidden="true">👥</span>
+        {{ uniqueCallsigns }}
+      </span>
     </div>
 
     <div class="header-actions">
@@ -54,8 +45,6 @@
           {{ isDarkTheme ? t('header.dark', '深') : t('header.light', '浅') }}</span
         >
       </button>
-
-      <PublicSiteTools />
 
       <button
         class="tool-btn icon-btn"
@@ -89,7 +78,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import PublicSiteTools from './PublicSiteTools.vue'
 import { useLocale } from '../../composables/useLocale'
 
 const router = useRouter()
@@ -141,7 +129,6 @@ onMounted(applyTheme)
 }
 
 .brand-home,
-.connection-summary,
 .header-stats,
 .header-actions,
 .header-stats span,
@@ -153,6 +140,7 @@ onMounted(applyTheme)
 
 .brand-home {
   gap: 0.55rem;
+  min-width: 0;
   padding: 0;
   border: 0;
   color: var(--text-primary);
@@ -164,28 +152,19 @@ onMounted(applyTheme)
   cursor: pointer;
 }
 
+.brand-home span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .header-logo {
   width: 2.25rem;
   height: 2.25rem;
   border: 1px solid var(--color-primary);
   border-radius: 7px;
+  flex-shrink: 0;
 }
 
-.connection-summary {
-  min-width: 0;
-  gap: 0.55rem;
-}
-
-.connection-summary strong {
-  overflow: hidden;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.status-light,
-.stat-light,
 .voice-dot {
   width: 0.5rem;
   height: 0.5rem;
@@ -193,34 +172,28 @@ onMounted(applyTheme)
   border-radius: 50%;
 }
 
-.status-light {
-  background: var(--color-success);
-  box-shadow: 0 0 0 4px var(--surface-success);
-}
-
 .header-stats {
   gap: 0.55rem;
 }
 
-.header-stats span {
-  gap: 0.28rem;
+.header-stat {
+  gap: 0.18rem;
   color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 650;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
-.stat-star {
-  color: #f6b925;
-  font-size: 0.92rem;
+.header-stat small {
+  color: var(--text-secondary);
+  font-size: 0.76em;
+  font-weight: 800;
 }
 
-.stat-light.friend {
-  background: #45b6ff;
-}
-
-.stat-light.today {
-  background: #65d47e;
+.stat-icon {
+  font-size: 0.8rem;
+  line-height: 1;
 }
 
 .header-actions {
@@ -271,6 +244,15 @@ onMounted(applyTheme)
   cursor: pointer;
 }
 
+.theme-btn {
+  width: 2.25rem;
+  padding: 0;
+}
+
+.theme-btn span:last-child {
+  display: none;
+}
+
 .tool-btn:hover,
 .brand-home:hover {
   color: var(--color-primary);
@@ -297,13 +279,11 @@ onMounted(applyTheme)
     padding-inline: 0.55rem;
   }
 
-  .brand-home,
-  .connection-summary {
+  .brand-home {
     gap: 0.35rem;
   }
 
-  .brand-home,
-  .connection-summary strong {
+  .brand-home {
     font-size: 0.82rem;
   }
 
@@ -311,7 +291,7 @@ onMounted(applyTheme)
     gap: 0.3rem;
   }
 
-  .header-stats span {
+  .header-stat {
     font-size: 0.68rem;
   }
 
@@ -327,23 +307,39 @@ onMounted(applyTheme)
 @media (max-width: 768px) {
   .header {
     min-height: 3.4rem;
-    padding: 0.5rem 0.75rem;
+    gap: 0.45rem;
+    padding: 0.5rem 0.55rem;
   }
 
-  .brand-home span,
-  .connection-summary,
-  .header-stats,
+  .brand-home {
+    flex: 1 1 7.2rem;
+    max-width: 10.2rem;
+    gap: 0.45rem;
+    font-size: 0.9rem;
+  }
+
+  .header-stats {
+    min-width: 0;
+    gap: 0.35rem;
+  }
+
+  .header-stat {
+    font-size: 0.82rem;
+  }
+
+  .header-actions {
+    gap: 0.35rem;
+  }
+
   .voice-select-wrap {
-    display: none;
+    width: 6.45rem;
+    height: 2.05rem;
+    padding-left: 0.4rem;
   }
 
-  .theme-btn {
-    width: 2.25rem;
-    padding: 0;
-  }
-
-  .theme-btn span:last-child {
-    display: none;
+  .voice-select-wrap select {
+    width: 4.95rem;
+    font-size: 0.72rem;
   }
 
   .header-logo {

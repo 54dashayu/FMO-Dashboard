@@ -280,8 +280,8 @@ curl -sS --max-time 15 https://fmo.bh1jss.net/v2/ | rg -o '/v2/assets/index-[^"]
 
 最近一次远端部署资源：
 
-- `/v2/assets/index-CnlwpHjM.js`
-- `/v2/assets/index-CKHvckbF.css`
+- `/v2/assets/index-CPt7Ve8Z.js`
+- `/v2/assets/index-DXblyDMy.css`
 
 验证过远端 JS 内包含：
 
@@ -296,7 +296,8 @@ Android V2.00 APK：
 - 本地文件：`release/android/FMO-Dashboard-Android-V2.00.apk`
 - VPS 文件：`/var/www/fmologs/downloads/FMO-Dashboard-Android-V2.00.apk`
 - 镜像文件：`/var/www/fmologs/dist/downloads/FMO-Dashboard-Android-V2.00.apk`
-- SHA256：`cc4453aa15da35a82f8dc3b755e0abb7bf5210833d226a8633ba41ce3e510b04`
+- Android manifest：`versionCode=20000`、`versionName=V2.00`
+- SHA256：`68f4dca7f72803f515e6be43b12f93abad9b20bb40989d1b7bd4a4e845b98a1f`
 - 包内已验证包含：
   - `Previous active`
   - `Next active`

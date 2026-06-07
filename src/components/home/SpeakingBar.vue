@@ -420,36 +420,36 @@ defineEmits(['click', 'toggle-audio', 'update-voice-mode'])
   line-height: 1;
 }
 
-:global(.native-ios) .speaking-bar {
+:global(.native-ios .speaking-bar) {
   padding: 0.4rem 0.75rem;
 }
 
-:global(.native-ios) .speaking-bar-content {
+:global(.native-ios .speaking-bar-content) {
   min-height: 2rem;
 }
 
-:global(.native-ios) .speaking-text {
+:global(.native-ios .speaking-text) {
   font-size: 1.1rem;
 }
 
-:global(.native-ios) .speaking-text strong {
+:global(.native-ios .speaking-text) strong {
   font-size: 1.3rem;
 }
 
-:global(.native-ios) .speaking-expand {
+:global(.native-ios .speaking-expand) {
   font-size: 0.9rem;
 }
 
-:global(.native-ios) .audio-toggle-btn {
+:global(.native-ios .audio-toggle-btn) {
   width: 32px;
   height: 32px;
 }
 
-:global(.native-ios) .audio-toggle-btn .audio-icon {
+:global(.native-ios .audio-toggle-btn) .audio-icon {
   font-size: 1rem;
 }
 
-:global(.native-ios) .voice-mode-select {
+:global(.native-ios .voice-mode-select) {
   max-width: 104px;
   font-size: 0.8rem;
 }

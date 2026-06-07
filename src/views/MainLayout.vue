@@ -1782,12 +1782,12 @@ provide('protocol', settings.protocol)
   fill: currentColor;
 }
 
-:global(.native-ios) .container {
+:global(.native-ios .container) {
   width: 100%;
   max-width: none;
 }
 
-:global(.native-ios) .content-area {
+:global(.native-ios .content-area) {
   overflow-x: hidden;
   padding: 0 0.5rem 0.5rem;
   min-height: 0;
@@ -1877,15 +1877,15 @@ provide('protocol', settings.protocol)
 }
 
 @media (min-width: 769px) and (orientation: landscape) {
-  :global(.native-ios) .content-area {
+  :global(.native-ios .content-area) {
     padding: 1rem;
   }
 
-  :global(.native-ios) .dashboard-route .content-area {
+  :global(.native-ios .dashboard-route) .content-area {
     padding: 0;
   }
 
-  :global(.native-ios) .mobile-nav {
+  :global(.native-ios .mobile-nav) {
     display: none;
   }
 }

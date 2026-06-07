@@ -1,5 +1,13 @@
 <template>
-  <div ref="resultSectionRef" class="result-section">
+  <div
+    ref="resultSectionRef"
+    class="result-section"
+    :class="{ dragging: isTableDragging }"
+    @pointerdown="handleTablePointerDown"
+    @pointermove="handleTablePointerMove"
+    @pointerup="handleTablePointerUp"
+    @pointerleave="handleTablePointerUp"
+  >
     <!-- 未加载数据：不显示表格，只显示空状态 -->
     <div v-if="!dbLoaded" class="empty-state standalone">
       <svg
@@ -196,11 +204,20 @@ const emit = defineEmits(['show-callsign-records', 'load-more'])
 const { t } = useLocale()
 
 function handleRowClick(row) {
+  if (suppressNextRowClick.value) {
+    suppressNextRowClick.value = false
+    return
+  }
   emit('show-callsign-records', { callsign: row.toCallsign, timestamp: row.timestamp })
 }
 
 const gridAddressMap = reactive({})
 const switchingRelay = ref('')
+const isTableDragging = ref(false)
+const suppressNextRowClick = ref(false)
+let tableDragStartX = 0
+let tableDragStartScrollLeft = 0
+let tableDragMoved = false
 
 async function handleRelaySwitch(relayName) {
   if (!relayName || switchingRelay.value) return
@@ -251,6 +268,39 @@ watch(() => props.queryResult, loadGridAddresses, { immediate: true, deep: true 
 const resultSectionRef = ref(null)
 const loadMoreRef = ref(null)
 let observer = null
+
+function canStartTableDrag(event) {
+  if (event.pointerType === 'touch') return false
+  if (!resultSectionRef.value) return false
+  if (event.target.closest('button, a, input, select, textarea, label')) return false
+  return resultSectionRef.value.scrollWidth > resultSectionRef.value.clientWidth
+}
+
+function handleTablePointerDown(event) {
+  if (!canStartTableDrag(event)) return
+  isTableDragging.value = true
+  tableDragMoved = false
+  tableDragStartX = event.clientX
+  tableDragStartScrollLeft = resultSectionRef.value.scrollLeft
+  resultSectionRef.value.setPointerCapture?.(event.pointerId)
+}
+
+function handleTablePointerMove(event) {
+  if (!isTableDragging.value || !resultSectionRef.value) return
+  const deltaX = event.clientX - tableDragStartX
+  if (Math.abs(deltaX) > 4) {
+    tableDragMoved = true
+    suppressNextRowClick.value = true
+  }
+  resultSectionRef.value.scrollLeft = tableDragStartScrollLeft - deltaX
+}
+
+function handleTablePointerUp(event) {
+  if (!isTableDragging.value) return
+  isTableDragging.value = false
+  resultSectionRef.value?.releasePointerCapture?.(event.pointerId)
+  if (!tableDragMoved) suppressNextRowClick.value = false
+}
 
 function isMobile() {
   return window.innerWidth <= 768
@@ -327,11 +377,23 @@ function formatTimePart(dateTimeStr) {
 .result-section {
   margin-top: 1rem;
   flex: 1;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  touch-action: pan-x pan-y;
+  scrollbar-gutter: stable;
+}
+
+.result-section.dragging {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .data-table {
   width: 100%;
+  min-width: 860px;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.9rem;
@@ -719,10 +781,12 @@ function formatTimePart(dateTimeStr) {
 @media (max-width: 768px) {
   .result-section {
     margin-top: 0.5rem;
-    overflow: visible;
+    overflow-x: auto;
+    overflow-y: visible;
   }
 
   .data-table {
+    min-width: 560px;
     font-size: 0.8rem;
   }
 

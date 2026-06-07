@@ -2039,6 +2039,49 @@ async function handleVoiceTest() {
 
 /* 移动端优化 */
 @media (max-width: 768px) {
+  :global(.native-ios .settings-view) {
+    width: 100vw;
+    max-width: 100vw;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    overflow-x: hidden;
+  }
+
+  :global(.native-ios .settings-content) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  :global(.native-ios .dialog-overlay) {
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+  }
+
+  :global(.native-ios .dialog) {
+    width: 100%;
+    max-width: calc(100vw - 1.5rem);
+  }
+
+  :global(.native-ios .dialog-body),
+  :global(.native-ios .dialog-footer) {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  :global(.native-ios .form-row) {
+    min-width: 0;
+  }
+
+  :global(.native-ios .form-input-flex) {
+    width: 100%;
+    min-width: 0;
+  }
+
   .text-desktop {
     display: none;
   }
