@@ -1,6 +1,6 @@
 # FMO 仪表盘 V2 Web 版交接文档
 
-更新时间：2026-06-06
+更新时间：2026-06-08
 
 本文用于把当前会话中完成的 V2 Web 版结果交付给后续「V2.0 Android / iOS」会话。新会话请先阅读本文，再阅读项目根目录 `AGENTS.md`。
 
@@ -10,8 +10,17 @@ Web V2 版已基本封版，当前线上地址：
 
 - `https://fmo.bh1jss.net/v2/`
 - Dashboard：`https://fmo.bh1jss.net/v2/dashboard`
+- Android V2.00 APK：`https://fmo.bh1jss.net/downloads/FMO-Dashboard-Android-V2.00.apk`
+- Android V2.00 SHA256：`https://fmo.bh1jss.net/downloads/SHA256SUMS-android-V2.00.txt`
 
 V2 部署在 VPS 的独立路径 `/v2/`，没有覆盖旧版 `/stats/` 统计页，也没有替换站点根目录旧内容。
+
+当前 Git 基线：
+
+- 分支：`main`
+- 最新提交：`37b3210 Localize active server switcher`
+- 该提交已推送到 GitHub。
+- 工作区仍有 iOS 接手相关未提交改动，见本文后面的「iOS 会话接手状态」。
 
 ## 已完成的 Web V2 重点
 
@@ -113,6 +122,27 @@ Dashboard 右侧收藏中继列表已改为更接近 V1 的列表风格：
   - `No location`
 - 刷新提示压缩为：
   - `Refresh {time}`
+- 面向用户的“中继”英文统一改为 `Server`，不再使用 `Relay`。
+- “上个 / 下个活跃中继”弹层英文为两行按钮：
+  - `Previous active` / `server`
+  - `Next active` / `server`
+  中文仍保持 `上个活跃中继`、`下个活跃中继`。
+
+### 6.1 最近活跃服务器切换
+
+移动版顶部不再放大块“正在通联 / 最近发言”重复区域。
+
+当前方案：
+
+- 顶部保留品牌、通联数量、好友数量、播报、主题、语言、设置等状态入口。
+- “上个 / 下个活跃中继”入口放在 Dashboard 第一屏的“频率 / 模式”卡片。
+- 点击“频率 / 模式”卡片呼出一个小型浮层。
+- 浮层提供两个按钮：
+  - `上个活跃中继`
+  - `下个活跃中继`
+- 英文界面按钮为两行，避免手机窄屏撑开。
+- 切换逻辑从最近发言历史中提取活跃服务器列表，按最近时间去重排序，并调用现有 `switchStationByRelayName`。
+- 宽屏仍保留 Web V2 桌面版信息布局，不强行套用手机版。
 
 ### 7. 主题与全局顶部
 
@@ -126,15 +156,15 @@ Dashboard 右侧收藏中继列表已改为更接近 V1 的列表风格：
 
 公网部署时右上角保留：
 
-- `下载 1.0`
+- 下载入口
 - 微信群按钮
 
-下载弹窗提供稳定版 1.0：
+当前下载弹窗面向 V2 移动版：
 
-- Windows EXE
-- Windows ZIP
-- Android APK
+- Android APK V2.00
 - iOS App Store
+
+不要再放 PC 版下载链接。
 
 iOS 下载地址：
 
@@ -250,16 +280,30 @@ curl -sS --max-time 15 https://fmo.bh1jss.net/v2/ | rg -o '/v2/assets/index-[^"]
 
 最近一次远端部署资源：
 
-- `/v2/assets/index-x5aH1Dvb.js`
-- `/v2/assets/index-Bbe1WLtl.css`
+- `/v2/assets/index-dbLtMKIR.js`
+- `/v2/assets/index-BX6sIKL4.css`
 
 验证过远端 JS 内包含：
 
 - `Standing By`
-- `FMO Dashboard contributed by BH1JSS`
-- `External access. Privacy.`
-- `Open source`
-- `Share freely`
+- `Previous active`
+- `Next active`
+- `Recent active server`
+- `Server list`
+
+Android V2.00 APK：
+
+- 本地文件：`release/android/FMO-Dashboard-Android-V2.00.apk`
+- VPS 文件：`/var/www/fmologs/downloads/FMO-Dashboard-Android-V2.00.apk`
+- 镜像文件：`/var/www/fmologs/dist/downloads/FMO-Dashboard-Android-V2.00.apk`
+- SHA256：`e92aaeab55001123c97deffc4a0bdbc41262b91a432b7dd07bbe269a39fb2e84`
+- 包内已验证包含：
+  - `Previous active`
+  - `Next active`
+  - `Server`
+  - `server`
+  - `上个活跃中继`
+  - `下个活跃中继`
 
 ## 验证状态
 
@@ -269,6 +313,7 @@ curl -sS --max-time 15 https://fmo.bh1jss.net/v2/ | rg -o '/v2/assets/index-[^"]
 npm run lint
 npm run typecheck
 npm run build -- --base=/v2/
+ANDROID_HOME=... ANDROID_SDK_ROOT=... JAVA_HOME=... bash scripts/build-android-apk.sh --debug
 ```
 
 结果：
@@ -276,6 +321,7 @@ npm run build -- --base=/v2/
 - `lint`：通过，但保留 17 个历史 warning。
 - `typecheck`：通过。
 - `build --base=/v2/`：通过。
+- Android debug APK：通过。
 
 这些 warning 是既有问题，不是本轮新增阻塞：
 
@@ -432,6 +478,42 @@ iOS 主要处理：
 - TestFlight / App Store 包。
 
 iOS 当前已有 App Store 地址用于 1.0 下载，不代表 V2 已发布。
+
+## iOS 会话接手状态
+
+当前 Android/Web V2.00 已发布，iOS 会话应从同一 Web V2 基线继续，不要回滚最近的 Dashboard、语言、Server 文案和活跃服务器切换改动。
+
+当前工作区仍有 iOS 相关未提交改动：
+
+- `ios/App/App/AppDelegate.swift`
+  - `applicationDidBecomeActive` 中调用 `configureAudioSession()`，用于 App 回到前台后恢复音频会话。
+- `ios/App/App/Info.plist`
+  - 增加 `NSAppTransportSecurity`：
+    - `NSAllowsArbitraryLoadsInWebContent`
+    - `NSAllowsLocalNetworking`
+  - 用于 WKWebView、本地网络、FMO 局域网地址访问验证。
+- `src/views/SettingsView.vue`
+  - 增加 iOS 移动端设置页宽度、弹窗、输入框的 `overflow-x` 和 `max-width` 约束。
+
+这些改动尚未提交，建议 iOS 会话先审阅并真机/模拟器验证后再决定提交。
+
+iOS 会话建议优先回归：
+
+1. `npm run ios:sync` 是否能把当前 Web V2 正确同步到 iOS 工程。
+2. iPhone 竖屏 Dashboard：
+   - 顶部 `✨166/5`、好友图标和数量是否显示完整。
+   - “频率 / 模式”卡片点击是否能呼出上个/下个活跃服务器浮层。
+   - 英文浮层按钮是否两行显示，不溢出。
+3. 设置页：
+   - 添加/编辑 FMO 地址弹窗不横向撑开。
+   - 局域网地址、DDNS、`ws://`、`wss://` 都能保存并尝试连接。
+4. 语音播报：
+   - 语音播报开关存在。
+   - App 回到前台后仍能播报。
+   - 静音开关和系统语音不可用时的表现要记录。
+5. iOS 安全策略：
+   - WKWebView 是否允许访问 `fmo.local`、局域网 IP、DDNS。
+   - ATS 变更是否足够，是否需要更细的 domain exception。
 
 ### 4. 车机版建议
 
