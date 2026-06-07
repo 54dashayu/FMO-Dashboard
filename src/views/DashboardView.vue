@@ -114,7 +114,13 @@
           :disabled="recentRelayBusy"
           @click="switchRecentRelay('prev')"
         >
-          上个活跃中继
+          <span
+            v-for="line in t('dashboard.prevActiveRelay', '上个活跃中继').split('\n')"
+            :key="line"
+            class="recent-relay-action-line"
+          >
+            {{ line }}
+          </span>
         </button>
         <button
           type="button"
@@ -122,7 +128,13 @@
           :disabled="recentRelayBusy"
           @click="switchRecentRelay('next')"
         >
-          下个活跃中继
+          <span
+            v-for="line in t('dashboard.nextActiveRelay', '下个活跃中继').split('\n')"
+            :key="line"
+            class="recent-relay-action-line"
+          >
+            {{ line }}
+          </span>
         </button>
       </section>
     </div>
@@ -2869,6 +2881,10 @@ onUnmounted(() => {
 }
 
 .recent-relay-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
   min-height: 3rem;
   border: 0;
   border-radius: 7px;
@@ -2877,6 +2893,10 @@ onUnmounted(() => {
   font-size: 0.96rem;
   font-weight: 800;
   letter-spacing: 0;
+}
+
+.recent-relay-action-line {
+  display: block;
 }
 
 .recent-relay-action:active:not(:disabled) {
@@ -2904,7 +2924,7 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  :global(.native-ios) .recent-relay-switcher {
+  :global(.native-ios .recent-relay-switcher) {
     width: min(100%, 286px);
     gap: 10px;
     padding: 10px;
@@ -2912,7 +2932,7 @@ onUnmounted(() => {
     text-size-adjust: 100%;
   }
 
-  :global(.native-ios) .recent-relay-action {
+  :global(.native-ios .recent-relay-action) {
     min-height: 40px;
     padding: 0 10px;
     font-size: 14px;
