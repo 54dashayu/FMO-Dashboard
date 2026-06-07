@@ -53,9 +53,6 @@ public class FmoSystemUiPlugin extends Plugin {
                 JSObject data = new JSObject();
                 int statusBarDp = pxToDp(insets.getInsets(WindowInsetsCompat.Type.statusBars()).top);
                 int navBarDp = pxToDp(insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom);
-                // bottom 需要包含 top，因为 #app 的 padding-top 已经将整体下移，
-                // 若不补偿，100dvh 容器会把底部导航栏挤出可见区域。
-                int bottom = statusBarDp + navBarDp;
                 int left = pxToDp(Math.max(
                     insets.getInsets(WindowInsetsCompat.Type.systemBars()).left,
                     insets.getInsets(WindowInsetsCompat.Type.displayCutout()).left
@@ -65,11 +62,10 @@ public class FmoSystemUiPlugin extends Plugin {
                     insets.getInsets(WindowInsetsCompat.Type.displayCutout()).right
                 ));
                 data.put("top", statusBarDp);
-                data.put("bottom", bottom);
+                data.put("bottom", navBarDp);
                 data.put("left", left);
                 data.put("right", right);
-                Log.i(TAG, "safeAreaChanged top=" + statusBarDp + " bottom=" + bottom
-                    + " (statusBar=" + statusBarDp + " + navBar=" + navBarDp + ")"
+                Log.i(TAG, "safeAreaChanged top=" + statusBarDp + " bottom=" + navBarDp
                     + " left=" + left + " right=" + right);
                 notifyListeners("safeAreaChanged", data);
                 return insets;
@@ -95,9 +91,8 @@ public class FmoSystemUiPlugin extends Plugin {
             if (insets != null) {
                 int statusBarDp = pxToDp(insets.getInsets(WindowInsets.Type.statusBars()).top);
                 int navBarDp = pxToDp(insets.getInsets(WindowInsets.Type.navigationBars()).bottom);
-                // bottom 包含 top 补偿：padding-top 已下移内容，bottom 需同步增大
                 result.put("top", statusBarDp);
-                result.put("bottom", statusBarDp + navBarDp);
+                result.put("bottom", navBarDp);
                 result.put("left", pxToDp(Math.max(
                     insets.getInsets(WindowInsets.Type.systemBars()).left,
                     insets.getInsets(WindowInsets.Type.displayCutout()).left
@@ -109,14 +104,14 @@ public class FmoSystemUiPlugin extends Plugin {
             } else {
                 // 尚未完成 layout 时的估算值（dp）
                 result.put("top", 36);
-                result.put("bottom", 84);
+                result.put("bottom", 48);
                 result.put("left", 0);
                 result.put("right", 0);
             }
         } catch (Exception e) {
             Log.w(TAG, "getSafeAreaInsets failed: " + e.getMessage());
             result.put("top", 36);
-            result.put("bottom", 84);
+            result.put("bottom", 48);
             result.put("left", 0);
             result.put("right", 0);
         }

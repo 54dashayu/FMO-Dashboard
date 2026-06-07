@@ -32,7 +32,7 @@ export async function applySafeAreaInsets(): Promise<void> {
     setCssVariables(insets)
   } catch (e) {
     console.warn('[FmoSystemUi] getSafeAreaInsets failed, using fallback:', e)
-    setCssVariables({ top: 36, bottom: 84, left: 0, right: 0 })
+    setCssVariables({ top: 36, bottom: 48, left: 0, right: 0 })
   }
 
   // 监听动态变化（手势/三键导航切换、折叠屏展开/折叠）

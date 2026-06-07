@@ -4,14 +4,21 @@
       <div class="dashboard-brand">
         <img src="/app-icon.png" alt="" class="dashboard-brand-mark" />
         <strong>{{ t('app.name', 'FMO 仪表盘') }}</strong>
+        <div class="mobile-command-stats" aria-label="移动端统计">
+          <span class="command-stat total-stat" :title="t('header.total', '总通联数量')">
+            <span class="stat-star" aria-hidden="true">★</span>
+            {{ totalLogs || totalContactCount }}
+          </span>
+          <span class="command-stat friend-stat" :title="t('header.friends', '好友数量')">
+            <span class="stat-light" aria-hidden="true"></span>
+            {{ uniqueCallsigns }}
+          </span>
+          <span class="command-stat today-stat" :title="t('header.today', '今日通联数量')">
+            <span class="stat-light" aria-hidden="true"></span>
+            {{ todayLogs || todayContactCount }}
+          </span>
+        </div>
       </div>
-      <button
-        type="button"
-        class="recent-relay-command"
-        :title="recentRelayCommandTitle"
-        :aria-label="t('dashboard.recentActiveRelay', '最近活跃中继')"
-        @click="showRecentRelaySwitcher = true"
-      ></button>
       <div class="connection-strip">
         <span :class="['status-dot', liveStatusKind || 'ok']"></span>
         <div class="connection-copy">
@@ -221,10 +228,15 @@
               <small v-if="currentStation?.uid">#{{ currentStation.uid }}</small>
             </strong>
           </button>
-          <div>
+          <button
+            type="button"
+            class="contact-detail-card frequency-detail-card"
+            :title="recentRelayCommandTitle"
+            @click="showRecentRelaySwitcher = true"
+          >
             <span>{{ t('dashboard.frequency', '频率 / 模式') }}</span>
             <strong>{{ currentFrequencyMode }}</strong>
-          </div>
+          </button>
         </div>
 
         <section class="mobile-previous-card">
@@ -793,12 +805,34 @@ const recentActiveRelayName = computed(() => {
   return getSpeakingRelayName(latestRelayRecord)
 })
 
+const recentActiveRelayNames = computed(() => {
+  const names = []
+  const seen = new Set()
+  const recordsByTime = [...speakingHistory.value].sort((a, b) => {
+    const aTime = a.endTime || a.startTime || 0
+    const bTime = b.endTime || b.startTime || 0
+    return bTime - aTime
+  })
+
+  for (const item of recordsByTime) {
+    const name = getSpeakingRelayName(item)
+    const key = normalizeRelayName(name)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    names.push(name)
+  }
+
+  return names
+})
+
 const recentRelayControlName = computed(() => {
   return currentStation.value?.name || recentActiveRelayName.value || ''
 })
 
 const recentRelayBusy = computed(() => {
-  return props.stationBusy || !props.stationConnected
+  return (
+    props.stationBusy || Boolean(switchingRelay.value) || recentActiveRelayNames.value.length === 0
+  )
 })
 
 const recentRelayCommandTitle = computed(() => {
@@ -1780,7 +1814,7 @@ watch(
 )
 
 async function switchRelay(relayName) {
-  if (!relayName || switchingRelay.value) return
+  if (!relayName || switchingRelay.value) return false
   switchingRelay.value = relayName
 
   try {
@@ -1795,8 +1829,10 @@ async function switchRelay(relayName) {
     updateCurrentStationSnapshot(current || station)
     refreshSpeakingSnapshot()
     toast.success(`已切换到：${current?.name || station.name}`)
+    return true
   } catch (err) {
     toast.error(err.message || '切换中继失败')
+    return false
   } finally {
     switchingRelay.value = ''
   }
@@ -1808,9 +1844,27 @@ function getSpeakingRelayName(speakingRecord) {
   return speakingRecord.serverName || matchedLog?.relayName || ''
 }
 
-function switchRecentRelay(direction) {
+async function switchRecentRelay(direction) {
   if (recentRelayBusy.value) return
-  emit(direction === 'prev' ? 'station-prev' : 'station-next')
+
+  const names = recentActiveRelayNames.value
+  if (names.length === 0) {
+    toast.warning('暂无最近活跃中继')
+    return
+  }
+
+  const currentKey = normalizeRelayName(currentStation.value?.name || recentActiveRelayName.value)
+  const currentIndex = names.findIndex((name) => normalizeRelayName(name) === currentKey)
+  let nextIndex = 0
+
+  if (currentIndex >= 0) {
+    nextIndex = direction === 'prev' ? currentIndex + 1 : currentIndex - 1
+    if (nextIndex < 0) nextIndex = names.length - 1
+    if (nextIndex >= names.length) nextIndex = 0
+  }
+
+  const switched = await switchRelay(names[nextIndex])
+  if (switched) showRecentRelaySwitcher.value = false
 }
 
 onMounted(() => {
@@ -2669,21 +2723,8 @@ onUnmounted(() => {
   font-size: 0.82rem;
 }
 
-.recent-relay-command {
-  display: none;
-  min-width: 0;
-  height: 2.25rem;
-  border: 0;
-  color: var(--color-primary);
-  background: transparent;
-  cursor: pointer;
-}
-
-.recent-relay-command:hover {
-  background: transparent;
-}
-
 .command-stats,
+.mobile-command-stats,
 .command-tools {
   display: flex;
   align-items: center;
@@ -2691,6 +2732,7 @@ onUnmounted(() => {
 }
 
 .command-stats span,
+.mobile-command-stats span,
 .command-address {
   color: var(--text-secondary);
   font-size: 0.82rem;
@@ -2702,6 +2744,10 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+}
+
+.mobile-command-stats {
+  display: none;
 }
 
 .stat-star {
@@ -3072,6 +3118,18 @@ onUnmounted(() => {
   background: var(--surface-primary);
 }
 
+.frequency-detail-card {
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.frequency-detail-card:hover {
+  border-color: var(--color-primary);
+  background: var(--surface-accent);
+}
+
 .contact-details span {
   display: block;
   color: var(--text-tertiary);
@@ -3395,7 +3453,6 @@ onUnmounted(() => {
   }
 
   .dashboard-brand,
-  .recent-relay-command,
   .connection-strip,
   .command-stats,
   .command-tools {
@@ -3409,11 +3466,6 @@ onUnmounted(() => {
 
   .command-stats span {
     font-size: 0.72rem;
-  }
-
-  .recent-relay-command {
-    min-width: 7.8rem;
-    padding: 0 0.5rem;
   }
 
   .command-tool-wide {
@@ -3457,6 +3509,23 @@ onUnmounted(() => {
     text-overflow: ellipsis;
   }
 
+  .mobile-command-stats {
+    display: flex;
+    gap: 0.38rem;
+    margin-left: 0.1rem;
+  }
+
+  .mobile-command-stats span {
+    gap: 0.18rem;
+    font-size: 0.7rem;
+  }
+
+  .mobile-command-stats .stat-light {
+    width: 0.42rem;
+    height: 0.42rem;
+    box-shadow: none;
+  }
+
   .dashboard-brand-mark {
     width: 2.35rem;
     height: 2.35rem;
@@ -3464,12 +3533,6 @@ onUnmounted(() => {
 
   .connection-strip {
     display: none;
-  }
-
-  .recent-relay-command {
-    display: grid;
-    width: 100%;
-    height: 2.25rem;
   }
 
   .command-stats,
@@ -3569,6 +3632,11 @@ onUnmounted(() => {
   .contact-detail-card {
     min-height: 3.3rem;
     padding: 0.5rem 0.6rem;
+  }
+
+  .frequency-detail-card {
+    border-color: color-mix(in srgb, var(--color-primary) 62%, var(--border-light));
+    background: color-mix(in srgb, var(--surface-accent) 58%, transparent);
   }
 
   .contact-details strong {
@@ -3724,6 +3792,15 @@ onUnmounted(() => {
     display: none;
   }
 
+  .mobile-command-stats {
+    gap: 0.32rem;
+    margin-left: 0;
+  }
+
+  .mobile-command-stats span {
+    font-size: 0.68rem;
+  }
+
   .dashboard-brand-mark,
   .command-tool {
     width: 2.05rem;
@@ -3732,10 +3809,6 @@ onUnmounted(() => {
 
   .command-tools {
     gap: 0.25rem;
-  }
-
-  .recent-relay-command {
-    height: 2.05rem;
   }
 
   .recent-relay-switcher {
