@@ -3,7 +3,7 @@
     <button
       class="public-tool-btn download-tool-btn"
       type="button"
-      :title="t('public.download', '下载 1.0')"
+      :title="t('public.download', '下载 V2.00')"
       :aria-label="t('public.download', '下载')"
       @click="showDownloads = true"
     >
@@ -99,25 +99,8 @@ const { t } = useLocale()
 const showWechat = ref(false)
 const showDownloads = ref(false)
 const isPublicVps = window.location.hostname === 'fmo.bh1jss.net'
-const releaseBase = 'https://github.com/54dashayu/FMO-Dashboard/releases/download/v1.0.0'
 const vpsDownloadBase = 'https://fmo.bh1jss.net/downloads'
 const downloads = [
-  {
-    icon: 'WIN',
-    titleKey: 'public.windowsExe',
-    title: 'Windows 便携版 EXE',
-    hintKey: 'public.windowsExeHint',
-    hint: '推荐下载，下载后直接运行。',
-    url: `${releaseBase}/FMO-Dashboard-Windows-Portable-v1.0.0.exe`
-  },
-  {
-    icon: 'ZIP',
-    titleKey: 'public.windowsZip',
-    title: 'Windows 便携版 ZIP',
-    hintKey: 'public.windowsZipHint',
-    hint: '解压后运行，适合 EXE 下载被拦截时使用。',
-    url: `${releaseBase}/FMO-Dashboard-Windows-Portable-v1.0.0.zip`
-  },
   {
     icon: 'APK',
     titleKey: 'public.androidApk',

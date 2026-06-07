@@ -2844,6 +2844,38 @@ onUnmounted(() => {
   opacity: 0.62;
 }
 
+:global(.native-android .recent-relay-switcher) {
+  width: min(100%, 286px);
+  gap: 10px;
+  padding: 10px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+:global(.native-android .recent-relay-action) {
+  min-height: 40px;
+  padding: 0 10px;
+  font-size: 14px;
+  line-height: 1.15;
+}
+
+@media (max-width: 768px) {
+  :global(.native-ios) .recent-relay-switcher {
+    width: min(100%, 286px);
+    gap: 10px;
+    padding: 10px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  :global(.native-ios) .recent-relay-action {
+    min-height: 40px;
+    padding: 0 10px;
+    font-size: 14px;
+    line-height: 1.15;
+  }
+}
+
 .command-refresh {
   min-height: 2.2rem;
   padding: 0 0.8rem;
@@ -3435,7 +3467,7 @@ onUnmounted(() => {
   }
 
   .recent-relay-command {
-    display: block;
+    display: grid;
     width: 100%;
     height: 2.25rem;
   }

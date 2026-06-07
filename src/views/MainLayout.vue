@@ -1876,6 +1876,20 @@ provide('protocol', settings.protocol)
   }
 }
 
+@media (min-width: 769px) and (orientation: landscape) {
+  :global(.native-ios) .content-area {
+    padding: 1rem;
+  }
+
+  :global(.native-ios) .dashboard-route .content-area {
+    padding: 0;
+  }
+
+  :global(.native-ios) .mobile-nav {
+    display: none;
+  }
+}
+
 /* 回到顶部按钮淡入淡出 */
 .fade-enter-active,
 .fade-leave-active {
