@@ -10,15 +10,26 @@
 
 ## 证书准备
 
-1. 在 Mac 上打开“钥匙串访问”，生成 Certificate Signing Request。
+1. 准备 Certificate Signing Request。
+   - 本仓库已提供一个本机生成好的 CSR：`~/Desktop/FMO-Dashboard-DeveloperIDApplication.csr`
+   - 私钥保存在 `build/macos-signing/DeveloperIDApplication.key`，不要上传或发给别人。
 2. 登录 Apple Developer，进入 Certificates, Identifiers & Profiles。
 3. 创建 `Developer ID Application` 证书并下载。
-4. 双击下载的 `.cer`，安装到钥匙串。
-5. 在“钥匙串访问”里展开该证书，右键私钥，导出为 `.p12`，并设置导出密码。
-6. 将 `.p12` 转为 base64：
+4. 使用脚本把下载的 `.cer` 转成 GitHub Secrets 需要的 `.p12` 和 base64 文本：
 
 ```bash
-openssl base64 -A -in DeveloperIDApplication.p12 -out DeveloperIDApplication.p12.base64.txt
+scripts/prepare-macos-signing-secrets.sh ~/Downloads/developerID_application.cer
+```
+
+脚本会输出两个 GitHub Secret 值：
+
+- `APPLE_CERTIFICATE_P12_BASE64`：复制 `build/macos-signing/DeveloperIDApplication.p12.base64.txt` 的完整内容。
+- `APPLE_CERTIFICATE_PASSWORD`：复制脚本输出的随机密码。
+
+也可以自己指定 `.p12` 密码：
+
+```bash
+scripts/prepare-macos-signing-secrets.sh ~/Downloads/developerID_application.cer 'your-p12-password'
 ```
 
 ## GitHub Secrets
