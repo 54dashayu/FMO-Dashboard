@@ -27,6 +27,13 @@ FMO 仪表盘是面向 FMO 用户的实时通联看板，基于 FmoLogs 数据�
 
 iPhone / iPad 用户可在 Apple App Store 搜索 `FMO Dashboard` 下载。
 
+### macOS
+
+- [FMO-Dashboard-macOS-Universal-v2.0.0.dmg](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-macOS-Universal-v2.0.0.dmg)
+- [SHA256SUMS-macos-v2.0.0.txt](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/SHA256SUMS-macos-v2.0.0.txt)
+
+macOS DMG 为 Universal 版本，同时支持 Apple Silicon 和 Intel Mac。当前测试包未配置 Apple Developer ID 签名和公证，首次打开时可能需要在 Finder 中右键选择“打开”。
+
 ### Android
 
 - [FMO-Dashboard-Android-V2.00.apk](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Android-V2.00.apk)
