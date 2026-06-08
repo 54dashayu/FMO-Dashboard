@@ -82,6 +82,16 @@ export function buildWebSocketUrl(host, protocol = 'ws', path = '/ws') {
   return `${wsProtocol}://${normalizedHost}${normalizedPath}`
 }
 
+export function isLocalMdnsHost(host) {
+  const normalizedHost = normalizeHost(host).replace(/:\d+$/, '').toLowerCase()
+  return normalizedHost === 'fmo.local' || normalizedHost.endsWith('.local')
+}
+
+export function getLocalMdnsTroubleshootingMessage(host) {
+  if (!isLocalMdnsHost(host)) return ''
+  return 'Windows 桌面版可能无法解析 fmo.local 这类 .local 地址。请在 FMO 设备或路由器里查看局域网 IP，例如 192.168.x.x，然后在地址里填写这个 IP。'
+}
+
 export function getBlockedInsecureWebSocketMessage(host, protocol = 'ws') {
   const normalizedProtocol = protocol === 'wss' || protocol === 'https' ? 'wss' : 'ws'
   if (

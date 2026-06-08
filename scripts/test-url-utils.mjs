@@ -3,7 +3,9 @@ import assert from 'node:assert/strict'
 import {
   buildWebSocketUrl,
   getEffectiveWebSocketProtocol,
+  getLocalMdnsTroubleshootingMessage,
   getProtocolFromAddress,
+  isLocalMdnsHost,
   isValidHostAddress,
   normalizeHost
 } from '../src/utils/urlUtils.js'
@@ -69,5 +71,10 @@ assert.equal(
   buildWebSocketUrl('https://fmo.example.net/events', 'wss', '/events'),
   'wss://fmo.example.net/events'
 )
+
+assert.equal(isLocalMdnsHost('fmo.local'), true)
+assert.equal(isLocalMdnsHost('my_fmo_gateway.local:40088'), true)
+assert.equal(isLocalMdnsHost('fmo.example.net'), false)
+assert.match(getLocalMdnsTroubleshootingMessage('ws://fmo.local/ws'), /局域网 IP/)
 
 console.log('urlUtils tests passed')

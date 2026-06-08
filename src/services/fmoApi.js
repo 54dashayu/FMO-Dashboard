@@ -1,11 +1,23 @@
-import { buildWebSocketUrl, isValidHostAddress, normalizeHost } from '../utils/urlUtils'
+import {
+  buildWebSocketUrl,
+  getLocalMdnsTroubleshootingMessage,
+  isValidHostAddress,
+  normalizeHost
+} from '../utils/urlUtils'
 
 function formatWebSocketCreateError(error, wsUrl) {
   const message = error?.message || String(error)
   if (/insecure WebSocket|loaded over HTTPS/i.test(message)) {
     return `当前页面被浏览器按 HTTPS 处理，不能直接连接 ${wsUrl}。请用 http://fmo.bh1jss.net/ 打开网页后再同步；如果浏览器自动跳到 HTTPS，请换用本地版、Android/Win64 版，或关闭浏览器的“始终使用安全连接”。`
   }
+  const mdnsMessage = getLocalMdnsTroubleshootingMessage(wsUrl)
+  if (mdnsMessage) return mdnsMessage
   return message || `WebSocket connection failed: ${wsUrl}`
+}
+
+function formatWebSocketConnectionError(wsUrl) {
+  const mdnsMessage = getLocalMdnsTroubleshootingMessage(wsUrl)
+  return mdnsMessage || `WebSocket connection failed: ${wsUrl}`
 }
 
 export class FmoApiClient {
@@ -56,7 +68,7 @@ export class FmoApiClient {
         this.connectPromise = null
         this.socket.close()
         this.socket = null
-        reject(new Error('WebSocket connection timeout'))
+        reject(new Error(formatWebSocketConnectionError(wsUrl)))
       }, 10000)
 
       this.socket.onopen = () => {
@@ -79,7 +91,7 @@ export class FmoApiClient {
         clearTimeout(connectTimeout)
         console.error('FMO WebSocket error:', error)
         this.connectPromise = null
-        reject(new Error(`WebSocket connection failed: ${wsUrl}`))
+        reject(new Error(formatWebSocketConnectionError(wsUrl)))
       }
 
       this.socket.onclose = () => {

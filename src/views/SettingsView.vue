@@ -406,7 +406,13 @@
 <script setup>
 import { ref, computed, onUnmounted, watch } from 'vue'
 import { Capacitor, registerPlugin } from '@capacitor/core'
-import { getProtocolFromAddress, isValidHostAddress, normalizeHost } from '../utils/urlUtils'
+import {
+  getLocalMdnsTroubleshootingMessage,
+  getProtocolFromAddress,
+  isLocalMdnsHost,
+  isValidHostAddress,
+  normalizeHost
+} from '../utils/urlUtils'
 import confirmDialog from '../composables/useConfirm'
 import { clearGridCache } from '../services/gridService'
 import { addDiagnosticLog } from '../services/diagnosticLog'
@@ -606,6 +612,10 @@ const isMobileDevice = computed(() => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 })
 
+const isTauriDesktop = computed(() => {
+  return Boolean(window.__TAURI_INTERNALS__ || window.__TAURI__)
+})
+
 // 同步按钮文本计算属性
 const getSyncDaysButtonText = computed(() => {
   if (props.syncing) {
@@ -695,6 +705,7 @@ const addressHostLabel = computed(() => {
 
 const addressHostPlaceholder = computed(() => {
   if (formData.value.addressType === 'ddns') return 'xxxx.ddns.xxx:40088'
+  if (isTauriDesktop.value) return '例如 192.168.31.146'
   return t('settings.localPlaceholder', '例如 192.168.31.146 或 fmo.local')
 })
 
@@ -704,6 +715,9 @@ const addressTypeHelpText = computed(() => {
       'settings.ddnsHelp',
       '填写动态域名和端口。鉴于某些浏览器会自动开启安全连接，建议在浏览器设置中关掉“一律使用安全连接”，并确认地址栏完整输入 http://fmo.bh1jss.net/。'
     )
+  }
+  if (isTauriDesktop.value) {
+    return 'Windows 桌面版建议填写 FMO 的局域网 IP。fmo.local 在部分 Windows 环境无法解析，会导致同步失败。'
   }
   return t(
     'settings.localHelp',
@@ -722,7 +736,7 @@ watch(
       }
       return
     }
-    if (!host) {
+    if (!host && !isTauriDesktop.value) {
       formData.value.host = 'fmo.local'
     }
   }
@@ -744,7 +758,7 @@ function showAddForm() {
   editingId.value = null
   formData.value = {
     name: '',
-    host: 'fmo.local',
+    host: isTauriDesktop.value ? '' : 'fmo.local',
     addressType: 'local',
     protocol: 'ws'
   }
@@ -783,6 +797,15 @@ async function submitAddressForm() {
 
   if (!isValidHostAddress(normalizedHost)) {
     formError.value = t('settings.invalidAddress', '请输入有效的IP地址或域名')
+    return
+  }
+
+  if (
+    isTauriDesktop.value &&
+    formData.value.addressType === 'local' &&
+    isLocalMdnsHost(normalizedHost)
+  ) {
+    formError.value = getLocalMdnsTroubleshootingMessage(normalizedHost)
     return
   }
 
