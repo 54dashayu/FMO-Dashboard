@@ -32,10 +32,11 @@ fi
 mkdir -p "$work_dir"
 openssl x509 -inform DER -in "$cert_path" -out "$pem_path"
 openssl pkcs12 -export \
+  -legacy \
   -inkey "$key_path" \
   -in "$pem_path" \
   -out "$p12_path" \
-  -password "pass:$password" \
+  -passout "pass:$password" \
   -name "Developer ID Application"
 openssl base64 -A -in "$p12_path" -out "$base64_path"
 chmod 600 "$key_path" "$p12_path" "$base64_path"
