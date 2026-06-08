@@ -11,6 +11,7 @@
 ## 说明
 
 - 这个包内置了 Windows 版 Node.js 运行时，目标电脑不需要安装开发环境。
+- `Portable-x64` 面向 Win10/Win11 64 位用户；`Portable-x86` 面向 32 位 Windows 用户；`Legacy-Win7-x86` 仅作为 Win7 旧系统兜底包。
 - `.exe` 版本是便携启动器，会自动准备运行目录并启动本地服务；它不是传统安装包，不需要安装向导。
 - 本机默认访问地址是 `http://127.0.0.1:5180/`，如果端口被占用，会自动尝试后面的端口。
 - 便携版默认允许同一局域网内的其他设备访问。通常手机浏览器可以打开 `http://电脑局域网IP:5180/` 访问，例如 `http://192.168.x.x:5180/`。
@@ -22,12 +23,12 @@
 ## 安全提示与校验
 
 - 便携版会启动本机 Web 服务并自动打开浏览器，这是正常行为。
-- 如果 `.exe` 启动器暂未代码签名，Windows SmartScreen 或部分杀毒软件可能提示未知发布者。
+- 正式发布的 `.exe` 启动器应当进行代码签名；未签名测试包可能触发 Windows SmartScreen 或部分杀毒软件的未知发布者提示。
 - 如果 `.exe` 被拦截，可下载 `.zip` 版本，解压后运行 `start-windows-hidden.vbs` 或 `start-windows.bat`。
 - 发布页会提供 SHA256 校验值。可在 PowerShell 中执行：
 
 ```powershell
-Get-FileHash .\FMO-Dashboard-Windows-Portable-v1.0.1.exe -Algorithm SHA256
+Get-FileHash .\FMO-Dashboard-Windows-Portable-x64-v2.0.0.exe -Algorithm SHA256
 ```
 
 校验值应与发布页提供的一致。

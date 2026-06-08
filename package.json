@@ -2,7 +2,7 @@
   "name": "fmo-dashboard",
   "private": true,
   "license": "MIT",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -28,7 +28,16 @@
     "android:deploy": "bash scripts/android-deploy.sh",
     "android:deploy:log": "bash scripts/android-deploy.sh --logcat",
     "win:portable": "bash scripts/build-windows-portable.sh",
-    "win:release": "bash scripts/build-windows-release.sh",
+    "win:portable:x64": "bash scripts/build-windows-portable-exe.sh --arch x64",
+    "win:portable:x86": "bash scripts/build-windows-portable-exe.sh --arch x86",
+    "win:legacy": "bash scripts/build-windows-portable-exe.sh --legacy --arch x86",
+    "win:desktop:x64": "bash scripts/build-windows-desktop.sh --arch x64",
+    "win:desktop:x86": "bash scripts/build-windows-desktop.sh --arch x86",
+    "win:desktop:arm64": "bash scripts/build-windows-desktop.sh --arch arm64",
+    "win:desktop:release": "bash scripts/build-windows-desktop-release.sh",
+    "win:portable:release": "bash scripts/build-windows-release.sh",
+    "win:release": "bash scripts/build-windows-desktop-release.sh",
+    "test:url": "node scripts/test-url-utils.mjs",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {

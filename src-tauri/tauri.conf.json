@@ -54,6 +54,10 @@
       "icons/StoreLogo.png"
     ],
     "windows": {
+      "webviewInstallMode": {
+        "type": "embedBootstrapper",
+        "silent": true
+      },
       "nsis": {
         "installerIcon": "icons/icon.ico",
         "languages": ["SimpChinese"],

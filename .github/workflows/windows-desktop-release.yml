@@ -1,0 +1,84 @@
+name: Windows Desktop Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      require_signing:
+        description: Require code signing certificate secrets
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build Win32 and Win64 desktop installers
+    runs-on: windows-latest
+    env:
+      WINDOWS_SIGN_CERT_P12_BASE64: ${{ secrets.WINDOWS_SIGN_CERT_P12_BASE64 }}
+      WINDOWS_SIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_SIGN_CERT_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc,i686-pc-windows-msvc
+
+      - name: Install dependencies
+        shell: bash
+        run: npm ci
+
+      - name: Prepare signing certificate
+        if: ${{ env.WINDOWS_SIGN_CERT_P12_BASE64 != '' }}
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP\codesign" | Out-Null
+          [IO.File]::WriteAllBytes(
+            "$env:RUNNER_TEMP\codesign\windows-codesign.p12",
+            [Convert]::FromBase64String("$env:WINDOWS_SIGN_CERT_P12_BASE64")
+          )
+
+      - name: Build signed desktop release
+        if: ${{ env.WINDOWS_SIGN_CERT_P12_BASE64 != '' }}
+        shell: bash
+        env:
+          WINDOWS_SIGN_CERT_P12: ${{ runner.temp }}\codesign\windows-codesign.p12
+        run: npm run win:release
+
+      - name: Build unsigned desktop release
+        if: ${{ env.WINDOWS_SIGN_CERT_P12_BASE64 == '' && (github.event_name == 'workflow_dispatch' && inputs.require_signing == 'false') }}
+        shell: bash
+        env:
+          REQUIRE_WINDOWS_SIGNING: '0'
+        run: npm run win:release
+
+      - name: Fail when signing is required but unavailable
+        if: ${{ env.WINDOWS_SIGN_CERT_P12_BASE64 == '' && (github.event_name != 'workflow_dispatch' || inputs.require_signing == 'true') }}
+        shell: bash
+        run: |
+          echo "WINDOWS_SIGN_CERT_P12_BASE64 is not configured, and signing is required." >&2
+          exit 1
+
+      - name: Upload Windows desktop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fmo-dashboard-windows-desktop
+          path: |
+            release/FMO-Dashboard-Windows-Desktop-x64-Setup-v*.exe
+            release/FMO-Dashboard-Windows-Desktop-x86-Setup-v*.exe
+            release/SHA256SUMS-windows-desktop-v*.txt
+          if-no-files-found: error

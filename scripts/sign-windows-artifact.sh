@@ -44,7 +44,27 @@ if command -v osslsigncode >/dev/null 2>&1; then
   exit 0
 fi
 
-echo "osslsigncode was not found; install it or sign on Windows with signtool.exe" >&2
+SIGNTOOL_BIN=""
+if command -v signtool.exe >/dev/null 2>&1; then
+  SIGNTOOL_BIN="signtool.exe"
+elif command -v signtool >/dev/null 2>&1; then
+  SIGNTOOL_BIN="signtool"
+fi
+
+if [[ -n "$SIGNTOOL_BIN" ]]; then
+  MSYS2_ARG_CONV_EXCL='*' "$SIGNTOOL_BIN" sign \
+    /f "$WINDOWS_SIGN_CERT_P12" \
+    /p "$WINDOWS_SIGN_CERT_PASSWORD" \
+    /fd SHA256 \
+    /tr "$TIMESTAMP_URL" \
+    /td SHA256 \
+    /d "FMO Dashboard" \
+    "$ARTIFACT"
+  echo "Signed with $SIGNTOOL_BIN: $ARTIFACT"
+  exit 0
+fi
+
+echo "osslsigncode or signtool.exe was not found" >&2
 echo "macOS example: brew install osslsigncode" >&2
 echo "Windows example: signtool sign /fd SHA256 /tr <timestamp-url> /td SHA256 /f cert.pfx artifact.exe" >&2
 exit 1

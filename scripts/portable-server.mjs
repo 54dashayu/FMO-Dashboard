@@ -6,7 +6,7 @@ import {
   unlinkSync,
   writeFileSync
 } from 'node:fs'
-import { createServer } from 'node:http'
+import { createServer, get } from 'node:http'
 import { networkInterfaces } from 'node:os'
 import { extname, join, normalize, resolve, sep } from 'node:path'
 import { spawn } from 'node:child_process'
@@ -84,8 +84,7 @@ async function openExistingInstance() {
     if (!port || !isProcessAlive(pid)) return false
 
     const healthUrl = `http://127.0.0.1:${port}/__health`
-    const response = await fetch(healthUrl, { signal: AbortSignal.timeout(1200) })
-    if (!response.ok) return false
+    if (!(await requestHealthCheck(healthUrl))) return false
 
     openBrowser(`http://127.0.0.1:${port}/`)
     console.log(`FMO仪表盘 is already running at http://127.0.0.1:${port}/`)
@@ -93,6 +92,21 @@ async function openExistingInstance() {
   } catch {
     return false
   }
+}
+
+function requestHealthCheck(url) {
+  return new Promise((resolveHealthCheck) => {
+    const request = get(url, (response) => {
+      response.resume()
+      resolveHealthCheck(response.statusCode >= 200 && response.statusCode < 300)
+    })
+
+    request.setTimeout(1200, () => {
+      request.destroy()
+      resolveHealthCheck(false)
+    })
+    request.on('error', () => resolveHealthCheck(false))
+  })
 }
 
 function getLanAddresses(port) {

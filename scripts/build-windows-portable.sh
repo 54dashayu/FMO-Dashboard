@@ -3,11 +3,51 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RELEASE_DIR="$ROOT_DIR/release"
-PACKAGE_NAME="FMO-Dashboard-Windows-Portable"
-PACKAGE_DIR="$RELEASE_DIR/$PACKAGE_NAME"
 APP_VERSION="$(node -p "require('./package.json').version")"
-NODE_VERSION="${NODE_VERSION:-v26.0.0}"
-NODE_ZIP="node-${NODE_VERSION}-win-x64.zip"
+WINDOWS_ARCH="${WINDOWS_ARCH:-x64}"
+WINDOWS_FLAVOR="${WINDOWS_FLAVOR:-Portable}"
+NODE_VERSION="${NODE_VERSION:-}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --arch)
+      WINDOWS_ARCH="${2:-}"
+      shift 2
+      ;;
+    --node-version)
+      NODE_VERSION="${2:-}"
+      shift 2
+      ;;
+    --legacy)
+      WINDOWS_FLAVOR="Legacy-Win7"
+      shift
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+case "$WINDOWS_ARCH" in
+  x64 | x86 | arm64) ;;
+  *)
+    echo "Unsupported WINDOWS_ARCH: $WINDOWS_ARCH (expected x64, x86, or arm64)" >&2
+    exit 1
+    ;;
+esac
+
+if [[ -z "$NODE_VERSION" ]]; then
+  if [[ "$WINDOWS_FLAVOR" == "Legacy-Win7" ]]; then
+    NODE_VERSION="v14.16.1"
+  else
+    NODE_VERSION="v22.22.3"
+  fi
+fi
+
+PACKAGE_NAME="FMO-Dashboard-Windows-$WINDOWS_FLAVOR-$WINDOWS_ARCH"
+PACKAGE_DIR="$RELEASE_DIR/$PACKAGE_NAME"
+NODE_ZIP="node-${NODE_VERSION}-win-${WINDOWS_ARCH}.zip"
 NODE_URL="https://nodejs.org/dist/${NODE_VERSION}/${NODE_ZIP}"
 NODE_CACHE="$RELEASE_DIR/$NODE_ZIP"
 
@@ -25,7 +65,7 @@ fi
 
 tmp_node_dir="$(mktemp -d)"
 unzip -q "$NODE_CACHE" -d "$tmp_node_dir"
-cp "$tmp_node_dir"/node-"$NODE_VERSION"-win-x64/node.exe "$PACKAGE_DIR/runtime/node.exe"
+cp "$tmp_node_dir"/node-"$NODE_VERSION"-win-"$WINDOWS_ARCH"/node.exe "$PACKAGE_DIR/runtime/node.exe"
 rm -rf "$tmp_node_dir"
 
 cp -R dist/. "$PACKAGE_DIR/app/"
@@ -40,6 +80,11 @@ cp scripts/PORTABLE_README.md "$PACKAGE_DIR/README.md"
   rm -f "$PACKAGE_NAME.zip"
   zip -qr "$PACKAGE_NAME.zip" "$PACKAGE_NAME"
   cp "$PACKAGE_NAME.zip" "$PACKAGE_NAME-v$APP_VERSION.zip"
+
+  if [[ "$WINDOWS_FLAVOR" == "Portable" && "$WINDOWS_ARCH" == "x64" ]]; then
+    cp "$PACKAGE_NAME.zip" "FMO-Dashboard-Windows-Portable.zip"
+    cp "$PACKAGE_NAME.zip" "FMO-Dashboard-Windows-Portable-v$APP_VERSION.zip"
+  fi
 )
 
 echo "Created: $RELEASE_DIR/$PACKAGE_NAME.zip"
