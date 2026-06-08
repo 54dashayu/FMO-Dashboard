@@ -95,6 +95,7 @@ npm run android:deploy
 ## 文档
 
 - [Windows 分发说明](WINDOWS_DISTRIBUTION.md)
+- [macOS 签名与公证说明](docs/macos-signing.md)
 - [项目交接文档](docs/project-handover.md)
 - [VPS 访问统计说明](docs/vps-stats.md)
 - [FMO 中继控制说明](doc/fmo-station-control.md)

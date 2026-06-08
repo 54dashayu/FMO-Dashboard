@@ -2,11 +2,22 @@ name: macOS Desktop Release
 
 on:
   workflow_dispatch:
+    inputs:
+      require_notarization:
+        description: Require Apple Developer ID signing and notarization secrets
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 jobs:
   build:
     name: Build universal macOS DMG
     runs-on: macos-latest
+    env:
+      HAS_APPLE_SIGNING: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' && secrets.APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
 
     steps:
       - name: Checkout
@@ -26,8 +37,40 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build universal DMG
+      - name: Build signed and notarized universal DMG
+        if: ${{ env.HAS_APPLE_SIGNING == 'true' }}
+        env:
+          CI: true
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_PROVIDER_SHORT_NAME: ${{ secrets.APPLE_PROVIDER_SHORT_NAME }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: npm run tauri:build -- --bundles dmg --target universal-apple-darwin
+
+      - name: Build unsigned universal DMG
+        if: ${{ env.HAS_APPLE_SIGNING != 'true' && (github.event_name == 'workflow_dispatch' && inputs.require_notarization == 'false') }}
+        env:
+          CI: true
+        run: npm run tauri:build -- --bundles dmg --target universal-apple-darwin
+
+      - name: Fail when notarization is required but unavailable
+        if: ${{ env.HAS_APPLE_SIGNING != 'true' && (github.event_name != 'workflow_dispatch' || inputs.require_notarization == 'true') }}
+        shell: bash
+        run: |
+          echo "Apple Developer ID signing/notarization secrets are not configured." >&2
+          echo "Required repository secrets:" >&2
+          echo "  APPLE_ID" >&2
+          echo "  APPLE_APP_SPECIFIC_PASSWORD" >&2
+          echo "  APPLE_TEAM_ID" >&2
+          echo "  APPLE_CERTIFICATE_P12_BASE64" >&2
+          echo "  APPLE_CERTIFICATE_PASSWORD" >&2
+          echo "Optional repository secrets:" >&2
+          echo "  APPLE_PROVIDER_SHORT_NAME" >&2
+          echo "  APPLE_SIGNING_IDENTITY" >&2
+          exit 1
 
       - name: Stage macOS artifacts
         shell: bash
