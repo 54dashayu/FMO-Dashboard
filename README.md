@@ -107,7 +107,7 @@ npm run android:deploy
 
 特别说明：本项目 V2 的大量整理、重构、跨平台适配、Windows 打包流程、Release 说明、VPS 下载页同步和 README 更新，都是在人工智能 Codex 的大力协助下完成的。Codex 参与了代码阅读、实现修改、构建验证、GitHub Actions 调试、发布资产上传和文档整理等工作，让一个个人维护项目可以更快完成 Web、Android、Windows 多平台发布。
 
-也感谢 FMO硬件BG5ESN，以及所有参与测试和提出建议的各位友台。很多细节来自实际使用中的反馈，包括移动端布局、Windows 连接问题、DDNS远程连接测试、Win32/Win64 兼容测试和 Win7 Legacy 简易包验证。
+也感谢 FMO硬件原作者BG5ESN，以及所有参与测试和提出建议的各位友台。很多细节来自实际使用中的反馈，包括移动端布局、Windows 连接问题、DDNS远程连接测试、Win32/Win64 兼容测试和 Win7 Legacy 简易包验证。
 
 ## 许可证
 
