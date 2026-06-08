@@ -4,7 +4,7 @@ FMO 仪表盘是面向 FMO 用户的实时通联看板，基于 FmoLogs 数据�
 
 项目当前以 V2 为主线，覆盖 Web、Android 和 Windows 桌面版。Windows 桌面版基于 Tauri 打包，不依赖外部浏览器，适合遇到浏览器自动 HTTPS、安全连接策略或环境兼容问题的用户。
 
-[Web V2](https://fmo.bh1jss.net/v2/) · [下载页](https://fmo.bh1jss.net/v2/) · [GitHub Release](https://github.com/54dashayu/FMO-Dashboard/releases/tag/v2.0.0) · [问题反馈](https://github.com/54dashayu/FMO-Dashboard/issues)
+[项目仓库](https://github.com/54dashayu/FMO-Dashboard) · [GitHub Release](https://github.com/54dashayu/FMO-Dashboard/releases/tag/v2.0.0) · [问题反馈](https://github.com/54dashayu/FMO-Dashboard/issues)
 
 ## 主要功能
 
@@ -19,9 +19,13 @@ FMO 仪表盘是面向 FMO 用户的实时通联看板，基于 FmoLogs 数据�
 
 ## 下载
 
-### Web
+安装包统一从 GitHub Release 下载：
 
-- [https://fmo.bh1jss.net/v2/](https://fmo.bh1jss.net/v2/)
+- [FMO 仪表盘 V2.0.0 Release](https://github.com/54dashayu/FMO-Dashboard/releases/tag/v2.0.0)
+
+### iOS
+
+iPhone / iPad 用户可在 Apple App Store 搜索 `FMO Dashboard` 下载。
 
 ### Android
 
