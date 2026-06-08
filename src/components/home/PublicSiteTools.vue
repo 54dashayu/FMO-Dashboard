@@ -102,6 +102,22 @@ const isPublicVps = window.location.hostname === 'fmo.bh1jss.net'
 const vpsDownloadBase = 'https://fmo.bh1jss.net/downloads'
 const downloads = [
   {
+    icon: 'Win64',
+    titleKey: 'public.windowsX64',
+    title: 'Windows 桌面版 Win64',
+    hintKey: 'public.windowsX64Hint',
+    hint: '推荐 Win10 / Win11 64 位用户下载，不依赖外部浏览器。',
+    url: `${vpsDownloadBase}/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.0.exe`
+  },
+  {
+    icon: 'Win32',
+    titleKey: 'public.windowsX86',
+    title: 'Windows 桌面版 Win32',
+    hintKey: 'public.windowsX86Hint',
+    hint: '32 位 Windows 或兼容备用版本，64 位系统也可运行。',
+    url: `${vpsDownloadBase}/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.0.exe`
+  },
+  {
     icon: 'APK',
     titleKey: 'public.androidApk',
     title: 'Android APK V2.00',
