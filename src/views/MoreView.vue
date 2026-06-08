@@ -66,7 +66,7 @@ function routeDescription(route) {
   padding: 1rem 1.25rem;
   background: var(--bg-card);
   border: 1px solid var(--border-light);
-  border-radius: 12px;
+  border-radius: 8px;
   text-decoration: none;
   color: var(--text-primary);
   transition: all 0.2s ease;
@@ -130,6 +130,7 @@ function routeDescription(route) {
 @media (max-width: 768px) {
   .more-view {
     padding: 1rem;
+    padding-bottom: calc(5rem + var(--safe-inset-bottom, env(safe-area-inset-bottom, 0px)));
   }
 
   .menu-list {

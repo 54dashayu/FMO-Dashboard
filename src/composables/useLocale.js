@@ -119,7 +119,8 @@ const messages = {
     'dashboard.recentActiveRelay': 'Recent active server',
     'dashboard.prevActiveRelay': 'Previous active\nserver',
     'dashboard.nextActiveRelay': 'Next active\nserver',
-    'dashboard.recent10': 'Recent 10',
+    'dashboard.recent10': 'Recent 20',
+    'dashboard.recent20': 'Recent 20',
     'dashboard.callsign': 'Callsign',
     'dashboard.time': 'Time',
     'dashboard.comment': 'Comment',
@@ -226,7 +227,7 @@ const messages = {
       'Logs and settings stay on user devices; the public web mainly hosts static pages.',
     'about.v2FirstScreen': 'Redesigned First Screen',
     'about.v2FirstScreenDesc':
-      'Current call, previous contact, favorite servers, and recent 10 contacts are presented together.',
+      'Current call, previous contact, favorite servers, and recent 20 contacts are presented together.',
     'about.v2QuickActions': 'Quick Actions First',
     'about.v2QuickActionsDesc':
       'Logs, friends, leaderboard, messages, settings, and FMO control are directly available from Dashboard.',

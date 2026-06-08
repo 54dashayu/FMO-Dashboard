@@ -312,10 +312,8 @@ onMounted(applyTheme)
   }
 
   .brand-home {
-    flex: 1 1 7.2rem;
-    max-width: 10.2rem;
-    gap: 0.45rem;
-    font-size: 0.9rem;
+    flex: 0 0 auto;
+    gap: 0;
   }
 
   .header-stats {
@@ -331,15 +329,9 @@ onMounted(applyTheme)
     gap: 0.35rem;
   }
 
+  .brand-home span,
   .voice-select-wrap {
-    width: 6.45rem;
-    height: 2.05rem;
-    padding-left: 0.4rem;
-  }
-
-  .voice-select-wrap select {
-    width: 4.95rem;
-    font-size: 0.72rem;
+    display: none;
   }
 
   .header-logo {

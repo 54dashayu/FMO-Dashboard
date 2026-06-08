@@ -84,11 +84,11 @@ Dashboard 右侧收藏中继列表已改为更接近 V1 的列表风格：
 - 保留“中继列表 / 搜索”入口。
 - 原先右侧底部的“当前 xxx #uid”提示已取消。
 
-### 5. 最近 10 个通联
+### 5. 最近 20 个通联
 
 最近通联区域已改为完整表格展示：
 
-- 标题简化为 `最近10个通联` / `Recent 10 contacts`。
+- 标题简化为 `最近20个通联` / `Recent 20`。
 - 表格行高压缩，桌面端更紧凑。
 - 表头字体和内容字体做了区分。
 - Dashboard 底部页脚不再覆盖表格。
@@ -213,7 +213,7 @@ App 图标已替换为压缩后的：
 后续移动端会话重点看这些文件：
 
 - `src/views/DashboardView.vue`
-  - Dashboard V2 首屏、当前呼叫、收藏中继、最近 10 个通联、外网安全提示。
+  - Dashboard V2 首屏、当前呼叫、收藏中继、最近 20 个通联、外网安全提示。
 - `src/views/MainLayout.vue`
   - 全局布局、页脚、移动端底部导航、非 Dashboard 页顶部逻辑。
 - `src/components/home/AppHeader.vue`
@@ -280,8 +280,8 @@ curl -sS --max-time 15 https://fmo.bh1jss.net/v2/ | rg -o '/v2/assets/index-[^"]
 
 最近一次远端部署资源：
 
-- `/v2/assets/index-CPt7Ve8Z.js`
-- `/v2/assets/index-DXblyDMy.css`
+- `/v2/assets/index-D3jvp3n-.js`
+- `/v2/assets/index-CXoS11be.css`
 
 验证过远端 JS 内包含：
 
@@ -297,7 +297,7 @@ Android V2.00 APK：
 - VPS 文件：`/var/www/fmologs/downloads/FMO-Dashboard-Android-V2.00.apk`
 - 镜像文件：`/var/www/fmologs/dist/downloads/FMO-Dashboard-Android-V2.00.apk`
 - Android manifest：`versionCode=20000`、`versionName=V2.00`
-- SHA256：`68f4dca7f72803f515e6be43b12f93abad9b20bb40989d1b7bd4a4e845b98a1f`
+- SHA256：`ffa53b485d7e1f96b1db7eba239b534408eb4d50e96ee5769b99f3633fc616dd`
 - 包内已验证包含：
   - `Previous active`
   - `Next active`

@@ -380,7 +380,7 @@
 
       <section class="live-panel">
         <div class="panel-header">
-          <h3>{{ t('dashboard.recent10', '最近10个通联') }}</h3>
+          <h3>{{ t('dashboard.recent20', '最近20个通联') }}</h3>
         </div>
 
         <div v-if="displayRecords.length > 0" class="live-table-wrap">
@@ -397,7 +397,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="record in displayRecords.slice(0, 10)"
+                v-for="record in displayRecords.slice(0, 20)"
                 :key="record.rowId"
                 :class="{ 'is-speaking': record.isSpeaking }"
               >

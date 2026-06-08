@@ -161,7 +161,7 @@ const v2Features = computed(() => [
     title: t('about.v2FirstScreen', '第一屏重新设计'),
     description: t(
       'about.v2FirstScreenDesc',
-      '当前呼叫、上个通联、收藏中继和最近十个通联集中呈现。'
+      '当前呼叫、上个通联、收藏中继和最近二十个通联集中呈现。'
     )
   },
   {

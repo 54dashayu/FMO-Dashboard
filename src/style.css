@@ -250,6 +250,20 @@ html[data-theme='light'] {
   --shadow-panel: 0 16px 40px rgba(37, 55, 66, 0.1);
   --surface-accent: rgba(8, 127, 196, 0.1);
   --surface-success: rgba(47, 157, 85, 0.12);
+  --bg-friend-card: #ffffff;
+  --border-friend-card: #d7e4ec;
+  --bg-today-card: #f4fbf7;
+  --border-today-card: #b8dbc8;
+  --bg-today-row: #f7fbf9;
+  --bg-today-index: #eaf6ef;
+  --bg-today-index-neutral: #f1f8f4;
+  --border-today-row: #d5e8dc;
+  --color-today-accent: #42a66a;
+  --bg-rank-1: #fff8dc;
+  --bg-rank-2: #eef3f7;
+  --bg-rank-3: #f8eee5;
+  --bg-record-card: #ffffff;
+  --border-record-card: #dfe8ee;
 }
 
 html[data-theme='dark'] {
