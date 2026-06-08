@@ -1,0 +1,51 @@
+name: macOS Desktop Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build universal macOS DMG
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin,aarch64-apple-darwin
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build universal DMG
+        run: npm run tauri:build -- --bundles dmg --target universal-apple-darwin
+
+      - name: Stage macOS artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release/macos
+          find src-tauri/target -path '*/bundle/dmg/*.dmg' -type f -print -exec cp {} release/macos/ \;
+          test -n "$(find release/macos -name '*.dmg' -type f -print -quit)"
+          version="$(node -p "require('./package.json').version")"
+          for dmg in release/macos/*.dmg; do
+            mv "$dmg" "release/macos/FMO-Dashboard-macOS-Universal-v${version}.dmg"
+            break
+          done
+          shasum -a 256 release/macos/* > "release/macos/SHA256SUMS-macos-v${version}.txt"
+          ls -lh release/macos
+
+      - name: Upload macOS desktop artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fmo-dashboard-macos-desktop
+          path: release/macos/*
