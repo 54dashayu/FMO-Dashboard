@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FMO 仪表盘下载</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d1117;
+        --panel: #161b22;
+        --panel-2: #1f2630;
+        --text: #f0f6fc;
+        --muted: #9da7b3;
+        --border: #30363d;
+        --accent: #2f81f7;
+        --accent-2: #3fb950;
+        --warn: #d29922;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei",
+          sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 18% 12%, rgba(47, 129, 247, 0.2), transparent 28rem),
+          radial-gradient(circle at 88% 8%, rgba(63, 185, 80, 0.15), transparent 24rem), var(--bg);
+      }
+
+      main {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 40px 0 56px;
+      }
+
+      header {
+        padding: 28px 0 24px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .brand img {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 5vw, 3.6rem);
+        letter-spacing: 0;
+      }
+
+      .lead {
+        max-width: 760px;
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 1.08rem;
+        line-height: 1.8;
+      }
+
+      .notice {
+        margin: 24px 0;
+        padding: 18px 20px;
+        border: 1px solid rgba(210, 153, 34, 0.45);
+        border-radius: 8px;
+        background: rgba(210, 153, 34, 0.1);
+        color: #f7d58a;
+        line-height: 1.75;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        min-height: 230px;
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(22, 27, 34, 0.88);
+      }
+
+      .card.recommended {
+        border-color: rgba(63, 185, 80, 0.55);
+        box-shadow: 0 0 0 1px rgba(63, 185, 80, 0.18) inset;
+      }
+
+      .tag {
+        width: fit-content;
+        margin-bottom: 12px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        color: var(--bg);
+        background: var(--accent-2);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      h2 {
+        margin: 0 0 8px;
+        font-size: 1.28rem;
+      }
+
+      .card p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: auto;
+      }
+
+      a.button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 14px;
+        border: 1px solid rgba(47, 129, 247, 0.65);
+        border-radius: 7px;
+        color: #dbeafe;
+        background: rgba(47, 129, 247, 0.16);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      a.button.primary {
+        color: #fff;
+        background: var(--accent);
+      }
+
+      a.button.subtle {
+        border-color: var(--border);
+        color: var(--muted);
+        background: var(--panel-2);
+      }
+
+      section {
+        margin-top: 28px;
+      }
+
+      .notes {
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: rgba(22, 27, 34, 0.78);
+      }
+
+      .notes h2 {
+        margin-bottom: 12px;
+      }
+
+      .notes ul {
+        margin: 0;
+        padding-left: 1.2rem;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      footer {
+        margin-top: 30px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 640px) {
+        main {
+          width: min(100% - 22px, 1080px);
+          padding-top: 22px;
+        }
+
+        .brand img {
+          width: 44px;
+          height: 44px;
+        }
+
+        .card {
+          min-height: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="brand">
+          <img src="/app-icon.png" alt="FMO 仪表盘" />
+          <div>
+            <h1>FMO 仪表盘下载</h1>
+          </div>
+        </div>
+        <p class="lead">
+          FMO 仪表盘 V2 已全面转向新版界面。网页版仍可临时访问，但更强烈建议按平台下载
+          App 或桌面版使用，体验更稳定，也能减少浏览器安全策略、自动 HTTPS 和系统环境差异造成的问题。
+        </p>
+      </header>
+
+      <div class="notice">
+        下载地址统一指向 GitHub Release。请优先选择与你设备对应的推荐版本；Win32 和 Win7 Legacy
+        仅作为兼容备用。
+      </div>
+
+      <section class="grid" aria-label="推荐下载">
+        <article class="card recommended">
+          <span class="tag">推荐</span>
+          <h2>Windows 64 位桌面版</h2>
+          <p>适用于 Win10 / Win11 64 位系统。不依赖外部浏览器，普通 Windows 用户优先下载这个版本。</p>
+          <div class="actions">
+            <a
+              class="button primary"
+              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.0.exe"
+              >下载 Win64</a
+            >
+          </div>
+        </article>
+
+        <article class="card recommended">
+          <span class="tag">推荐</span>
+          <h2>macOS Universal DMG</h2>
+          <p>一个 DMG 同时支持 Apple Silicon 和 Intel Mac。未签名测试包首次打开可能需要右键选择“打开”。</p>
+          <div class="actions">
+            <a
+              class="button primary"
+              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-macOS-Universal-v2.0.0.dmg"
+              >下载 macOS</a
+            >
+          </div>
+        </article>
+
+        <article class="card recommended">
+          <span class="tag">推荐</span>
+          <h2>Android APK</h2>
+          <p>适用于 Android 手机和平板。下载安装包后，如系统提示风险，请确认文件来自 GitHub Release。</p>
+          <div class="actions">
+            <a
+              class="button primary"
+              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Android-V2.00.apk"
+              >下载 Android</a
+            >
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>iOS / iPadOS</h2>
+          <p>iPhone 和 iPad 用户请在 Apple App Store 搜索 FMO Dashboard 下载。</p>
+          <div class="actions">
+            <a class="button primary" href="https://apps.apple.com/cn/app/fmo-dashboard/id6772919070"
+              >打开 App Store</a
+            >
+          </div>
+        </article>
+      </section>
+
+      <section class="grid" aria-label="兼容备用下载">
+        <article class="card">
+          <h2>Windows 32 位备用版</h2>
+          <p>适用于 32 位 Windows，也可在 64 位 Windows 兼容运行。普通用户仍建议优先选择 Win64。</p>
+          <div class="actions">
+            <a
+              class="button"
+              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.0.exe"
+              >下载 Win32</a
+            >
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Win7 Legacy 简易包</h2>
+          <p>仅供 Win7 32 位环境尝试。它会启动本地服务并打开浏览器，体验不如正式桌面版。</p>
+          <div class="actions">
+            <a
+              class="button"
+              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Windows-Legacy-Win7-x86-v2.0.0.zip"
+              >下载 ZIP</a
+            >
+            <a
+              class="button subtle"
+              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Windows-Legacy-Win7-x86-v2.0.0.exe"
+              >自解压 EXE</a
+            >
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>网页版 V2</h2>
+          <p>网页版已全面转向 V2，仅建议临时访问或快速体验。长期使用请优先下载对应平台版本。</p>
+          <div class="actions">
+            <a class="button" href="/v2/">进入网页版 V2</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>校验文件</h2>
+          <p>SHA256 用于确认下载文件完整性，不是安装包。需要校验时再下载。</p>
+          <div class="actions">
+            <a
+              class="button subtle"
+              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/SHA256SUMS-macos-v2.0.0.txt"
+              >macOS</a
+            >
+            <a
+              class="button subtle"
+              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/SHA256SUMS-windows-desktop-v2.0.0.txt"
+              >Windows</a
+            >
+            <a
+              class="button subtle"
+              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/SHA256SUMS-android-V2.00.txt"
+              >Android</a
+            >
+          </div>
+        </article>
+      </section>
+
+      <section class="notes">
+        <h2>使用建议</h2>
+        <ul>
+          <li>Windows 桌面版添加本地 FMO 地址时，建议填写设备局域网 IP，例如 192.168.x.x。</li>
+          <li>部分 Windows 环境无法解析 fmo.local 这类 .local 地址，可能导致同步失败。</li>
+          <li>当前 Windows 和 macOS 桌面测试包未配置商业签名证书，首次安装或打开时可能出现安全提示。</li>
+          <li>所有安装包均以 GitHub Release 附件为准。</li>
+        </ul>
+      </section>
+
+      <footer>
+        FMO Dashboard V2.0.0 ·
+        <a class="button subtle" href="https://github.com/54dashayu/FMO-Dashboard/releases/tag/v2.0.0"
+          >查看 GitHub Release</a
+        >
+      </footer>
+    </main>
+  </body>
+</html>
