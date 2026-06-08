@@ -79,6 +79,13 @@
         line-height: 1.75;
       }
 
+      .intro {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+        gap: 16px;
+        margin-top: 18px;
+      }
+
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -165,13 +172,21 @@
         background: rgba(22, 27, 34, 0.78);
       }
 
-      .notes h2 {
+      .notes h2,
+      .intro h2 {
         margin-bottom: 12px;
       }
 
-      .notes ul {
+      .notes ul,
+      .intro ul {
         margin: 0;
         padding-left: 1.2rem;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .intro p {
+        margin: 0 0 12px;
         color: var(--muted);
         line-height: 1.8;
       }
@@ -196,6 +211,10 @@
         .card {
           min-height: 0;
         }
+
+        .intro {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -209,15 +228,33 @@
           </div>
         </div>
         <p class="lead">
-          FMO 仪表盘 V2 已全面转向新版界面。网页版仍可临时访问，但更强烈建议按平台下载
-          App 或桌面版使用，体验更稳定，也能减少浏览器安全策略、自动 HTTPS 和系统环境差异造成的问题。
+          FMO 仪表盘是面向 FMO 用户的实时通联看板，集中展示当前发言、最近通联、友台位置、相对方位、距离、服务器状态、播报模式和通联统计。V2.0
+          已全面转向新版界面，桌面端和移动端都围绕实时使用场景重新整理。
         </p>
       </header>
 
       <div class="notice">
-        下载地址统一指向 GitHub Release。请优先选择与你设备对应的推荐版本；Win32 和 Win7 Legacy
-        仅作为兼容备用。
+        网页版已全面转向 V2：
+        <a class="button primary" href="/v2/">进入网页版 V2</a>
+        。网页版适合临时访问或快速体验，长期使用强烈建议下载对应平台的 App 或桌面版，稳定性和兼容性更好。
       </div>
+
+      <section class="intro" aria-label="软件介绍">
+        <div class="notes">
+          <h2>V2.0 优化重点</h2>
+          <ul>
+            <li>Dashboard 第一屏重新设计，当前发言、最近通联、方位距离和服务器信息更集中。</li>
+            <li>移动端顶栏、底部导航和页面安全区域重新适配，手机上更紧凑易读。</li>
+            <li>新增最近活跃服务器切换、语音播报模式整理和多地址同步体验优化。</li>
+            <li>Windows / macOS 桌面版不依赖外部浏览器，减少自动 HTTPS 和浏览器安全策略影响。</li>
+          </ul>
+        </div>
+        <div class="notes">
+          <h2>下载说明</h2>
+          <p>本站提供当前最终版安装包下载，适合无法访问 GitHub 的用户。</p>
+          <p>请优先选择与你设备对应的推荐版本；Win32 和 Win7 Legacy 仅作为兼容备用。</p>
+        </div>
+      </section>
 
       <section class="grid" aria-label="推荐下载">
         <article class="card recommended">
@@ -227,7 +264,7 @@
           <div class="actions">
             <a
               class="button primary"
-              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.0.exe"
+              href="/downloads/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.0.exe"
               >下载 Win64</a
             >
           </div>
@@ -240,7 +277,7 @@
           <div class="actions">
             <a
               class="button primary"
-              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-macOS-Universal-v2.0.0.dmg"
+              href="/downloads/FMO-Dashboard-macOS-Universal-v2.0.0.dmg"
               >下载 macOS</a
             >
           </div>
@@ -253,7 +290,7 @@
           <div class="actions">
             <a
               class="button primary"
-              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Android-V2.00.apk"
+              href="/downloads/FMO-Dashboard-Android-V2.00.apk"
               >下载 Android</a
             >
           </div>
@@ -277,7 +314,7 @@
           <div class="actions">
             <a
               class="button"
-              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.0.exe"
+              href="/downloads/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.0.exe"
               >下载 Win32</a
             >
           </div>
@@ -289,12 +326,12 @@
           <div class="actions">
             <a
               class="button"
-              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Windows-Legacy-Win7-x86-v2.0.0.zip"
+              href="/downloads/FMO-Dashboard-Windows-Legacy-Win7-x86-v2.0.0.zip"
               >下载 ZIP</a
             >
             <a
               class="button subtle"
-              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/FMO-Dashboard-Windows-Legacy-Win7-x86-v2.0.0.exe"
+              href="/downloads/FMO-Dashboard-Windows-Legacy-Win7-x86-v2.0.0.exe"
               >自解压 EXE</a
             >
           </div>
@@ -314,17 +351,17 @@
           <div class="actions">
             <a
               class="button subtle"
-              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/SHA256SUMS-macos-v2.0.0.txt"
+              href="/downloads/SHA256SUMS-macos-v2.0.0.txt"
               >macOS</a
             >
             <a
               class="button subtle"
-              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/SHA256SUMS-windows-desktop-v2.0.0.txt"
+              href="/downloads/SHA256SUMS-windows-desktop-v2.0.0.txt"
               >Windows</a
             >
             <a
               class="button subtle"
-              href="https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.0/SHA256SUMS-android-V2.00.txt"
+              href="/downloads/SHA256SUMS-android-V2.00.txt"
               >Android</a
             >
           </div>
@@ -337,15 +374,13 @@
           <li>Windows 桌面版添加本地 FMO 地址时，建议填写设备局域网 IP，例如 192.168.x.x。</li>
           <li>部分 Windows 环境无法解析 fmo.local 这类 .local 地址，可能导致同步失败。</li>
           <li>当前 Windows 和 macOS 桌面测试包未配置商业签名证书，首次安装或打开时可能出现安全提示。</li>
-          <li>所有安装包均以 GitHub Release 附件为准。</li>
+          <li>如本站下载受限，可到 GitHub 项目页面查看 Release 附件。</li>
         </ul>
       </section>
 
       <footer>
         FMO Dashboard V2.0.0 ·
-        <a class="button subtle" href="https://github.com/54dashayu/FMO-Dashboard/releases/tag/v2.0.0"
-          >查看 GitHub Release</a
-        >
+        <a class="button subtle" href="https://github.com/54dashayu/FMO-Dashboard">GitHub 项目地址</a>
       </footer>
     </main>
   </body>
