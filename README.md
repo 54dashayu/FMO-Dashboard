@@ -90,9 +90,13 @@ npm run android:deploy
 
 ## 致谢
 
-本项目基于 BH5HSJ 后视镜开源的 [dingle1122/FmoLogs](https://github.com/dingle1122/FmoLogs) 修改，感谢原作者的开源工作。
+这个项目最初不是从零开始的。它基于 BH5HSJ 后视镜开源的 [dingle1122/FmoLogs](https://github.com/dingle1122/FmoLogs) 修改而来，原项目为 FMO 日志读取、数据展示和基础交互打下了重要基础。没有这份开源工作，FMO 仪表盘也不会这么快进入可用状态。
 
-也感谢 BG5ESN、BG9JYT 以及参与测试和提出建议的各位友台。
+在这个基础上，FMO 仪表盘逐步从“日志查看器”扩展为实时通联看板：重新设计 Dashboard 第一屏，加入当前发言、最近通联、友台方位距离、服务器切换、语音播报、多地址同步、移动端适配、Android 打包和 Windows 桌面版分发。V2.0.0 也是在持续测试、反馈、修正和重新打包中完成的。
+
+特别说明：本项目 V2 的大量整理、重构、跨平台适配、Windows 打包流程、Release 说明、VPS 下载页同步和 README 更新，都是在人工智能 Codex 的大力协助下完成的。Codex 参与了代码阅读、实现修改、构建验证、GitHub Actions 调试、发布资产上传和文档整理等工作，让一个个人维护项目可以更快完成 Web、Android、Windows 多平台发布。
+
+也感谢 BG5ESN、BG9JYT 以及参与测试和提出建议的各位友台。很多细节来自实际使用中的反馈，包括移动端布局、Windows 连接问题、`fmo.local` 解析、Win32/Win64 兼容测试和 Win7 Legacy 简易包验证。
 
 ## 许可证
 
