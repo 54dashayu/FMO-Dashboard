@@ -11,6 +11,14 @@ on:
         options:
           - 'true'
           - 'false'
+      skip_stapling:
+        description: Skip waiting for Apple notarization/stapling
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 jobs:
   build:
@@ -37,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build signed and notarized universal DMG
+      - name: Build signed universal DMG
         if: ${{ env.HAS_APPLE_SIGNING == 'true' }}
         env:
           CI: true
@@ -48,7 +56,14 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_PROVIDER_SHORT_NAME: ${{ secrets.APPLE_PROVIDER_SHORT_NAME }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-        run: npm run tauri:build -- --bundles dmg --target universal-apple-darwin
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--bundles dmg --target universal-apple-darwin)
+          if [[ "${{ github.event_name == 'workflow_dispatch' && inputs.skip_stapling == 'true' }}" == "true" ]]; then
+            args+=(--skip-stapling)
+          fi
+          npm run tauri:build -- "${args[@]}"
 
       - name: Build unsigned universal DMG
         if: ${{ env.HAS_APPLE_SIGNING != 'true' && (github.event_name == 'workflow_dispatch' && inputs.require_notarization == 'false') }}

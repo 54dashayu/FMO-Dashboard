@@ -56,14 +56,15 @@ scripts/prepare-macos-signing-secrets.sh ~/Downloads/developerID_application.cer
 进入 GitHub Actions，选择 `macOS Desktop Release` workflow，手动运行：
 
 - `require_notarization` 选择 `true`
+- 首次构建建议 `skip_stapling` 选择 `true`，避免 Apple notarization 等待数小时导致 GitHub Actions 超时。
 
-当五个必需 secrets 都配置完整时，workflow 会构建 signed + notarized Universal DMG。
+当五个必需 secrets 都配置完整时，workflow 会构建 Developer ID signed Universal DMG。`skip_stapling=true` 时，构建不会等待 Apple notarization 完成并 stapling，因此不会被长时间公证队列卡住。后续需要完整 stapled DMG 时，可再次运行 workflow，并将 `skip_stapling` 选择 `false`。
 
 如果需要临时构建未签名测试包，可将 `require_notarization` 选择 `false`。
 
 ## 验证
 
-下载 DMG 后，普通双击打开不应再出现“Apple 无法验证是否包含恶意软件”的强拦截提示。
+下载 DMG 后，普通双击打开不应再出现“Apple 无法验证是否包含恶意软件”的强拦截提示。若 `skip_stapling=true`，首次打开时 macOS 可能需要联网向 Apple 查询公证状态。
 
 也可在 macOS 上检查签名：
 
