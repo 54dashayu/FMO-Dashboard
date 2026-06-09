@@ -58,7 +58,7 @@ scripts/prepare-macos-signing-secrets.sh ~/Downloads/developerID_application.cer
 - `require_notarization` 选择 `true`
 - `skip_stapling` 保持默认 `false`，生成完整 Apple notarization + stapled DMG。
 
-当五个必需 secrets 都配置完整时，workflow 会构建 Developer ID signed Universal DMG，并对最终 DMG 单独执行 Apple notarization 与 `stapler staple`。`skip_stapling=true` 仅用于临时测试包，会跳过最终 DMG 的公证装订，普通用户分发不要使用。
+当五个必需 secrets 都配置完整时，workflow 会构建 Developer ID signed Universal App，等待 Apple notarization 通过，并对 `.app` 执行 `stapler staple`。随后 workflow 会把已 stapled 的 `.app` 放进 DMG。`skip_stapling=true` 仅用于临时测试包，会跳过 `.app` 的公证装订，普通用户分发不要使用。
 
 如果需要临时构建未签名测试包，可将 `require_notarization` 选择 `false`。
 

@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build signed universal DMG
+      - name: Build signed universal app
         if: ${{ env.HAS_APPLE_SIGNING == 'true' }}
         env:
           CI: true
@@ -59,7 +59,56 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm run tauri:build -- --bundles dmg --target universal-apple-darwin --skip-stapling
+          npm run tauri:build -- --bundles app --target universal-apple-darwin --skip-stapling 2>&1 | tee tauri-app-build.log
+
+      - name: Wait for app notarization and staple app
+        if: ${{ env.HAS_APPLE_SIGNING == 'true' && (github.event_name != 'workflow_dispatch' || inputs.skip_stapling == 'false') }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="$(find src-tauri/target -path '*/bundle/macos/*.app' -type d -print -quit)"
+          test -n "$app"
+
+          submission_id="$(grep -Eo 'id [0-9a-fA-F-]{36}' tauri-app-build.log | awk '{ print $2 }' | tail -n 1)"
+          test -n "$submission_id"
+          echo "App notarization submission: $submission_id"
+
+          deadline=$((SECONDS + 1800))
+          while true; do
+            info="$(xcrun notarytool info "$submission_id" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID")"
+            echo "$info"
+            status="$(printf '%s\n' "$info" | awk -F': ' '/status:/ { print $2; exit }')"
+
+            case "$status" in
+              Accepted)
+                break
+                ;;
+              Invalid|Rejected)
+                xcrun notarytool log "$submission_id" \
+                  --apple-id "$APPLE_ID" \
+                  --password "$APPLE_PASSWORD" \
+                  --team-id "$APPLE_TEAM_ID"
+                exit 1
+                ;;
+            esac
+
+            if (( SECONDS >= deadline )); then
+              echo "Timed out waiting for app notarization." >&2
+              exit 124
+            fi
+            sleep 20
+          done
+
+          xcrun stapler staple "$app"
+          xcrun stapler validate "$app"
+          spctl -a -vvv -t exec "$app"
 
       - name: Build unsigned universal DMG
         if: ${{ env.HAS_APPLE_SIGNING != 'true' && (github.event_name == 'workflow_dispatch' && inputs.require_notarization == 'false') }}
@@ -83,7 +132,29 @@ jobs:
           echo "  APPLE_SIGNING_IDENTITY" >&2
           exit 1
 
-      - name: Stage macOS artifacts
+      - name: Create DMG from stapled app
+        if: ${{ env.HAS_APPLE_SIGNING == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          app="$(find src-tauri/target -path '*/bundle/macos/*.app' -type d -print -quit)"
+          test -n "$app"
+          mkdir -p release/macos
+          rm -rf release/macos/dmg-root
+          mkdir -p release/macos/dmg-root
+          cp -R "$app" release/macos/dmg-root/
+          ln -s /Applications release/macos/dmg-root/Applications
+          dmg="release/macos/FMO-Dashboard-macOS-Universal-v${version}.dmg"
+          hdiutil create -volname "FMO仪表盘" -srcfolder release/macos/dmg-root -ov -format UDZO "$dmg"
+          identity="$(security find-identity -v -p codesigning | sed -n 's/.*"\(Developer ID Application:[^"]*\)".*/\1/p' | head -n 1)"
+          if [[ -n "$identity" ]]; then
+            codesign --force --timestamp --sign "$identity" "$dmg"
+          fi
+          rm -rf release/macos/dmg-root
+
+      - name: Stage unsigned macOS artifacts
+        if: ${{ env.HAS_APPLE_SIGNING != 'true' && (github.event_name == 'workflow_dispatch' && inputs.require_notarization == 'false') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -95,26 +166,6 @@ jobs:
             mv "$dmg" "release/macos/FMO-Dashboard-macOS-Universal-v${version}.dmg"
             break
           done
-
-      - name: Notarize and staple DMG
-        if: ${{ env.HAS_APPLE_SIGNING == 'true' && (github.event_name != 'workflow_dispatch' || inputs.skip_stapling == 'false') }}
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          dmg="$(find release/macos -name '*.dmg' -type f -print -quit)"
-          test -n "$dmg"
-          xcrun notarytool submit "$dmg" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait \
-            --timeout 45m
-          xcrun stapler staple "$dmg"
-          xcrun stapler validate "$dmg"
 
       - name: Generate macOS checksums
         shell: bash
