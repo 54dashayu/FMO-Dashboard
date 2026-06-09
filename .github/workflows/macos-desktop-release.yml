@@ -79,6 +79,10 @@ jobs:
 
           deadline=$((SECONDS + 7200))
           while true; do
+            if xcrun stapler staple "$app"; then
+              break
+            fi
+
             if ! info="$(SUBMISSION_ID="$submission_id" python3 - <<'PY'
           import os
           import subprocess
@@ -135,13 +139,12 @@ jobs:
             esac
 
             if (( SECONDS >= deadline )); then
-              echo "Timed out waiting for app notarization." >&2
+              echo "Timed out waiting for app notarization/stapling." >&2
               exit 124
             fi
             sleep 20
           done
 
-          xcrun stapler staple "$app"
           xcrun stapler validate "$app"
           spctl -a -vvv -t exec "$app"
 
