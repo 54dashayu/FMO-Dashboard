@@ -14,7 +14,7 @@ on:
       skip_stapling:
         description: Skip waiting for Apple notarization/stapling
         required: true
-        default: 'true'
+        default: 'false'
         type: choice
         options:
           - 'true'
@@ -59,11 +59,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          args=(--bundles dmg --target universal-apple-darwin)
-          if [[ "${{ github.event_name == 'workflow_dispatch' && inputs.skip_stapling == 'true' }}" == "true" ]]; then
-            args+=(--skip-stapling)
-          fi
-          npm run tauri:build -- "${args[@]}"
+          npm run tauri:build -- --bundles dmg --target universal-apple-darwin --skip-stapling
 
       - name: Build unsigned universal DMG
         if: ${{ env.HAS_APPLE_SIGNING != 'true' && (github.event_name == 'workflow_dispatch' && inputs.require_notarization == 'false') }}
@@ -99,6 +95,32 @@ jobs:
             mv "$dmg" "release/macos/FMO-Dashboard-macOS-Universal-v${version}.dmg"
             break
           done
+
+      - name: Notarize and staple DMG
+        if: ${{ env.HAS_APPLE_SIGNING == 'true' && (github.event_name != 'workflow_dispatch' || inputs.skip_stapling == 'false') }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          dmg="$(find release/macos -name '*.dmg' -type f -print -quit)"
+          test -n "$dmg"
+          xcrun notarytool submit "$dmg" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --timeout 45m
+          xcrun stapler staple "$dmg"
+          xcrun stapler validate "$dmg"
+
+      - name: Generate macOS checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
           shasum -a 256 release/macos/* > "release/macos/SHA256SUMS-macos-v${version}.txt"
           ls -lh release/macos
 
