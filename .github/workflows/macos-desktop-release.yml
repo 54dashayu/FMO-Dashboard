@@ -77,12 +77,47 @@ jobs:
           test -n "$submission_id"
           echo "App notarization submission: $submission_id"
 
-          deadline=$((SECONDS + 1800))
+          deadline=$((SECONDS + 7200))
           while true; do
-            info="$(xcrun notarytool info "$submission_id" \
-              --apple-id "$APPLE_ID" \
-              --password "$APPLE_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID")"
+            if ! info="$(SUBMISSION_ID="$submission_id" python3 - <<'PY'
+          import os
+          import subprocess
+          import sys
+
+          command = [
+              'xcrun',
+              'notarytool',
+              'info',
+              os.environ['SUBMISSION_ID'],
+              '--apple-id',
+              os.environ['APPLE_ID'],
+              '--password',
+              os.environ['APPLE_PASSWORD'],
+              '--team-id',
+              os.environ['APPLE_TEAM_ID'],
+          ]
+
+          try:
+              result = subprocess.run(
+                  command, check=False, capture_output=True, text=True, timeout=90
+              )
+          except subprocess.TimeoutExpired:
+              print('notarytool info timed out after 90 seconds', file=sys.stderr)
+              sys.exit(124)
+
+          sys.stdout.write(result.stdout)
+          sys.stderr.write(result.stderr)
+          sys.exit(result.returncode)
+          PY
+            )"; then
+              echo "notarytool info query failed or timed out; retrying." >&2
+              if (( SECONDS >= deadline )); then
+                echo "Timed out waiting for app notarization." >&2
+                exit 124
+              fi
+              sleep 20
+              continue
+            fi
             echo "$info"
             status="$(printf '%s\n' "$info" | awk -F': ' '/status:/ { print $2; exit }')"
 
