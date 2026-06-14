@@ -11,7 +11,8 @@
 // @ts-ignore - legacy JS
 import {
   isQsoExistsInIndexedDB,
-  saveSingleQsoToIndexedDB
+  saveSingleQsoToIndexedDB,
+  saveQsoBatchToIndexedDB
   // @ts-ignore
 } from '../../services/db'
 
@@ -39,6 +40,11 @@ function noop() {
 function never() {
   return false
 }
+
+const FULL_SYNC_PAGE_SIZE = 50
+const FULL_SYNC_RECONNECT_EVERY_PAGES = 8
+const DETAIL_REQUEST_PAUSE_MS = 60
+const PAGE_PAUSE_MS = 250
 
 /** 获取 N 天前 UTC 零点时间戳（单位秒） */
 export function getDaysAgoTimestamp(days: number): number {
@@ -257,7 +263,7 @@ export async function syncFullForAddress(
 
     let response: any
     try {
-      response = await client.getQsoList(page, 20, currentFromCallsign)
+      response = await client.getQsoList(page, FULL_SYNC_PAGE_SIZE, currentFromCallsign)
     } catch (err: any) {
       throw new Error(`获取日志列表失败: ${err?.message || String(err)}`)
     }
@@ -266,28 +272,30 @@ export async function syncFullForAddress(
     if (list.length === 0) break
 
     totalProcessed += list.length
+    const pageRecords: any[] = []
 
-    for (const item of list) {
+    for (const [index, item] of list.entries()) {
       if (isAborted()) break
 
       try {
         let qso: any = null
 
         if (currentFromCallsign) {
-          await new Promise((r) => setTimeout(r, 100))
+          await new Promise((r) => setTimeout(r, DETAIL_REQUEST_PAUSE_MS))
           const detailResponse = await client.getQsoDetail(item.logId)
           qso = detailResponse.log
           if (qso && qso.fromCallsign !== currentFromCallsign) qso = null
         } else {
-          await new Promise((r) => setTimeout(r, 100))
+          await new Promise((r) => setTimeout(r, DETAIL_REQUEST_PAUSE_MS))
           const detailResponse = await client.getQsoDetail(item.logId)
           qso = detailResponse.log
         }
 
         if (qso) {
-          await saveSingleQsoToIndexedDB(qso)
-          totalSynced++
-          statusCallback(`已处理 ${totalProcessed} 条，已同步 ${totalSynced} 条`)
+          pageRecords.push(qso)
+          statusCallback(
+            `第 ${page + 1} 页 ${index + 1}/${list.length}，待保存 ${pageRecords.length} 条`
+          )
         }
       } catch (err: any) {
         console.warn(`获取详情失败 logId=${item.logId}:`, err?.message)
@@ -300,12 +308,22 @@ export async function syncFullForAddress(
       }
     }
 
-    if (list.length < 20) {
+    if (pageRecords.length > 0 && !isAborted()) {
+      const saved = await saveQsoBatchToIndexedDB(pageRecords)
+      totalSynced += saved
+      statusCallback(`已处理 ${totalProcessed} 条，已同步 ${totalSynced} 条`)
+    }
+
+    if (list.length < FULL_SYNC_PAGE_SIZE) {
       hasMore = false
     } else {
       page++
       if (!isAborted()) {
-        await new Promise((r) => setTimeout(r, 200))
+        if (page % FULL_SYNC_RECONNECT_EVERY_PAGES === 0 && typeof client.close === 'function') {
+          statusCallback(`已完成 ${page} 页，正在重建连接...`)
+          client.close()
+        }
+        await new Promise((r) => setTimeout(r, PAGE_PAUSE_MS))
       }
     }
   }

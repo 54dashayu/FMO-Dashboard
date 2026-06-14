@@ -586,6 +586,8 @@ async function writeRecordsToStore(storeName, records) {
         utcDate,
         timestamp: record.timestamp,
         freqHz: record.freqHz,
+        txFreqHz: record.txFreqHz,
+        rxFreqHz: record.rxFreqHz,
         fromCallsign: record.fromCallsign,
         fromGrid: record.fromGrid,
         toCallsign: record.toCallsign,
@@ -1123,6 +1125,34 @@ export async function saveSingleQsoToIndexedDB(record) {
   }
 }
 
+// 批量保存QSO记录到IndexedDB，减少全量同步时的事务数量
+export async function saveQsoBatchToIndexedDB(records) {
+  const validRecords = (records || []).filter((record) => record?.fromCallsign)
+  if (validRecords.length === 0) return 0
+
+  const grouped = new Map()
+  for (const record of validRecords) {
+    const list = grouped.get(record.fromCallsign) || []
+    list.push(record)
+    grouped.set(record.fromCallsign, list)
+  }
+
+  await openLogsDatabase(Array.from(grouped.keys()))
+
+  let imported = 0
+  for (const [fromCallsign, list] of grouped.entries()) {
+    imported += await writeRecordsToStore(`logs_from_${fromCallsign}`, list)
+  }
+
+  const currentCallsigns = await getAvailableFromCallsigns()
+  const merged = Array.from(new Set([...currentCallsigns, ...grouped.keys()]))
+  if (merged.length !== currentCallsigns.length) {
+    await saveCallsignList(merged)
+  }
+
+  return imported
+}
+
 // 导出IndexedDB数据到SQLite数据库文件
 export async function exportDataToDbFile(fromCallsign) {
   if (!fromCallsign) {
@@ -1143,21 +1173,23 @@ export async function exportDataToDbFile(fromCallsign) {
 
   // 创建qso_logs表（导出时包含logId主键）
   db.run(
-    'CREATE TABLE qso_logs (logId INTEGER PRIMARY KEY,timestamp INTEGER,freqHz INTEGER,fromCallsign TEXT,fromGrid TEXT,toCallsign TEXT,toGrid TEXT,toComment TEXT,mode TEXT,relayName TEXT,relayAdmin TEXT)'
+    'CREATE TABLE qso_logs (logId INTEGER PRIMARY KEY,timestamp INTEGER,freqHz INTEGER,txFreqHz INTEGER,rxFreqHz INTEGER,fromCallsign TEXT,fromGrid TEXT,toCallsign TEXT,toGrid TEXT,toComment TEXT,mode TEXT,relayName TEXT,relayAdmin TEXT)'
   )
 
   // 插入数据（logId自动递增）
   const insertStmt = db.prepare(`
     INSERT INTO qso_logs (
-      timestamp, freqHz, fromCallsign, fromGrid, toCallsign, 
+      timestamp, freqHz, txFreqHz, rxFreqHz, fromCallsign, fromGrid, toCallsign,
       toGrid, toComment, mode, relayName, relayAdmin
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
   for (const record of allRecords) {
     insertStmt.run([
       record.timestamp || null,
       record.freqHz || null,
+      record.txFreqHz || null,
+      record.rxFreqHz || null,
       record.fromCallsign || null,
       record.fromGrid || null,
       record.toCallsign || null,

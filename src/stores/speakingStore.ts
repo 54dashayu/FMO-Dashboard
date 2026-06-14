@@ -531,7 +531,7 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
 
   function updateServerInfo(addressId: string, info: ServerInfo) {
     if (info && info.uid) {
-      serverInfoMap.set(addressId, { uid: info.uid, name: info.name || '' })
+      serverInfoMap.set(addressId, { ...info, uid: info.uid, name: info.name || '' })
       changeCounter.value++
     }
   }

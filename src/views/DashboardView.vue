@@ -245,7 +245,7 @@
             @click="showRecentRelaySwitcher = true"
           >
             <span>{{ t('dashboard.frequency', '频率 / 模式') }}</span>
-            <strong>{{ currentFrequencyMode }}</strong>
+            <strong class="frequency-line">{{ currentFrequencyLine }}</strong>
           </button>
         </div>
 
@@ -726,14 +726,37 @@ const todayContactCount = computed(() => {
   return Object.keys(props.todayContactedCallsigns || {}).length
 })
 
-const currentFrequencyMode = computed(() => {
-  if (activeContact.value?.frequencyMode && activeContact.value.frequencyMode !== 'FMO') {
-    return activeContact.value.frequencyMode
+const currentFrequencyDisplay = computed(() => {
+  const candidates = [
+    currentStation.value,
+    activeContact.value?.frequencySource,
+    findStationByName(activeContact.value?.relayName),
+    findStationByName(recentActiveRelayName.value),
+    records.value.find((record) => getFrequencyParts(record).hasFrequency),
+    activeContact.value
+  ].filter(Boolean)
+
+  let fallback = null
+  for (const candidate of candidates) {
+    const display = formatFrequencyDisplay(candidate)
+    if (display.tx || display.rx) return display
+    if (!fallback && (display.hasFrequency || display.mode !== 'FMO')) fallback = display
   }
 
-  const latestWithFrequency = records.value.find((record) => record?.freqHz)
-  if (latestWithFrequency) return formatFrequencyMode(latestWithFrequency)
-  return activeContact.value?.frequencyMode || 'FMO'
+  if (fallback) return fallback
+  return formatFrequencyDisplay(null)
+})
+
+const currentFrequencyLine = computed(() => {
+  const display = currentFrequencyDisplay.value
+  if (display.tx || display.rx) {
+    const parts = []
+    if (display.tx) parts.push(`T:${display.tx.replace(/\s*MHz$/i, '')}`)
+    if (display.rx) parts.push(`R:${display.rx.replace(/\s*MHz$/i, '')}`)
+    parts.push(display.mode)
+    return parts.join('/')
+  }
+  return [display.single?.replace(/\s*MHz$/i, ''), display.mode].filter(Boolean).join('/')
 })
 
 const sortedStations = computed(() => {
@@ -787,7 +810,7 @@ const activeContact = computed(() => {
     grid,
     qth,
     relayName: current.serverName || matchedLog?.relayName || currentStation.value?.name || '',
-    frequencyMode: formatFrequencyMode(matchedLog),
+    frequencySource: matchedLog || findStationByName(current.serverName) || currentStation.value,
     bearing,
     bearingHint: getBearingHint(grid, isSelf),
     isSpeaking: !current.endTime,
@@ -967,10 +990,239 @@ function formatTimeAgo(timestamp) {
   return t('dashboard.daysAgo', `${count} 天前`, { count })
 }
 
-function formatFrequencyMode(record) {
-  const frequency = record?.freqHz ? `${formatFreqHz(record.freqHz)} MHz` : ''
-  const mode = record?.mode || 'FMO'
-  return frequency ? `${frequency} · ${mode}` : mode
+function findStationByName(name) {
+  const key = normalizeRelayName(name)
+  if (!key) return null
+  return (
+    allStations.value.find((station) => normalizeRelayName(station.name) === key) ||
+    pinnedStations.value.find((station) => normalizeRelayName(station.name) === key) ||
+    null
+  )
+}
+
+function readFrequencyValue(record, names) {
+  if (!record) return null
+  for (const name of names) {
+    const value = record[name]
+    if (value !== undefined && value !== null && value !== '') return value
+  }
+  return null
+}
+
+function normalizeFrequencyHz(value) {
+  if (value === undefined || value === null || value === '') return null
+  if (typeof value === 'string' && value.trim().toUpperCase().endsWith('MHZ')) {
+    const mhz = Number(value.replace(/mhz/i, '').trim())
+    return Number.isFinite(mhz) ? Math.round(mhz * 10000) : null
+  }
+
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric) || numeric <= 0) return null
+
+  // FMO 日志使用 MHz * 10000；部分接口可能直接返回 MHz 或 Hz。
+  if (numeric < 10000) return Math.round(numeric * 10000)
+  if (numeric > 100000000) return Math.round(numeric / 100)
+  return Math.round(numeric)
+}
+
+function normalizeFrequencyDeltaHz(value) {
+  if (value === undefined || value === null || value === '') return null
+  if (typeof value === 'string' && value.trim().toUpperCase().endsWith('MHZ')) {
+    const mhz = Number(value.replace(/mhz/i, '').trim())
+    return Number.isFinite(mhz) && mhz !== 0 ? Math.round(mhz * 10000) : null
+  }
+
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric) || numeric === 0) return null
+  const abs = Math.abs(numeric)
+  let normalized = 0
+  if (abs < 10000) normalized = Math.round(abs * 10000)
+  else if (abs > 100000000) normalized = Math.round(abs / 100)
+  else normalized = Math.round(abs)
+  return numeric < 0 ? -normalized : normalized
+}
+
+function formatFrequencyValue(value) {
+  const normalized = normalizeFrequencyHz(value)
+  return normalized ? `${formatFreqHz(normalized)} MHz` : ''
+}
+
+function findCombinedFrequencyText(record) {
+  if (!record || typeof record !== 'object') return ''
+  const preferredKeys = [
+    'frequencyText',
+    'frequencyDisplay',
+    'freqText',
+    'freqDisplay',
+    'displayFrequency',
+    'channel',
+    'channelText',
+    'radioFrequency',
+    'workFrequency'
+  ]
+  const values = []
+  for (const key of preferredKeys) {
+    const value = record[key]
+    if (typeof value === 'string') values.push(value)
+  }
+  for (const value of Object.values(record)) {
+    if (typeof value === 'string' && /(?:^|[\\s/])(?:T|TX|R|RX)\\s*[:：]/i.test(value)) {
+      values.push(value)
+    }
+  }
+  return values.find((value) => /(?:T|TX)\\s*[:：].*(?:R|RX)\\s*[:：]/i.test(value)) || ''
+}
+
+function parseCombinedFrequencyParts(record) {
+  const text = findCombinedFrequencyText(record)
+  if (!text) return { tx: '', rx: '' }
+  const txMatch = text.match(/(?:^|[\\s/])(?:T|TX)\\s*[:：]\\s*([0-9]+(?:\\.[0-9]+)?)/i)
+  const rxMatch = text.match(/(?:^|[\\s/])(?:R|RX)\\s*[:：]\\s*([0-9]+(?:\\.[0-9]+)?)/i)
+  return {
+    tx: txMatch ? formatFrequencyValue(txMatch[1]) : '',
+    rx: rxMatch ? formatFrequencyValue(rxMatch[1]) : ''
+  }
+}
+
+function getOffsetFrequencyValue(record) {
+  return readFrequencyValue(record, [
+    'txOffsetHz',
+    'txOffset',
+    'freqOffsetHz',
+    'freqOffset',
+    'frequencyOffsetHz',
+    'frequencyOffset',
+    'offsetHz',
+    'offset',
+    'shiftHz',
+    'shift',
+    'duplexOffsetHz',
+    'duplexOffset',
+    'differenceHz',
+    'difference'
+  ])
+}
+
+function inferTxRxFromOffset(record, singleText) {
+  const singleHz = normalizeFrequencyHz(
+    readFrequencyValue(record, ['freqHz', 'frequencyHz', 'freq'])
+  )
+  const offsetHz = normalizeFrequencyDeltaHz(getOffsetFrequencyValue(record))
+  if (!singleHz || !offsetHz) return { tx: '', rx: '' }
+
+  const direction = String(
+    readFrequencyValue(record, ['duplex', 'shiftDirection', 'offsetDirection', 'direction']) || ''
+  ).toLowerCase()
+  const sign =
+    direction.includes('-') || direction.includes('minus') || offsetHz < 0
+      ? -1
+      : direction.includes('+') || direction.includes('plus')
+        ? 1
+        : 1
+
+  const txHz = singleHz + sign * Math.abs(offsetHz)
+  if (txHz <= 0 || txHz === singleHz) return { tx: '', rx: '' }
+  return {
+    tx: formatFrequencyValue(txHz),
+    rx: singleText || formatFrequencyValue(singleHz)
+  }
+}
+
+function inferKnownFmoPair(record, singleText) {
+  const mode = String(record?.mode || record?.app_fmo_mode || '').toUpperCase()
+  const singleHz = normalizeFrequencyHz(
+    readFrequencyValue(record, ['freqHz', 'frequencyHz', 'freq'])
+  )
+  if (mode !== 'FMO' || singleHz !== 4382500) return { tx: '', rx: '' }
+  return {
+    tx: '434.2500 MHz',
+    rx: singleText || '438.2500 MHz'
+  }
+}
+
+function getFrequencyParts(record) {
+  let tx = formatFrequencyValue(
+    readFrequencyValue(record, [
+      'txFreqHz',
+      'txFrequencyHz',
+      'txFreq',
+      'txFrequency',
+      'tx_freq',
+      'tx_frequency',
+      'tx',
+      'tFreqHz',
+      'tFreq',
+      't',
+      'transmitFreqHz',
+      'transmitFreq',
+      'transmitFrequency',
+      'transmit',
+      'sendFreqHz',
+      'sendFreq',
+      'sendFrequency',
+      'frequencyTx',
+      'frequencyTX',
+      'uplinkFreqHz',
+      'uplinkFreq',
+      'uplinkFrequency'
+    ])
+  )
+  let rx = formatFrequencyValue(
+    readFrequencyValue(record, [
+      'rxFreqHz',
+      'rxFrequencyHz',
+      'rxFreq',
+      'rxFrequency',
+      'rx_freq',
+      'rx_frequency',
+      'rx',
+      'rFreqHz',
+      'rFreq',
+      'r',
+      'receiveFreqHz',
+      'receiveFreq',
+      'receiveFrequency',
+      'receive',
+      'recvFreqHz',
+      'recvFreq',
+      'recvFrequency',
+      'frequencyRx',
+      'frequencyRX',
+      'downlinkFreqHz',
+      'downlinkFreq',
+      'downlinkFrequency'
+    ])
+  )
+  const single = formatFrequencyValue(readFrequencyValue(record, ['freqHz', 'frequencyHz', 'freq']))
+  if (!tx || !rx) {
+    const combined = parseCombinedFrequencyParts(record)
+    tx = tx || combined.tx
+    rx = rx || combined.rx
+  }
+  if (!tx || !rx) {
+    const offsetParts = inferTxRxFromOffset(record, single)
+    tx = tx || offsetParts.tx
+    rx = rx || offsetParts.rx
+  }
+  if (!tx || !rx) {
+    const knownPair = inferKnownFmoPair(record, single)
+    tx = tx || knownPair.tx
+    rx = rx || knownPair.rx
+  }
+  return {
+    tx,
+    rx,
+    single: tx || rx ? '' : single,
+    hasFrequency: Boolean(tx || rx || single)
+  }
+}
+
+function formatFrequencyDisplay(record) {
+  const parts = getFrequencyParts(record)
+  return {
+    ...parts,
+    mode: record?.mode || record?.app_fmo_mode || 'FMO'
+  }
 }
 
 function formatErrorMessage(err) {
@@ -3162,6 +3414,15 @@ onUnmounted(() => {
   overflow-wrap: anywhere;
 }
 
+.contact-details .frequency-line {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.98rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
 .contact-details strong small {
   margin-left: 0.35rem;
   color: var(--text-tertiary);
@@ -3664,6 +3925,10 @@ onUnmounted(() => {
 
   .contact-details strong {
     font-size: 0.85rem;
+  }
+
+  .contact-details .frequency-line {
+    font-size: clamp(0.72rem, 3vw, 0.84rem);
   }
 
   .dashboard-actions {

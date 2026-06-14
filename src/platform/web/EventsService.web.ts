@@ -198,7 +198,7 @@ export class WebEventsService implements IEventsService {
       await client.connect()
       const data = await client.getCurrentStation()
       if (data && data.uid) {
-        this.emitServerInfo(addressId, { uid: data.uid, name: data.name || '' })
+        this.emitServerInfo(addressId, { ...data, uid: data.uid, name: data.name || '' })
       }
     } catch (err: any) {
       console.warn(`[Events][${addressId}] getCurrentStation failed`, err?.message || err)

@@ -193,11 +193,11 @@ export class FmoApiClient {
     if (fromCallsign) {
       params.fromCallsign = fromCallsign
     }
-    return this.sendRequest('qso', 'getList', params, { retries: 1, timeoutMs: 12000 })
+    return this.sendRequest('qso', 'getList', params, { retries: 2, timeoutMs: 18000 })
   }
 
   async getQsoDetail(logId) {
-    return this.sendRequest('qso', 'getDetail', { logId }, { retries: 1, timeoutMs: 12000 })
+    return this.sendRequest('qso', 'getDetail', { logId }, { retries: 2, timeoutMs: 18000 })
   }
 
   // Station 相关方法

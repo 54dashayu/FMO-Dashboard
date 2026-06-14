@@ -1,4 +1,5 @@
 import packageInfo from '../../package.json'
+import { getAndroidCompatibilityInfo } from '../utils/androidCompatibility'
 
 const LOG_KEY = 'fmo_dashboard_diagnostic_log'
 const MAX_ENTRIES = 300
@@ -58,12 +59,18 @@ export function clearDiagnosticLog() {
 }
 
 export function getDiagnosticText() {
+  const compatibility = getAndroidCompatibilityInfo()
   const header = [
     'FMO仪表盘诊断日志',
     `版本: ${packageInfo.version}`,
     `导出时间: ${new Date().toLocaleString()}`,
     `平台: ${navigator.platform || '-'}`,
     `UserAgent: ${navigator.userAgent || '-'}`,
+    `Android版本: ${compatibility.androidMajor || '-'}`,
+    `WebView/Chrome版本: ${compatibility.chromeMajor || '-'}`,
+    `最低WebView建议: ${compatibility.minimumWebViewFloor}`,
+    `WebView过旧: ${compatibility.criticalLegacyWebView ? '是' : '否'}`,
+    `旧系统风险: ${compatibility.needsCompatibilityWarning ? '是' : '否'}`,
     `页面: ${location.href}`,
     ''
   ]

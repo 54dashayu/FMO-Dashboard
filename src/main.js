@@ -7,7 +7,12 @@ import pinia from './stores'
 import { useLocationStore } from './stores/locationStore'
 import { getPlatform } from './platform'
 import { applySafeAreaInsets } from './platform/native-capacitor/SystemUiService.native'
-import { installDiagnosticLog } from './services/diagnosticLog'
+import { addDiagnosticLog, installDiagnosticLog } from './services/diagnosticLog'
+import toast from './composables/useToast'
+import {
+  getAndroidCompatibilityInfo,
+  shouldShowLegacyAndroidNotice
+} from './utils/androidCompatibility'
 import './style.css'
 
 installDiagnosticLog()
@@ -58,6 +63,26 @@ if (Capacitor.isNativePlatform()) {
 }
 
 app.mount('#app')
+
+if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+  const compatibility = getAndroidCompatibilityInfo()
+  addDiagnosticLog(
+    compatibility.needsCompatibilityWarning ? 'warn' : 'info',
+    compatibility.criticalLegacyWebView
+      ? 'Android WebView 版本过旧'
+      : compatibility.needsCompatibilityWarning
+        ? 'Android 旧系统兼容性风险'
+        : 'Android 运行环境',
+    compatibility
+  )
+
+  if (compatibility.needsCompatibilityWarning && shouldShowLegacyAndroidNotice()) {
+    const message = compatibility.criticalLegacyWebView
+      ? '当前 WebView/Chrome 过旧，请先升级系统 WebView 或 Chrome'
+      : '当前 Android/WebView 较旧，如遇白屏或闪退请导出诊断日志'
+    toast.warning(message, 8000)
+  }
+}
 
 // 冷启动自动恢复定位上报（如果之前已开启）
 const locationStore = useLocationStore()

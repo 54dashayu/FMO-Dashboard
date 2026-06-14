@@ -3,6 +3,7 @@
 export interface ServerInfo {
   uid: string
   name: string
+  [k: string]: any
 }
 
 export interface SpeakingRecord {
