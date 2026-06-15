@@ -3,108 +3,384 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FMO 仪表盘下载</title>
+    <title>FMO 工具箱 · 仪表盘与FMO伴侣屏</title>
     <style>
       :root {
         color-scheme: dark;
-        --bg: #0d1117;
-        --panel: #161b22;
-        --panel-2: #1f2630;
-        --text: #f0f6fc;
-        --muted: #9da7b3;
-        --border: #30363d;
-        --accent: #2f81f7;
-        --accent-2: #3fb950;
-        --warn: #d29922;
+        --bg: #0b0f0d;
+        --band: #101612;
+        --panel: #151c17;
+        --panel-2: #1d261f;
+        --text: #f4f7f3;
+        --muted: #a8b0a8;
+        --border: #303a33;
+        --green: #55d66b;
+        --blue: #39a9f9;
+        --gold: #e8b34d;
+        --danger: #ff8a4a;
       }
 
       * {
         box-sizing: border-box;
       }
 
+      html {
+        scroll-behavior: smooth;
+      }
+
       body {
         margin: 0;
         font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei",
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei',
           sans-serif;
         color: var(--text);
+        background: var(--bg);
+      }
+
+      body::before {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        content: '';
         background:
-          radial-gradient(circle at 18% 12%, rgba(47, 129, 247, 0.2), transparent 28rem),
-          radial-gradient(circle at 88% 8%, rgba(63, 185, 80, 0.15), transparent 24rem), var(--bg);
+          linear-gradient(180deg, rgba(11, 15, 13, 0.82), #0b0f0d 76%),
+          url('/assets/fmo-companion-desk.jpg') center 12% / cover no-repeat;
       }
 
-      main {
-        width: min(1080px, calc(100% - 32px));
+      a {
+        color: inherit;
+      }
+
+      .page {
+        width: min(1440px, calc(100% - 48px));
         margin: 0 auto;
-        padding: 40px 0 56px;
       }
 
-      header {
-        padding: 28px 0 24px;
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 0;
       }
 
       .brand {
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 12px;
+        min-width: 0;
+        font-weight: 800;
       }
 
       .brand img {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
       }
 
-      h1 {
-        margin: 0;
-        font-size: clamp(2rem, 5vw, 3.6rem);
+      .brand span {
+        font-size: 1.12rem;
+        white-space: nowrap;
+      }
+
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .hero {
+        min-height: clamp(620px, calc(100vh - 126px), 780px);
+        display: grid;
+        grid-template-columns: minmax(420px, 0.85fr) minmax(620px, 1.15fr);
+        grid-template-rows: auto 1fr;
+        column-gap: 36px;
+        row-gap: 18px;
+        align-items: end;
+        padding: 38px 0 34px;
+      }
+
+      .hero-title {
+        grid-column: 1 / -1;
+        align-self: end;
+        max-width: 1280px;
+      }
+
+      .hero-copy {
+        align-self: start;
+      }
+
+      .eyebrow {
+        margin: 20px 0 0;
+        color: var(--green);
+        font-size: 1rem;
+        font-weight: 800;
         letter-spacing: 0;
       }
 
+      .author {
+        margin: 0;
+        color: #dce5dc;
+        font-size: 1.05rem;
+        font-weight: 800;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        letter-spacing: 0;
+      }
+
+      h1 {
+        max-width: 1280px;
+        font-size: clamp(2.65rem, 4.65vw, 4.8rem);
+        line-height: 1.06;
+      }
+
       .lead {
-        max-width: 760px;
-        margin: 18px 0 0;
-        color: var(--muted);
-        font-size: 1.08rem;
+        max-width: 720px;
+        margin: 22px 0 0;
+        color: #d6ddd6;
+        font-size: 1.13rem;
         line-height: 1.8;
       }
 
-      .notice {
-        margin: 24px 0;
-        padding: 18px 20px;
-        border: 1px solid rgba(210, 153, 34, 0.45);
-        border-radius: 8px;
-        background: rgba(210, 153, 34, 0.1);
-        color: #f7d58a;
-        line-height: 1.75;
+      .hero-actions,
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
       }
 
-      .intro {
+      .hero-actions {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .hero-actions .button {
+        width: min(240px, 100%);
+      }
+
+      .hero-lower {
         display: grid;
-        grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
-        gap: 16px;
+        grid-template-columns: minmax(220px, 240px) minmax(180px, 220px);
+        gap: 18px;
+        align-items: end;
         margin-top: 18px;
       }
 
-      .grid {
+      .group-qr {
+        width: 100%;
+        justify-self: end;
+      }
+
+      .group-qr img {
+        display: block;
+        width: 100%;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 15px;
+        border: 1px solid rgba(85, 214, 107, 0.62);
+        border-radius: 7px;
+        color: #ecfff0;
+        background: rgba(38, 87, 48, 0.5);
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .button.primary {
+        border-color: var(--green);
+        color: #061008;
+        background: var(--green);
+      }
+
+      .button.blue {
+        border-color: var(--blue);
+        color: #06111a;
+        background: var(--blue);
+      }
+
+      .button.subtle {
+        border-color: var(--border);
+        color: var(--muted);
+        background: rgba(21, 28, 23, 0.86);
+      }
+
+      .hero-media {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: minmax(330px, 0.95fr) minmax(360px, 1.05fr);
+        grid-template-rows: 1fr 1fr;
+        gap: 8px;
+        align-items: stretch;
+        align-self: start;
+        height: clamp(420px, 50vh, 560px);
+      }
+
+      .photo {
+        margin: 0;
+        overflow: hidden;
+        border: 1px solid rgba(244, 247, 243, 0.16);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+      }
+
+      .photo img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .photo img.contain,
+      .project-image img.contain {
+        object-fit: contain;
+        padding: 8px;
+        background: #0b100d;
+      }
+
+      .photo.tall {
+        grid-row: 1 / span 2;
+        aspect-ratio: auto;
+      }
+
+      .photo.wide {
+        aspect-ratio: auto;
+      }
+
+      .hero-stack {
+        display: grid;
+        grid-row: 1 / span 2;
+        grid-template-rows: 1fr 1fr;
+        gap: 8px;
+        height: 100%;
+      }
+
+      section {
+        margin-top: 30px;
+        padding: 28px 0;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 16px;
+      }
+
+      .section-head p {
+        max-width: 620px;
+        margin: 8px 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      h2 {
+        font-size: clamp(1.55rem, 3vw, 2.35rem);
+      }
+
+      h3 {
+        font-size: 1.18rem;
+      }
+
+      .project-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 16px;
       }
 
-      .card {
-        display: flex;
-        flex-direction: column;
-        min-height: 230px;
-        padding: 20px;
+      .project,
+      .card,
+      .notes {
         border: 1px solid var(--border);
         border-radius: 8px;
-        background: rgba(22, 27, 34, 0.88);
+        background: rgba(21, 28, 23, 0.9);
+      }
+
+      .project {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        overflow: hidden;
+      }
+
+      .project-image {
+        aspect-ratio: 16 / 9;
+        border-bottom: 1px solid var(--border);
+        background: #0f1411;
+      }
+
+      .project-image img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .project-body,
+      .card,
+      .notes {
+        padding: 20px;
+      }
+
+      .project-body p,
+      .card p,
+      .notes p {
+        margin: 10px 0 16px;
+        color: var(--muted);
+        line-height: 1.75;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 14px 0;
+      }
+
+      .pill {
+        padding: 5px 9px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: #dce5dc;
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 0.82rem;
+        font-weight: 750;
+      }
+
+      .pill.good {
+        border-color: rgba(85, 214, 107, 0.46);
+        color: #c9ffd2;
+        background: rgba(85, 214, 107, 0.11);
+      }
+
+      .pill.info {
+        border-color: rgba(57, 169, 249, 0.5);
+        color: #d8f0ff;
+        background: rgba(57, 169, 249, 0.12);
+      }
+
+      .download-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 14px;
+      }
+
+      .card {
+        min-height: 216px;
+        display: flex;
+        flex-direction: column;
       }
 
       .card.recommended {
-        border-color: rgba(63, 185, 80, 0.55);
-        box-shadow: 0 0 0 1px rgba(63, 185, 80, 0.18) inset;
+        border-color: rgba(85, 214, 107, 0.58);
       }
 
       .tag {
@@ -112,276 +388,552 @@
         margin-bottom: 12px;
         padding: 4px 9px;
         border-radius: 999px;
-        color: var(--bg);
-        background: var(--accent-2);
+        color: #061008;
+        background: var(--green);
         font-size: 0.78rem;
-        font-weight: 700;
+        font-weight: 850;
       }
 
-      h2 {
-        margin: 0 0 8px;
-        font-size: 1.28rem;
-      }
-
-      .card p {
-        margin: 0 0 18px;
-        color: var(--muted);
-        line-height: 1.65;
-      }
-
-      .actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
+      .card .actions {
         margin-top: auto;
       }
 
-      a.button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 42px;
-        padding: 0 14px;
-        border: 1px solid rgba(47, 129, 247, 0.65);
-        border-radius: 7px;
-        color: #dbeafe;
-        background: rgba(47, 129, 247, 0.16);
-        font-weight: 700;
-        text-decoration: none;
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 12px;
+        margin: 16px 0 0;
+        padding: 0;
+        list-style: none;
       }
 
-      a.button.primary {
-        color: #fff;
-        background: var(--accent);
-      }
-
-      a.button.subtle {
-        border-color: var(--border);
-        color: var(--muted);
-        background: var(--panel-2);
-      }
-
-      section {
-        margin-top: 28px;
-      }
-
-      .notes {
-        padding: 20px;
+      .feature-list li {
+        min-height: 72px;
+        padding: 14px;
         border: 1px solid var(--border);
         border-radius: 8px;
-        background: rgba(22, 27, 34, 0.78);
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.035);
+        line-height: 1.55;
       }
 
-      .notes h2,
-      .intro h2 {
-        margin-bottom: 12px;
+      .gallery {
+        display: grid;
+        grid-template-columns: 1.25fr 0.75fr;
+        gap: 14px;
       }
 
-      .notes ul,
-      .intro ul {
-        margin: 0;
+      .gallery .photo {
+        box-shadow: none;
+      }
+
+      .gallery .photo:first-child {
+        aspect-ratio: 16 / 8.5;
+      }
+
+      .gallery .photo:last-child {
+        aspect-ratio: 3 / 4;
+      }
+
+      .notes ul {
+        margin: 12px 0 0;
         padding-left: 1.2rem;
         color: var(--muted);
-        line-height: 1.8;
+        line-height: 1.85;
       }
 
-      .intro p {
-        margin: 0 0 12px;
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .step {
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
         color: var(--muted);
-        line-height: 1.8;
+        background: rgba(255, 255, 255, 0.035);
+        line-height: 1.65;
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--text);
       }
 
       footer {
-        margin-top: 30px;
+        padding: 28px 0 42px;
         color: var(--muted);
-        font-size: 0.92rem;
+        font-size: 0.94rem;
       }
 
-      @media (max-width: 640px) {
-        main {
-          width: min(100% - 22px, 1080px);
-          padding-top: 22px;
+      .back-to-top {
+        position: fixed;
+        right: 22px;
+        bottom: 24px;
+        z-index: 20;
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(244, 247, 243, 0.22);
+        border-radius: 8px;
+        color: var(--text);
+        background: rgba(21, 28, 23, 0.58);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(10px);
+        font-size: 1.35rem;
+        font-weight: 900;
+        text-decoration: none;
+      }
+
+      .back-to-top:hover {
+        border-color: rgba(85, 214, 107, 0.62);
+        background: rgba(38, 87, 48, 0.7);
+      }
+
+      @media (max-width: 860px) {
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .nav {
+          justify-content: flex-start;
+        }
+
+        .hero,
+        .project-grid,
+        .gallery {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          min-height: 0;
+          grid-template-rows: auto;
+          padding-top: 20px;
+        }
+
+        .hero-title,
+        .hero-copy,
+        .hero-media {
+          align-self: auto;
+        }
+
+        .hero-media {
+          grid-template-columns: 1fr 1fr;
+          height: auto;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .page {
+          width: min(100% - 22px, 1180px);
         }
 
         .brand img {
-          width: 44px;
-          height: 44px;
+          width: 42px;
+          height: 42px;
         }
 
-        .card {
-          min-height: 0;
+        .brand span {
+          white-space: normal;
         }
 
-        .intro {
+        .hero-lower {
+          grid-template-columns: 1fr;
+        }
+
+        .button {
+          width: 100%;
+        }
+
+        .back-to-top {
+          right: 14px;
+          bottom: 14px;
+          width: 42px;
+          height: 42px;
+        }
+
+        .hero-media {
           grid-template-columns: 1fr;
         }
       }
     </style>
   </head>
   <body>
-    <main>
-      <header>
-        <div class="brand">
-          <img src="/app-icon.png" alt="FMO 仪表盘" />
-          <div>
-            <h1>FMO 仪表盘下载</h1>
+    <main class="page">
+      <nav class="topbar" aria-label="站点导航">
+        <div class="brand" aria-label="FMO 工具箱">
+          <img src="/app-icon.png" alt="FMO 工具箱" />
+          <span>FMO 工具箱</span>
+        </div>
+        <div class="nav">
+          <a class="button subtle" href="#dashboard">FMO仪表盘</a>
+          <a class="button subtle" href="#companion">FMO伴侣屏</a>
+          <a class="button subtle" href="/v2/">FMO仪表盘网页版</a>
+        </div>
+      </nav>
+
+      <header class="hero">
+        <div class="hero-title">
+          <h1>FMO仪表盘 /FMO伴侣屏（M5Core）</h1>
+        </div>
+        <div class="hero-copy">
+          <p class="author">作者：BH1JSS</p>
+          <p class="eyebrow">最近 VibeCoding 的一个小成果</p>
+          <p class="lead">
+            FMO 仪表盘软件已经整理出网页、Windows、Android、iOS、macOS 版本；另一个是
+            FMO伴侣屏，使用手头闲置的 M5 Core（一代）做一个桌面小屏。关于 FMO
+            的扩展软硬件，暂时就做这么多，无特殊需要不再花精力了。
+          </p>
+          <div class="hero-lower">
+            <div class="hero-actions">
+              <a class="button blue" href="/v2/">进入网页版 V2</a>
+              <a class="button primary" href="#dashboard-downloads">查看仪表盘下载</a>
+              <a class="button subtle" href="#companion">查看 FMO伴侣屏</a>
+            </div>
+            <div class="group-qr">
+              <img src="/assets/fmo-test-group-qr.png" alt="FMO仪表盘软硬件测试群二维码" />
+            </div>
           </div>
         </div>
-        <p class="lead">
-          FMO 仪表盘是面向 FMO 用户的实时通联看板，集中展示当前发言、最近通联、友台位置、相对方位、距离、服务器状态、播报模式和通联统计。V2.0
-          已全面转向新版界面，桌面端和移动端都围绕实时使用场景重新整理。
-        </p>
+        <div class="hero-media" aria-label="项目实拍">
+          <figure class="photo tall">
+            <img src="/assets/fmo-companion-radio.jpg" alt="FMO伴侣屏安装在手台上的实拍效果" />
+          </figure>
+          <div class="hero-stack">
+            <figure class="photo wide">
+              <img
+                class="contain"
+                src="/assets/fmo-dashboard-desktop.png"
+                alt="FMO 仪表盘桌面版界面截图"
+              />
+            </figure>
+            <figure class="photo wide">
+              <img src="/assets/fmo-companion-desk.jpg" alt="FMO伴侣屏、FMO 主机和手台桌面实拍" />
+            </figure>
+          </div>
+        </div>
       </header>
 
-      <div class="notice">
-        网页版已全面转向 V2：
-        <a class="button primary" href="/v2/">进入网页版 V2</a>
-        。网页版适合临时访问或快速体验，长期使用强烈建议下载对应平台的 App 或桌面版，稳定性和兼容性更好。
-      </div>
-
-      <section class="intro" aria-label="软件介绍">
-        <div class="notes">
-          <h2>V2.0 优化重点</h2>
-          <ul>
-            <li>Dashboard 第一屏重新设计，当前发言、最近通联、方位距离和服务器信息更集中。</li>
-            <li>移动端顶栏、底部导航和页面安全区域重新适配，手机上更紧凑易读。</li>
-            <li>新增最近活跃服务器切换、语音播报模式整理和多地址同步体验优化。</li>
-            <li>Windows / macOS 桌面版不依赖外部浏览器，减少自动 HTTPS 和浏览器安全策略影响。</li>
-          </ul>
+      <section id="dashboard" aria-label="FMO 仪表盘">
+        <div class="section-head">
+          <div>
+            <h2>FMO 仪表盘</h2>
+            <p>
+              面向 FMO 用户的实时通联看板，网页、Windows、Android、iOS、macOS
+              版本都有。它把当前发言、最近通联、服务器、方位距离、播报模式、通联统计和 TX/RX
+              频率集中到一个界面里。
+            </p>
+          </div>
+          <a class="button blue" href="https://github.com/54dashayu/FMO-Dashboard">GitHub 项目</a>
         </div>
         <div class="notes">
-          <h2>下载说明</h2>
-          <p>本站提供当前最终版安装包下载，适合无法访问 GitHub 的用户。</p>
-          <p>请优先选择与你设备对应的推荐版本；Win32 和 Win7 Legacy 仅作为兼容备用。</p>
+          <h3>多端实时看板</h3>
+          <p>
+            V2 第一屏重新整理了当前呼叫、上次通联、服务器收藏、最近通联列表和 FMO 控制入口。Android
+            V2.01 已加入老系统兼容调整，并在仪表盘里按 FMO 屏幕风格显示 TX/RX 频率。
+          </p>
+          <div class="meta">
+            <span class="pill good">Web V2</span>
+            <span class="pill good">Android V2.01</span>
+            <span class="pill good">Windows / macOS V2.01</span>
+            <span class="pill">iOS App Store</span>
+          </div>
         </div>
-      </section>
-
-      <section class="grid" aria-label="推荐下载">
-        <article class="card recommended">
-          <span class="tag">推荐</span>
-          <h2>Windows 64 位桌面版</h2>
-          <p>适用于 Win10 / Win11 64 位系统。不依赖外部浏览器，普通 Windows 用户优先下载这个版本。</p>
-          <div class="actions">
-            <a
-              class="button primary"
-              href="/downloads/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.0.exe"
-              >下载 Win64</a
-            >
-          </div>
-        </article>
-
-        <article class="card recommended">
-          <span class="tag">推荐</span>
-          <h2>macOS Universal DMG</h2>
-          <p>一个 DMG 同时支持 Apple Silicon 和 Intel Mac。未签名测试包首次打开可能需要右键选择“打开”。</p>
-          <div class="actions">
-            <a
-              class="button primary"
-              href="/downloads/FMO-Dashboard-macOS-Universal-v2.0.0.dmg"
-              >下载 macOS</a
-            >
-          </div>
-        </article>
-
-        <article class="card recommended">
-          <span class="tag">推荐</span>
-          <h2>Android APK V2.01</h2>
-          <p>适用于 Android 手机、平板和部分车机。V2.01 更新老系统适配与 TX/RX 频率显示。</p>
-          <div class="actions">
-            <a
-              class="button primary"
-              href="/downloads/FMO-Dashboard-Android-V2.01.apk"
-              >下载 Android</a
-            >
-          </div>
-        </article>
-
-        <article class="card">
-          <h2>iOS / iPadOS</h2>
-          <p>iPhone 和 iPad 用户请在 Apple App Store 搜索 FMO Dashboard 下载。</p>
-          <div class="actions">
-            <a class="button primary" href="https://apps.apple.com/cn/app/fmo-dashboard/id6772919070"
-              >打开 App Store</a
-            >
+        <article class="project">
+          <div class="project-image">
+            <img
+              class="contain"
+              src="/assets/fmo-dashboard-desktop.png"
+              alt="FMO 仪表盘桌面大屏界面"
+            />
           </div>
         </article>
       </section>
 
-      <section class="grid" aria-label="兼容备用下载">
-        <article class="card">
-          <h2>Windows 32 位备用版</h2>
-          <p>适用于 32 位 Windows，也可在 64 位 Windows 兼容运行。普通用户仍建议优先选择 Win64。</p>
-          <div class="actions">
-            <a
-              class="button"
-              href="/downloads/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.0.exe"
-              >下载 Win32</a
-            >
+      <section id="dashboard-downloads" aria-label="FMO 仪表盘下载">
+        <div class="section-head">
+          <div>
+            <h2>FMO 仪表盘下载</h2>
+            <p>请选择与你设备对应的版本。网页版适合临时访问，长期使用建议下载 App 或桌面版。</p>
+          </div>
+        </div>
+
+        <div class="download-grid">
+          <article class="card recommended">
+            <span class="tag">推荐</span>
+            <h3>Android APK V2.01</h3>
+            <p>适用于 Android 手机、平板和部分车机。V2.01 更新老系统适配与 TX/RX 频率显示。</p>
+            <div class="actions">
+              <a class="button primary" href="/downloads/FMO-Dashboard-Android-V2.01.apk"
+                >下载 Android</a
+              >
+            </div>
+          </article>
+
+          <article class="card recommended">
+            <span class="tag">推荐</span>
+            <h3>Windows 64 位桌面版</h3>
+            <p>
+              适用于 Win10 / Win11 64 位系统。不依赖外部浏览器，普通 Windows 用户优先下载这个版本。
+            </p>
+            <div class="actions">
+              <a
+                class="button primary"
+                href="/downloads/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.1.exe"
+                >下载 Win64</a
+              >
+            </div>
+          </article>
+
+          <article class="card recommended">
+            <span class="tag">推荐</span>
+            <h3>macOS Universal DMG</h3>
+            <p>
+              一个 DMG 同时支持 Apple Silicon 和 Intel Mac。已完成 Developer ID 签名与 Apple 公证。
+            </p>
+            <div class="actions">
+              <a class="button primary" href="/downloads/FMO-Dashboard-macOS-Universal-v2.0.1.dmg"
+                >下载 macOS</a
+              >
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>网页版 V2</h3>
+            <p>网页版适合临时访问或快速体验。长期使用请优先下载对应平台版本。</p>
+            <div class="actions">
+              <a class="button blue" href="/v2/">进入网页版 V2</a>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>iOS / iPadOS</h3>
+            <p>iPhone 和 iPad 用户请在 Apple App Store 搜索 FMO Dashboard 下载。</p>
+            <div class="actions">
+              <a
+                class="button primary"
+                href="https://apps.apple.com/cn/app/fmo-dashboard/id6772919070"
+                >打开 App Store</a
+              >
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Windows 32 位备用版</h3>
+            <p>
+              适用于 32 位 Windows，也可在 64 位 Windows 兼容运行。普通用户仍建议优先选择 Win64。
+            </p>
+            <div class="actions">
+              <a class="button" href="/downloads/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.1.exe"
+                >下载 Win32</a
+              >
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="companion" aria-label="FMO伴侣屏 ESP32">
+        <div class="section-head">
+          <div>
+            <h2>FMO伴侣屏</h2>
+            <p>
+              使用手头闲置的 M5 Core（一代）做一个桌面小屏，通过 WiFi 或远程网络连接
+              FMO，显示当前通联、站点、QSO 信息，并适合放在台站旁长期守听。
+            </p>
+          </div>
+          <a class="button blue" href="https://github.com/54dashayu/fmo-companion-m5core"
+            >GitHub 项目</a
+          >
+        </div>
+        <div class="notes">
+          <h3>主要特点</h3>
+          <p>
+            目前已经有两版固件：V0.2 版是在原作者基础上针对 M5 Core（一代）的编译版；V2.01
+            版本是在此基础上增加 5 个网络配置与 TF 卡 CSV 导入的增强版，更适合在多个 FMO 地址、WiFi
+            和远程环境之间切换。
+          </p>
+          <p>
+            V2.01 重构了按键交互、设置菜单和多连接配置，支持本地 IP、远程地址和 DDNS
+            动态域名接入，并新增从 TF 卡根目录读取
+            <code>fmo_profiles.csv</code>，一次导入全局呼号、5 组网络配置和当前启用配置。
+          </p>
+          <div class="meta">
+            <span class="pill good">M5 Core 一代适配</span>
+            <span class="pill good">Windows 一键刷写包</span>
+            <span class="pill info">5 组连接配置</span>
+            <span class="pill info">TF 卡 CSV 导入</span>
+            <span class="pill">可选 GPIO15 WS2812 LED</span>
+          </div>
+        </div>
+        <article class="project">
+          <div class="project-image">
+            <img src="/assets/fmo-companion-desk.jpg" alt="FMO伴侣屏 V2.0 桌面实拍" />
           </div>
         </article>
 
-        <article class="card">
-          <h2>Win7 Legacy 简易包</h2>
-          <p>仅供 Win7 32 位环境尝试。它会启动本地服务并打开浏览器，体验不如正式桌面版。</p>
-          <div class="actions">
-            <a
-              class="button"
-              href="/downloads/FMO-Dashboard-Windows-Legacy-Win7-x86-v2.0.0.zip"
-              >下载 ZIP</a
-            >
-            <a
-              class="button subtle"
-              href="/downloads/FMO-Dashboard-Windows-Legacy-Win7-x86-v2.0.0.exe"
-              >自解压 EXE</a
-            >
-          </div>
-        </article>
+        <ul class="feature-list">
+          <li>正面 A/B/C 三个实体按键完成移动、确认、保存、启用和设置操作。</li>
+          <li>支持局域网 IP、带端口地址和 DDNS 域名，适合本地台站和远程值守。</li>
+          <li>默认呼号 BH1JSS、默认 FMO 地址 192.168.31.146，均可在设备设置页修改。</li>
+          <li>普通不带 LED 灯带的 M5 Core 可以正常使用，外接 WS2812 时可做通联状态提示。</li>
+        </ul>
+      </section>
 
-        <article class="card">
-          <h2>网页版 V2</h2>
-          <p>网页版已全面转向 V2，仅建议临时访问或快速体验。长期使用请优先下载对应平台版本。</p>
-          <div class="actions">
-            <a class="button" href="/v2/">进入网页版 V2</a>
+      <section id="companion-downloads" aria-label="FMO伴侣屏（M5Core）固件下载">
+        <div class="section-head">
+          <div>
+            <h2>FMO伴侣屏（M5Core）固件下载</h2>
+            <p>
+              普通用户建议下载 Windows 刷写包；熟悉 ESP-IDF 的用户可使用固件 ZIP 或 merged bin。
+            </p>
           </div>
-        </article>
+        </div>
 
-        <article class="card">
-          <h2>校验文件</h2>
-          <p>SHA256 用于确认下载文件完整性，不是安装包。需要校验时再下载。</p>
-          <div class="actions">
-            <a
-              class="button subtle"
-              href="/downloads/SHA256SUMS-macos-v2.0.0.txt"
-              >macOS</a
-            >
-            <a
-              class="button subtle"
-              href="/downloads/SHA256SUMS-windows-desktop-v2.0.0.txt"
-              >Windows</a
-            >
-            <a
-              class="button subtle"
-              href="/downloads/SHA256SUMS-android-V2.01.txt"
-              >Android</a
-            >
+        <div class="download-grid">
+          <article class="card recommended">
+            <span class="tag">推荐</span>
+            <h3>V2.01 增强版刷写包</h3>
+            <p>增加 5 个网络配置与 TF 卡 CSV 导入，适合多个 WiFi、FMO 地址和远程环境之间切换。</p>
+            <div class="actions">
+              <a
+                class="button primary"
+                href="/downloads/fmo-companion-m5core-windows-flasher-v2.0.1.zip"
+                >下载 V2.01 刷写包</a
+              >
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>V0.2 编译版刷写包</h3>
+            <p>在原作者基础上针对 M5 Core（一代）完成编译，适合基础版使用或对比测试。</p>
+            <div class="actions">
+              <a class="button" href="/downloads/fmo-companion-m5core-windows-flasher-v0.2.0.zip"
+                >下载 V0.2 刷写包</a
+              >
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>V2.01 固件 ZIP</h3>
+            <p>
+              包含 bin、fmo_profiles.csv 配置文件与 TF 卡配置说明，适合熟悉 ESP-IDF
+              或需要手动刷写的用户。
+            </p>
+            <div class="actions">
+              <a class="button" href="/downloads/fmo-companion-m5core-firmware-v2.0.1.zip"
+                >V2.01 固件 ZIP</a
+              >
+              <a class="button subtle" href="/downloads/tf_profile_csv_user_guide.md"
+                >TF 卡配置说明</a
+              >
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>V2.01 完整 merged 固件</h3>
+            <p>从 0x0 地址刷写的完整固件，适合熟悉 ESP32 刷写流程的用户。</p>
+            <div class="actions">
+              <a class="button" href="/downloads/fmo-companion-m5core-merged-v2.0.1.bin"
+                >V2.01 merged bin</a
+              >
+              <a class="button subtle" href="/downloads/fmo_profiles.csv">fmo_profiles.csv</a>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>V0.2 / V2.0 历史版本</h3>
+            <p>保留早期刷写包和固件包，便于回退、对比测试或旧环境验证。</p>
+            <div class="actions">
+              <a class="button subtle" href="/downloads/fmo-companion-m5core-firmware-v2.0.0.zip"
+                >V2.0 固件 ZIP</a
+              >
+              <a class="button subtle" href="/downloads/fmo-companion-m5core-firmware-v0.2.0.zip"
+                >V0.2 固件 ZIP</a
+              >
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="notes" aria-label="TF 卡配置文件使用方法">
+        <h2>TF 卡配置文件使用方法</h2>
+        <p>
+          FMO伴侣屏 V2.01 支持从 TF 卡读取 CSV 配置。请使用 <strong>32GB 以下</strong> 的 TF
+          卡，格式化为 <strong>FAT32</strong>，并把配置文件放在 TF 卡根目录，文件名固定为
+          <code>fmo_profiles.csv</code>。
+        </p>
+        <div class="steps">
+          <div class="step">
+            <strong>1. 准备 TF 卡</strong>
+            使用 32GB 以下 TF 卡，格式化为 FAT32。不要把配置文件放进任何文件夹。
           </div>
-        </article>
+          <div class="step">
+            <strong>2. 编辑 CSV</strong>
+            文件名必须是 <code>fmo_profiles.csv</code>，可从页面下载配置文件后修改呼号、WiFi、FMO
+            地址和启用配置。
+          </div>
+          <div class="step">
+            <strong>3. 插卡读取</strong>
+            插入 M5 Core 后进入设置页，选择第一行 <code>TF卡配置文件</code>，按中键读取。
+          </div>
+        </div>
+        <ul>
+          <li>CSV 支持全局本机呼号、5 组网络配置和当前启用配置号。</li>
+          <li>第一行作为表头跳过，列顺序需要保持不变。</li>
+          <li>
+            FMO 地址只填 <code>Host[:Port]</code>，不要填 <code>http://</code>、<code>ws://</code>
+            或路径。
+          </li>
+          <li>文件解析失败、未插卡、文件不存在或文件名不正确时，不会覆盖原有配置。</li>
+        </ul>
+        <div class="actions">
+          <a class="button primary" href="/downloads/fmo_profiles.csv">下载 fmo_profiles.csv</a>
+          <a class="button subtle" href="/downloads/tf_profile_csv_user_guide.md">下载完整说明</a>
+        </div>
       </section>
 
       <section class="notes">
-        <h2>使用建议</h2>
+        <h2>校验与说明</h2>
+        <p>SHA256 用于确认下载文件完整性，不是安装包。需要校验时再下载。</p>
+        <div class="actions">
+          <a class="button subtle" href="/downloads/SHA256SUMS-fmo-companion-m5core-v2.0.1.txt"
+            >FMO伴侣屏 V2.01 校验</a
+          >
+          <a class="button subtle" href="/downloads/SHA256SUMS-fmo-companion-m5core-v0.2-v2.0.txt"
+            >FMO伴侣屏历史版本校验</a
+          >
+          <a class="button subtle" href="/downloads/SHA256SUMS-android-V2.01.txt">Android 校验</a>
+          <a class="button subtle" href="/downloads/SHA256SUMS-macos-v2.0.1.txt">macOS 校验</a>
+          <a class="button subtle" href="/downloads/SHA256SUMS-windows-desktop-v2.0.1.txt"
+            >Windows 校验</a
+          >
+        </div>
         <ul>
           <li>Windows 桌面版添加本地 FMO 地址时，建议填写设备局域网 IP，例如 192.168.x.x。</li>
           <li>部分 Windows 环境无法解析 fmo.local 这类 .local 地址，可能导致同步失败。</li>
-          <li>当前 Windows 和 macOS 桌面测试包未配置商业签名证书，首次安装或打开时可能出现安全提示。</li>
-          <li>如本站下载受限，可到 GitHub 项目页面查看 Release 附件。</li>
+          <li>Windows 桌面版当前未配置商业签名证书，首次安装时可能出现安全提示。</li>
+          <li>macOS 桌面版已完成 Developer ID 签名与 Apple 公证，建议下载最新 V2.01 DMG。</li>
+          <li>
+            FMO伴侣屏普通用户优先使用 Windows 一键刷写包；V2.01 已支持 TF 卡根目录读取
+            <code>fmo_profiles.csv</code>。
+          </li>
         </ul>
       </section>
 
       <footer>
-        FMO Dashboard V2.0.0 ·
-        <a class="button subtle" href="https://github.com/54dashayu/FMO-Dashboard">GitHub 项目地址</a>
+        FMO 工具箱 ·
+        <a href="https://github.com/54dashayu/FMO-Dashboard">FMO Dashboard</a>
+        ·
+        <a href="https://github.com/54dashayu/fmo-companion-m5core">FMO Companion M5 Core</a>
       </footer>
     </main>
+    <a class="back-to-top" href="#" aria-label="回到顶部" title="回到顶部">↑</a>
   </body>
 </html>
