@@ -324,6 +324,12 @@
         object-fit: cover;
       }
 
+      .project-image a {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
       .project-body,
       .card,
       .notes {
@@ -592,6 +598,7 @@
           </p>
           <div class="hero-lower">
             <div class="hero-actions">
+              <a class="button blue" href="/v2/">进入FMO仪表盘网页版</a>
               <a class="button primary" href="#dashboard-downloads">查看仪表盘下载</a>
               <a class="button subtle" href="#companion">查看 FMO伴侣屏</a>
             </div>
@@ -645,11 +652,13 @@
         </div>
         <article class="project">
           <div class="project-image">
-            <img
-              class="contain"
-              src="/assets/fmo-dashboard-desktop.png"
-              alt="FMO 仪表盘桌面大屏界面"
-            />
+            <a href="/v2/" aria-label="进入FMO仪表盘网页版">
+              <img
+                class="contain"
+                src="/assets/fmo-dashboard-desktop.png"
+                alt="FMO 仪表盘桌面大屏界面"
+              />
+            </a>
           </div>
         </article>
       </section>
