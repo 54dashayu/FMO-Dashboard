@@ -1,15 +1,61 @@
-import initSqlJs from 'sql.js'
+import sqlAsmUrl from 'sql.js/dist/sql-asm.js?url'
 import { AdifFormatter, AdifParser } from '../adif/index.js'
 import { exportFile } from '../utils/exportFile.js'
 
 let SQL = null
+let sqlAsmLoader = null
+
+function loadSqlAsmInit() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return Promise.reject(new Error('当前环境不支持加载 sql.js asm fallback'))
+  }
+  if (typeof window.initSqlJs === 'function') {
+    return Promise.resolve(window.initSqlJs)
+  }
+  if (!sqlAsmLoader) {
+    sqlAsmLoader = new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = sqlAsmUrl
+      script.async = true
+      script.onload = () => {
+        if (typeof window.initSqlJs === 'function') {
+          resolve(window.initSqlJs)
+        } else {
+          reject(new Error('sql.js asm fallback 加载后未找到 initSqlJs'))
+        }
+      }
+      script.onerror = () => reject(new Error('sql.js asm fallback 加载失败'))
+      document.head.appendChild(script)
+    })
+  }
+  return sqlAsmLoader
+}
+
+function shouldPreferSqlAsm() {
+  const precheck = window.__FMO_ANDROID_WEBVIEW_PRECHECK__
+  return Boolean(precheck?.isAndroid && precheck?.chromeMajor && precheck.chromeMajor < 64)
+}
 
 // 初始化sql.js（使用本地wasm文件）
 async function initSQL() {
   if (!SQL) {
-    SQL = await initSqlJs({
-      locateFile: (file) => `/${file}`
-    })
+    if (shouldPreferSqlAsm()) {
+      const initSqlJs = await loadSqlAsmInit()
+      SQL = await initSqlJs()
+      return SQL
+    }
+
+    try {
+      const module = await import('sql.js')
+      const initSqlJs = module.default || module
+      SQL = await initSqlJs({
+        locateFile: (file) => `/${file}`
+      })
+    } catch (error) {
+      console.warn('[sql.js] wasm 初始化失败，回退到 asm.js:', error)
+      const initSqlJs = await loadSqlAsmInit()
+      SQL = await initSqlJs()
+    }
   }
   return SQL
 }

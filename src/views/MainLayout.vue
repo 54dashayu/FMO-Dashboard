@@ -61,63 +61,65 @@
       @touchmove="handleTouchMove"
       @touchend="handleTouchEnd"
     >
-      <router-view v-slot="{ Component }">
-        <component
-          :is="Component"
-          :db-loaded="dbLoaded"
-          :selected-from-callsign="selectedFromCallsign"
-          :own-callsign="ownCallsign"
-          :loading="loading || dataQuery.loading.value"
-          :error="error || dataQuery.error.value"
-          :import-progress="importProgress"
-          :fmo-sync-message="fmoSync.autoSyncMessage.value"
-          :data-query="dataQuery"
-          :callsign-records="callsignRecords"
-          :active-address-id="settings.activeAddressId.value"
-          :address-list="settings.addressList.value"
-          :fmo-address="settings.fmoAddress.value"
-          :protocol="settings.protocol.value"
-          :syncing="fmoSync.syncing.value"
-          :sync-status="fmoSync.syncStatus.value"
-          :multi-select-mode="settings.multiSelectMode.value"
-          :selected-address-ids="settings.selectedAddressIds.value"
-          :multi-sync-progress="fmoSync.multiSyncProgress.value"
-          :audio-volume="settings.audioVolume.value"
-          :contact-counts="settings.contactCounts.value"
-          :today-contacted-callsigns="settings.todayContactedCallsigns.value"
-          :total-logs="totalLogs"
-          :today-logs="todayLogs"
-          :unique-callsigns="uniqueCallsigns"
-          :voice-mode="dashboardVoiceMode"
-          :station-connected="speakingStatus.primaryConnected.value"
-          :station-busy="stationBusy"
-          @update-dashboard-voice-mode="handleUpdateDashboardVoiceMode"
-          @execute-query="executeQuery"
-          @show-callsign-records="handleShowCallsignRecords"
-          @select-files="triggerFileInput"
-          @export-data="handleExportData"
-          @export-adif="handleExportAdif"
-          @sync-days="handleSyncDays"
-          @sync-incremental="handleSyncIncremental"
-          @sync-full="handleSyncFull"
-          @backup-logs="handleBackupLogs"
-          @clear-all-data="handleClearAllData"
-          @update:multi-select-mode="handleSetMultiSelectMode"
-          @toggle-address-selection="handleToggleAddressSelection"
-          @sync-multiple="handleSyncMultiple"
-          @add-address="handleAddAddress"
-          @update-address="handleUpdateAddress"
-          @delete-address="handleDeleteAddress"
-          @select-address="handleSelectAddress"
-          @clear-all-addresses="handleClearAllAddresses"
-          @refresh-user-info="handleRefreshUserInfo"
-          @validate-and-select="handleValidateAndSelect"
-          @update-audio-volume="handleUpdateAudioVolume"
-          @open-station-list="handleOpenStationList"
-          @station-prev="handleStationPrev"
-          @station-next="handleStationNext"
-        />
-      </router-view>
+      <div class="route-frame">
+        <router-view v-slot="{ Component }">
+          <component
+            :is="Component"
+            :db-loaded="dbLoaded"
+            :selected-from-callsign="selectedFromCallsign"
+            :own-callsign="ownCallsign"
+            :loading="loading || dataQuery.loading.value"
+            :error="error || dataQuery.error.value"
+            :import-progress="importProgress"
+            :fmo-sync-message="fmoSync.autoSyncMessage.value"
+            :data-query="dataQuery"
+            :callsign-records="callsignRecords"
+            :active-address-id="settings.activeAddressId.value"
+            :address-list="settings.addressList.value"
+            :fmo-address="settings.fmoAddress.value"
+            :protocol="settings.protocol.value"
+            :syncing="fmoSync.syncing.value"
+            :sync-status="fmoSync.syncStatus.value"
+            :multi-select-mode="settings.multiSelectMode.value"
+            :selected-address-ids="settings.selectedAddressIds.value"
+            :multi-sync-progress="fmoSync.multiSyncProgress.value"
+            :audio-volume="settings.audioVolume.value"
+            :contact-counts="settings.contactCounts.value"
+            :today-contacted-callsigns="settings.todayContactedCallsigns.value"
+            :total-logs="totalLogs"
+            :today-logs="todayLogs"
+            :unique-callsigns="uniqueCallsigns"
+            :voice-mode="dashboardVoiceMode"
+            :station-connected="speakingStatus.primaryConnected.value"
+            :station-busy="stationBusy"
+            @update-dashboard-voice-mode="handleUpdateDashboardVoiceMode"
+            @execute-query="executeQuery"
+            @show-callsign-records="handleShowCallsignRecords"
+            @select-files="triggerFileInput"
+            @export-data="handleExportData"
+            @export-adif="handleExportAdif"
+            @sync-days="handleSyncDays"
+            @sync-incremental="handleSyncIncremental"
+            @sync-full="handleSyncFull"
+            @backup-logs="handleBackupLogs"
+            @clear-all-data="handleClearAllData"
+            @update:multi-select-mode="handleSetMultiSelectMode"
+            @toggle-address-selection="handleToggleAddressSelection"
+            @sync-multiple="handleSyncMultiple"
+            @add-address="handleAddAddress"
+            @update-address="handleUpdateAddress"
+            @delete-address="handleDeleteAddress"
+            @select-address="handleSelectAddress"
+            @clear-all-addresses="handleClearAllAddresses"
+            @refresh-user-info="handleRefreshUserInfo"
+            @validate-and-select="handleValidateAndSelect"
+            @update-audio-volume="handleUpdateAudioVolume"
+            @open-station-list="handleOpenStationList"
+            @station-prev="handleStationPrev"
+            @station-next="handleStationNext"
+          />
+        </router-view>
+      </div>
 
       <footer class="app-footer">
         <span>{{ t('footer.credit', 'FMO仪表盘 由 BH1JSS 机婶婶 贡献') }}</span>
@@ -1738,6 +1740,18 @@ provide('protocol', settings.protocol)
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
+.route-frame {
+  display: flex;
+  flex: 1 0 auto;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.route-frame :deep(> *) {
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
 .back-to-top-btn {
   display: none;
 }
@@ -1887,6 +1901,67 @@ provide('protocol', settings.protocol)
 
   :global(.native-ios .mobile-nav) {
     display: none;
+  }
+}
+
+@media (max-height: 520px) and (max-width: 950px) and (orientation: landscape) {
+  .container {
+    max-width: none;
+    height: 100dvh;
+  }
+
+  .container :deep(.header),
+  .container :deep(.speaking-bar) {
+    display: none;
+  }
+
+  .dashboard-route .content-area,
+  .content-area {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-nav {
+    display: flex;
+    min-height: 2.05rem;
+    padding: 0.06rem 0;
+    padding-bottom: 0.06rem;
+  }
+
+  .mobile-nav .nav-tab {
+    gap: 0;
+    padding: 0.05rem 0.55rem;
+    border-radius: 6px;
+  }
+
+  .nav-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .nav-label {
+    font-size: 0.54rem;
+    line-height: 1.05;
+  }
+
+  .dashboard-route .app-footer {
+    display: none;
+  }
+
+  .back-to-top-btn {
+    right: 0.55rem;
+    bottom: 2.3rem;
+    width: 34px;
+    height: 34px;
+  }
+
+  .back-to-top-btn svg {
+    width: 18px;
+    height: 18px;
   }
 }
 

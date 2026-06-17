@@ -4,7 +4,7 @@ FMO 仪表盘是面向 FMO 用户的实时通联看板，基于 FmoLogs 数据�
 
 项目当前以 V2 为主线，覆盖 Web、Android、iOS、Windows 和 macOS。Windows / macOS 桌面版基于 Tauri 打包，不依赖外部浏览器，适合遇到浏览器自动 HTTPS、安全连接策略或环境兼容问题的用户。
 
-[项目仓库](https://github.com/54dashayu/FMO-Dashboard) · [GitHub Release](https://github.com/54dashayu/FMO-Dashboard/releases/tag/v2.0.1) · [问题反馈](https://github.com/54dashayu/FMO-Dashboard/issues)
+[项目仓库](https://github.com/54dashayu/FMO-Dashboard) · [GitHub Release](https://github.com/54dashayu/FMO-Dashboard/releases/tag/v2.0.2) · [问题反馈](https://github.com/54dashayu/FMO-Dashboard/issues)
 
 ## 主要功能
 
@@ -21,7 +21,7 @@ FMO 仪表盘是面向 FMO 用户的实时通联看板，基于 FmoLogs 数据�
 
 安装包统一从 GitHub Release 下载：
 
-- [FMO 仪表盘 V2.01 Release](https://github.com/54dashayu/FMO-Dashboard/releases/tag/v2.0.1)
+- [FMO 仪表盘 Android V2.02 Release](https://github.com/54dashayu/FMO-Dashboard/releases/tag/v2.0.2)
 
 ### iOS
 
@@ -36,8 +36,10 @@ macOS DMG 为 Universal 版本，同时支持 Apple Silicon 和 Intel Mac。V2.0
 
 ### Android
 
-- [FMO-Dashboard-Android-V2.01.apk](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.1/FMO-Dashboard-Android-V2.01.apk)
-- [SHA256SUMS-android-V2.01.txt](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.1/SHA256SUMS-android-V2.01.txt)
+- [FMO-Dashboard-Android-V2.02.apk](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.2/FMO-Dashboard-Android-V2.02.apk)
+- [SHA256SUMS-android-V2.02.txt](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.2/SHA256SUMS-android-V2.02.txt)
+
+Android V2.02 主要针对更低版本 Android 和特殊车机/音箱系统增强兼容，已测试 Android 8、小爱音箱、鸿蒙 6 等环境；高版本 Android 会自动使用现代 WebView 与系统能力。该版本加入旧 WebView 启动失败兜底、低版本 WebView 的数据库加载回退、Android 11 以下安全区修复，并优化 800x480 等小分辨率横屏显示。
 
 ### Windows 桌面版
 
@@ -58,7 +60,8 @@ Windows 下添加本地 FMO 地址时，建议填写设备局域网 IP，例如 
 - 最近活跃服务器切换入口加入 Dashboard。
 - 英文界面中面向用户的“中继”统一为 Server。
 - Logs、Friends、About、Settings 等页面做了窄屏和浅色模式优化。
-- Android V2.01、Windows Desktop v2.0.1、macOS Desktop v2.0.1 与 Web V2 同步发布。
+- Android V2.02 已补充老 Android WebView、Android 11 以下原生安全区和小分辨率横屏兼容优化。
+- Windows Desktop v2.0.1、macOS Desktop v2.0.1 与 Web V2 同步发布。
 
 ## 本地开发
 

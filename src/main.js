@@ -63,6 +63,7 @@ if (Capacitor.isNativePlatform()) {
 }
 
 app.mount('#app')
+document.documentElement.classList.add('app-mounted')
 
 if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
   const compatibility = getAndroidCompatibilityInfo()

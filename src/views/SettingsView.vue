@@ -2055,6 +2055,110 @@ async function handleVoiceTest() {
   }
 }
 
+@media (max-height: 520px) and (max-width: 950px) and (orientation: landscape) {
+  .settings-view {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+    padding: 0.45rem;
+  }
+
+  .settings-content {
+    max-width: none;
+  }
+
+  .setting-group,
+  .setting-group-audio {
+    margin-bottom: 0.5rem;
+    padding: 0.65rem;
+  }
+
+  .setting-item {
+    gap: 0.45rem;
+    margin-bottom: 0.55rem;
+  }
+
+  .setting-label,
+  .setting-label-normal {
+    font-size: 0.82rem;
+  }
+
+  .address-card {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .dialog-overlay {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 0.35rem;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dialog {
+    width: min(28rem, calc(100vw - 0.7rem));
+    max-width: calc(100vw - 0.7rem);
+    max-height: calc(100dvh - 0.7rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .dialog-header {
+    flex-shrink: 0;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .dialog-title {
+    font-size: 0.92rem;
+  }
+
+  .dialog-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.65rem 0.75rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dialog-footer {
+    flex-shrink: 0;
+    gap: 0.45rem;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .form-group {
+    margin-bottom: 0.58rem;
+  }
+
+  .form-label {
+    margin-bottom: 0.28rem;
+    font-size: 0.78rem;
+  }
+
+  .form-input,
+  .form-input-flex,
+  .connection-select,
+  .protocol-select {
+    padding: 0.42rem 0.55rem;
+    font-size: 0.78rem;
+  }
+
+  .form-hint,
+  .form-error {
+    margin-top: 0.45rem;
+    padding: 0.45rem;
+    font-size: 0.72rem;
+  }
+
+  .fmo-preview-dialog {
+    width: calc(100vw - 0.7rem);
+    max-width: calc(100vw - 0.7rem);
+    height: calc(100dvh - 0.7rem);
+    max-height: calc(100dvh - 0.7rem);
+  }
+}
+
 /* 响应式文案：桌面端显示完整文案，移动端显示精简文案 */
 .text-mobile {
   display: none;

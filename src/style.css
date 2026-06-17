@@ -327,8 +327,7 @@ body::before {
   z-index: -1;
   background:
     radial-gradient(circle at 18% 10%, rgba(8, 127, 196, 0.08), transparent 28rem),
-    linear-gradient(135deg, rgba(47, 157, 85, 0.07), transparent 34rem),
-    var(--bg-page);
+    linear-gradient(135deg, rgba(47, 157, 85, 0.07), transparent 34rem), var(--bg-page);
   background-size: 100% 100%;
   background-repeat: no-repeat;
   -webkit-mask-image: none;
@@ -340,8 +339,7 @@ body::before {
   body::before {
     background:
       radial-gradient(circle at 18% 10%, rgba(69, 182, 255, 0.1), transparent 28rem),
-      linear-gradient(135deg, rgba(101, 212, 126, 0.08), transparent 34rem),
-      var(--bg-page);
+      linear-gradient(135deg, rgba(101, 212, 126, 0.08), transparent 34rem), var(--bg-page);
   }
 }
 
@@ -454,6 +452,14 @@ button:focus-visible {
   max-width: none;
   overflow-x: hidden;
   box-shadow: none;
+}
+
+@media (max-height: 520px) and (max-width: 950px) and (orientation: landscape) {
+  .native-android #app {
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 /* 暗色模式 #app 阴影覆盖（必须在基础 #app 之后） */

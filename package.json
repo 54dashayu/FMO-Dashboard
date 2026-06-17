@@ -2,7 +2,7 @@
   "name": "fmo-dashboard",
   "private": true,
   "license": "MIT",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -59,6 +59,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.1",
+    "@vitejs/plugin-legacy": "^7.2.1",
     "@vitejs/plugin-vue": "^6.0.1",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
@@ -66,6 +67,7 @@
     "eslint-plugin-vue": "^10.7.0",
     "prettier": "^3.8.0",
     "rimraf": "^6.1.3",
+    "terser": "^5.48.0",
     "typescript": "^5.6.3",
     "vite": "^7.2.4",
     "vue-tsc": "^2.1.10"

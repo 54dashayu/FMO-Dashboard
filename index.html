@@ -39,11 +39,37 @@
       font-size: 13px;
     }
 
-    .legacy-webview .legacy-webview-fallback {
+    .legacy-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .legacy-actions button {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid #b8c2d6;
+      border-radius: 6px;
+      color: #162033;
+      background: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .legacy-actions button.primary {
+      border-color: #1d72d2;
+      color: #ffffff;
+      background: #1d72d2;
+    }
+
+    .legacy-webview .legacy-webview-fallback,
+    .startup-failed .legacy-webview-fallback {
       display: block;
     }
 
-    .legacy-webview #app {
+    .legacy-webview #app,
+    .startup-failed #app {
       display: none;
     }
   </style>
@@ -54,7 +80,7 @@
       var chromeMatch = ua.match(/(?:Chrome|CriOS)\/(\d+)/i)
       var chromeMajor = chromeMatch ? Number(chromeMatch[1]) : null
       var lacksModule = !('noModule' in document.createElement('script'))
-      var tooOld = isAndroid && ((chromeMajor && chromeMajor < 64) || (!chromeMajor && lacksModule))
+      var tooOld = isAndroid && ((chromeMajor && chromeMajor < 61) || (!chromeMajor && lacksModule))
       if (tooOld) document.documentElement.className += ' legacy-webview'
       window.__FMO_ANDROID_WEBVIEW_PRECHECK__ = {
         isAndroid: isAndroid,
@@ -62,6 +88,62 @@
         lacksModule: lacksModule,
         tooOld: tooOld
       }
+      window.__FMO_SHOULD_IGNORE_STARTUP_ERROR__ = function (message) {
+        if (!isAndroid || !chromeMajor || chromeMajor >= 64) return false
+        return /Unexpected token|Unexpected reserved word|Unexpected identifier/i.test(
+          message || ''
+        )
+      }
+      window.__FMO_SHOW_STARTUP_FALLBACK__ = function (reason) {
+        var root = document.documentElement
+        if (root.className.indexOf('app-mounted') !== -1) return
+        if (root.className.indexOf('startup-failed') === -1) root.className += ' startup-failed'
+        var reasonNode = document.getElementById('legacy-startup-reason')
+        if (reasonNode) {
+          reasonNode.innerHTML =
+            '启动阶段：' +
+            (reason || '应用未能完成加载') +
+            '<br>Android: ' +
+            (isAndroid ? '是' : '否') +
+            '，WebView/Chrome: ' +
+            (chromeMajor || '未识别') +
+            '，ES module: ' +
+            (lacksModule ? '不支持' : '支持')
+        }
+      }
+      window.__FMO_EXIT_APP__ = function () {
+        try {
+          var app =
+            window.Capacitor &&
+            window.Capacitor.Plugins &&
+            window.Capacitor.Plugins.App
+          if (app && app.exitApp) {
+            app.exitApp()
+            return
+          }
+        } catch (error) {}
+        try {
+          history.back()
+        } catch (error) {}
+      }
+      window.addEventListener('error', function (event) {
+        var message = event && event.message ? event.message : ''
+        if (window.__FMO_SHOULD_IGNORE_STARTUP_ERROR__(message)) return
+        window.__FMO_SHOW_STARTUP_FALLBACK__(
+          message || '脚本错误'
+        )
+      })
+      window.addEventListener('unhandledrejection', function (event) {
+        var reason = event && event.reason
+        var message = reason && reason.message ? reason.message : ''
+        if (window.__FMO_SHOULD_IGNORE_STARTUP_ERROR__(message)) return
+        window.__FMO_SHOW_STARTUP_FALLBACK__(
+          message || '启动 Promise 异常'
+        )
+      })
+      window.setTimeout(function () {
+        window.__FMO_SHOW_STARTUP_FALLBACK__('12 秒内未完成界面加载')
+      }, 12000)
     })()
   </script>
 </head>
@@ -74,10 +156,15 @@
     </div>
   </noscript>
   <div class="legacy-webview-fallback" role="alert">
-    <h1>Android System WebView 版本过旧</h1>
-    <p>当前设备的 WebView/Chrome 内核太旧，可能无法启动 FMO仪表盘 V2.01，容易出现白屏、闪退或同步异常。</p>
+    <h1>当前 Android WebView 无法稳定启动</h1>
+    <p>当前设备的 WebView/Chrome 内核太旧或厂商 ROM 兼容性不足，可能无法启动 FMO仪表盘 V2.02，容易出现白屏、闪退或同步异常。</p>
     <p>请先在应用市场升级 <code>Android System WebView</code> 或 <code>Chrome</code>，再重新打开本应用。</p>
     <p>如果车机系统无法升级 WebView，建议改用 Android 10+ 设备、网页版或桌面版。</p>
+    <p id="legacy-startup-reason"></p>
+    <div class="legacy-actions">
+      <button class="primary" type="button" onclick="location.reload()">重试启动</button>
+      <button type="button" onclick="window.__FMO_EXIT_APP__ && window.__FMO_EXIT_APP__()">退出应用</button>
+    </div>
   </div>
   <div id="app"></div>
   <script type="module" src="/src/main.js"></script>

@@ -1,9 +1,9 @@
 apply plugin: 'com.android.application'
 
 // ========== Android 原生安装包版本 ==========
-// V2.01 老 Android 适配测试包：递增 Android 原生版本，便于覆盖安装和区分诊断日志。
-def appVersionCode = 20100
-def appVersionName = "V2.01"
+// V2.02 Android 通用包：加入老 Android WebView 与小分辨率横屏兼容优化。
+def appVersionCode = 20200
+def appVersionName = "V2.02"
 
 // ========== 读取正式签名参数（env 或 ~/.gradle/gradle.properties 均可） ==========
 // Gradle 的 file() 不会自动展开 ~，这里手动处理成绝对路径

@@ -3,7 +3,7 @@
     <button
       class="public-tool-btn download-tool-btn"
       type="button"
-      :title="t('public.download', '下载 V2.01')"
+      :title="t('public.download', '下载 V2.02')"
       :aria-label="t('public.download', '下载')"
       @click="showDownloads = true"
     >
@@ -45,7 +45,7 @@
             ×
           </button>
           <div class="download-heading">
-            <strong>V2.01</strong>
+            <strong>V2.02</strong>
             <div>
               <h2>{{ t('public.downloadTitle', 'FMO 仪表盘下载') }}</h2>
               <p>
@@ -120,10 +120,10 @@ const downloads = [
   {
     icon: 'APK',
     titleKey: 'public.androidApk',
-    title: 'Android APK V2.01',
+    title: 'Android APK V2.02',
     hintKey: 'public.androidApkHint',
-    hint: 'V2.01 老系统适配测试版，适用于安卓手机、平板和部分车机。',
-    url: `${vpsDownloadBase}/FMO-Dashboard-Android-V2.01.apk`
+    hint: 'V2.02 兼容性升级版，适用于安卓手机、平板和部分车机。',
+    url: `${vpsDownloadBase}/FMO-Dashboard-Android-V2.02.apk`
   },
   {
     icon: 'iOS',

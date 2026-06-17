@@ -155,7 +155,7 @@
         <div class="active-contact-main">
           <div class="active-contact-primary">
             <div class="callsign-wrap">
-              <h2>{{ activeContact?.callsign || t('dashboard.noSpeaker', '无人发言') }}</h2>
+              <h1>{{ activeContact?.callsign || t('dashboard.noSpeaker', '无人发言') }}</h1>
               <span v-if="activeContact?.grid" class="grid-square">{{ activeContact.grid }}</span>
               <span v-if="activeContact?.isNewCallsign" class="active-contact-new-badge">{{
                 t('dashboard.new', '新')
@@ -2336,6 +2336,7 @@ onUnmounted(() => {
   gap: 0.18rem;
 }
 
+.active-contact-primary h1,
 .active-contact-primary h2,
 .active-contact-empty h2 {
   display: flex;
@@ -2822,6 +2823,7 @@ onUnmounted(() => {
     height: 25px;
   }
 
+  .active-contact-primary h1,
   .active-contact-primary h2,
   .active-contact-empty h2 {
     font-size: clamp(1.35rem, 6.8vw, 1.9rem);
@@ -2866,6 +2868,7 @@ onUnmounted(() => {
     padding: 0.75rem;
   }
 
+  .active-contact-primary h1,
   .active-contact-primary h2,
   .active-contact-empty h2 {
     font-size: clamp(1.25rem, 6.4vw, 1.7rem);
@@ -3284,6 +3287,7 @@ onUnmounted(() => {
   min-width: 0;
 }
 
+.active-contact-primary h1,
 .active-contact-primary h2 {
   font-size: clamp(3rem, 6vw, 5rem);
   overflow-wrap: anywhere;
@@ -3293,6 +3297,7 @@ onUnmounted(() => {
   flex-wrap: nowrap;
 }
 
+:global(html[lang='en']) .active-contact-card.idle .active-contact-primary h1,
 :global(html[lang='en']) .active-contact-card.idle .active-contact-primary h2 {
   display: block;
   max-width: 100%;
@@ -3707,6 +3712,7 @@ onUnmounted(() => {
     grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
   }
 
+  .active-contact-primary h1,
   .active-contact-primary h2 {
     font-size: clamp(2.7rem, 5.2vw, 4.2rem);
   }
@@ -3883,6 +3889,7 @@ onUnmounted(() => {
     align-items: stretch;
   }
 
+  .active-contact-primary h1,
   .active-contact-primary h2 {
     font-size: clamp(2rem, 10vw, 2.85rem);
     line-height: 1.02;
@@ -4139,6 +4146,7 @@ onUnmounted(() => {
     gap: 0.5rem;
   }
 
+  .active-contact-primary h1,
   .active-contact-primary h2 {
     font-size: clamp(1.85rem, 11vw, 2.55rem);
   }
@@ -4216,26 +4224,30 @@ onUnmounted(() => {
 
 @media (max-height: 520px) and (max-width: 950px) and (orientation: landscape) {
   .dashboard-view {
-    min-height: 100%;
-    overflow-y: auto;
+    height: auto;
+    min-height: auto;
+    gap: 0.22rem;
+    overflow: visible;
+    padding-bottom: 2.55rem;
   }
 
   .dashboard-command-bar {
     grid-template-columns: auto minmax(0, 1fr) auto;
-    min-height: 3.1rem;
-    padding: 0.42rem 0.65rem;
+    min-height: 2.42rem;
+    padding: 0.22rem 0.38rem;
   }
 
   .dashboard-brand strong {
     display: block;
-    max-width: 8rem;
+    max-width: 6.4rem;
     overflow: hidden;
+    font-size: 0.82rem;
     text-overflow: ellipsis;
   }
 
   .dashboard-brand-mark {
-    width: 2.1rem;
-    height: 2.1rem;
+    width: 1.72rem;
+    height: 1.72rem;
   }
 
   .connection-strip,
@@ -4246,7 +4258,8 @@ onUnmounted(() => {
   }
 
   .command-tool-wide {
-    width: 2.15rem;
+    width: 1.76rem;
+    height: 1.76rem;
     padding: 0;
   }
 
@@ -4254,29 +4267,137 @@ onUnmounted(() => {
     display: none;
   }
 
+  .command-select-wrap {
+    width: 6.1rem;
+    height: 1.76rem;
+    padding-left: 0.38rem;
+  }
+
+  .command-select {
+    font-size: 0.64rem;
+  }
+
+  .command-tool {
+    width: 1.76rem;
+    height: 1.76rem;
+  }
+
   .dashboard-grid {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto;
-    gap: 0.5rem;
-    padding: 0.5rem;
+    gap: 0.25rem;
+    padding: 0.25rem;
     overflow: visible;
   }
 
-  .active-contact-main {
-    grid-template-columns: minmax(0, 1fr) 112px;
-    gap: 0.65rem;
+  .active-contact-card {
+    padding: 0.38rem;
   }
 
+  .section-label {
+    margin-bottom: 0.2rem;
+    font-size: 0.62rem;
+    line-height: 1.1;
+  }
+
+  .active-contact-main {
+    grid-template-columns: minmax(0, 1fr) 84px;
+    gap: 0.32rem;
+  }
+
+  .active-contact-primary {
+    grid-template-columns: minmax(0, max-content) auto;
+    grid-template-rows: auto minmax(0.25rem, 1fr) auto;
+    min-height: 92px;
+    align-content: stretch;
+    align-items: end;
+    column-gap: 0.28rem;
+    row-gap: 0.12rem;
+  }
+
+  .active-contact-primary .callsign-wrap {
+    grid-row: 1;
+    grid-column: 1 / -1;
+    align-self: start;
+  }
+
+  .active-contact-primary h1,
   .active-contact-primary h2 {
-    font-size: clamp(2.15rem, 8vw, 3rem);
+    font-size: clamp(56px, 15vw, 84px);
+    line-height: 0.9;
+  }
+
+  .contact-tags {
+    grid-row: 3;
+    grid-column: 1;
+    justify-self: start;
+    gap: 0.2rem;
+    margin-top: 0;
+  }
+
+  .contact-tags span {
+    min-height: 1.08rem;
+    padding: 0.08rem 0.28rem;
+    font-size: 0.58rem;
+    line-height: 1.12;
+  }
+
+  .active-contact-controls {
+    grid-row: 3;
+    grid-column: 2;
+    align-self: start;
+    justify-self: start;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  .command-refresh {
+    min-height: 1.72rem;
+    padding: 0.12rem 0.45rem;
+    font-size: 0.62rem;
   }
 
   .bearing-panel {
-    min-height: 112px;
+    min-height: 72px;
+    padding: 0.28rem;
+    gap: 0.24rem;
+  }
+
+  .bearing-panel .compass {
+    width: 34px;
+    height: 34px;
+  }
+
+  .bearing-meta strong {
+    font-size: 0.62rem;
+  }
+
+  .bearing-meta span {
+    font-size: 0.52rem;
   }
 
   .contact-details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.24rem;
+    margin-top: 0.25rem;
+  }
+
+  .contact-detail-card {
+    min-height: 2.04rem;
+    padding: 0.24rem 0.38rem;
+  }
+
+  .contact-details span {
+    font-size: 0.56rem;
+  }
+
+  .contact-details strong {
+    margin-top: 0.12rem;
+    font-size: 0.68rem;
+  }
+
+  .contact-details .frequency-line {
+    font-size: clamp(0.62rem, 2.2vw, 0.72rem);
   }
 
   .dashboard-actions,
@@ -4288,26 +4409,49 @@ onUnmounted(() => {
 
   .mobile-previous-card {
     display: grid;
-    gap: 0.4rem;
-    margin-top: 0.6rem;
-    padding: 0.55rem;
+    gap: 0.18rem;
+    margin-top: 0.24rem;
+    padding: 0.3rem 0.34rem;
     border: 1px solid var(--border-light);
     border-radius: 8px;
     background: color-mix(in srgb, var(--bg-table-stripe) 72%, transparent);
   }
 
   .mobile-previous-main {
-    grid-template-columns: minmax(0, 0.45fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.4fr) minmax(0, 1fr);
     align-items: center;
+    gap: 0.28rem;
+  }
+
+  .mobile-previous-identity strong {
+    font-size: 0.92rem;
+  }
+
+  .mobile-previous-identity span {
+    font-size: 0.56rem;
+  }
+
+  .mobile-previous-meta {
+    gap: 0.18rem;
+    overflow: hidden;
+  }
+
+  .mobile-previous-meta span,
+  .mobile-previous-empty {
+    min-height: 1.04rem;
+    padding: 0.08rem 0.28rem;
+    font-size: 0.56rem;
+    line-height: 1.1;
   }
 
   .live-panel {
     grid-column: 1;
-    min-height: 15rem;
+    min-height: 12rem;
   }
 
   .live-table-wrap {
-    max-height: 50vh;
+    max-height: none;
+    overflow: auto;
   }
 }
 </style>

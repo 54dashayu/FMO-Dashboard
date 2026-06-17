@@ -4,6 +4,7 @@ package net.bh1jss.fmodashboard;
 
 
 import android.content.res.Resources;
+import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -72,7 +73,7 @@ public class FmoSystemUiPlugin extends Plugin {
             });
             // 主动触发一次 dispatch，确保首次一定能收到 inset 值
             ViewCompat.requestApplyInsets(decor);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.w(TAG, "setOnApplyWindowInsetsListener failed: " + e.getMessage());
         }
     }
@@ -88,7 +89,7 @@ public class FmoSystemUiPlugin extends Plugin {
         try {
             View decor = getActivity().getWindow().getDecorView();
             WindowInsets insets = decor.getRootWindowInsets();
-            if (insets != null) {
+            if (insets != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 int statusBarDp = pxToDp(insets.getInsets(WindowInsets.Type.statusBars()).top);
                 int navBarDp = pxToDp(insets.getInsets(WindowInsets.Type.navigationBars()).bottom);
                 result.put("top", statusBarDp);
@@ -101,6 +102,11 @@ public class FmoSystemUiPlugin extends Plugin {
                     insets.getInsets(WindowInsets.Type.systemBars()).right,
                     insets.getInsets(WindowInsets.Type.displayCutout()).right
                 )));
+            } else if (insets != null) {
+                result.put("top", pxToDp(insets.getSystemWindowInsetTop()));
+                result.put("bottom", pxToDp(insets.getSystemWindowInsetBottom()));
+                result.put("left", pxToDp(insets.getSystemWindowInsetLeft()));
+                result.put("right", pxToDp(insets.getSystemWindowInsetRight()));
             } else {
                 // 尚未完成 layout 时的估算值（dp）
                 result.put("top", 36);
@@ -108,7 +114,7 @@ public class FmoSystemUiPlugin extends Plugin {
                 result.put("left", 0);
                 result.put("right", 0);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.w(TAG, "getSafeAreaInsets failed: " + e.getMessage());
             result.put("top", 36);
             result.put("bottom", 48);

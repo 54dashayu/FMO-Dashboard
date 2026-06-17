@@ -101,7 +101,7 @@
 import { computed, ref } from 'vue'
 import { useLocale } from '../composables/useLocale'
 
-const appVersion = 'V2.01'
+const appVersion = 'V2.02'
 const showCoffee = ref(false)
 const { t } = useLocale()
 const aboutIntroFallback =

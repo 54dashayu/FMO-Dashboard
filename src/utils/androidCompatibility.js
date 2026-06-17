@@ -18,7 +18,7 @@ export function getAndroidCompatibilityInfo(userAgent = navigator.userAgent || '
   const legacyAndroid = Boolean(androidMajor && androidMajor < 10)
   const legacyWebView = Boolean(chromeMajor && chromeMajor < 80)
   const criticalLegacyWebView = Boolean(
-    isAndroid && ((chromeMajor && chromeMajor < 64) || precheck?.tooOld)
+    isAndroid && ((chromeMajor && chromeMajor < 61) || precheck?.tooOld)
   )
 
   return {
@@ -34,7 +34,7 @@ export function getAndroidCompatibilityInfo(userAgent = navigator.userAgent || '
     needsCompatibilityWarning:
       isAndroid && (legacyAndroid || legacyWebView || criticalLegacyWebView),
     supportedInstallFloor: 'Android 7.0 / API 24',
-    minimumWebViewFloor: 'Chrome/WebView 64+',
+    minimumWebViewFloor: 'Chrome/WebView 61+',
     recommendedFloor: 'Android 10+'
   }
 }
