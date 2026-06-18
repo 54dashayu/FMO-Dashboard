@@ -17,7 +17,7 @@ jobs:
     name: Build macOS App Store PKG
     runs-on: macos-latest
     env:
-      HAS_MAC_APPSTORE_SIGNING: ${{ secrets.MAC_APPSTORE_CERTIFICATE_P12_BASE64 != '' && secrets.MAC_APPSTORE_CERTIFICATE_PASSWORD != '' && secrets.MAC_APPSTORE_PROVISION_PROFILE_BASE64 != '' && secrets.APPLE_TEAM_ID != '' }}
+      HAS_MAC_APPSTORE_SIGNING: ${{ secrets.MAC_APPSTORE_CERTIFICATE_P12_BASE64 != '' && secrets.MAC_APPSTORE_CERTIFICATE_PASSWORD != '' && secrets.MAC_APPSTORE_INSTALLER_CERTIFICATE_BASE64 != '' && secrets.MAC_APPSTORE_PROVISION_PROFILE_BASE64 != '' && secrets.APPLE_TEAM_ID != '' }}
       HAS_APPSTORE_UPLOAD: ${{ secrets.APPLE_API_KEY_ID != '' && secrets.APPLE_API_ISSUER != '' && secrets.APPLE_API_KEY_BASE64 != '' }}
 
     steps:
@@ -46,6 +46,7 @@ jobs:
           echo "Required repository secrets:" >&2
           echo "  MAC_APPSTORE_CERTIFICATE_P12_BASE64" >&2
           echo "  MAC_APPSTORE_CERTIFICATE_PASSWORD" >&2
+          echo "  MAC_APPSTORE_INSTALLER_CERTIFICATE_BASE64" >&2
           echo "  MAC_APPSTORE_PROVISION_PROFILE_BASE64" >&2
           echo "  APPLE_TEAM_ID" >&2
           exit 1
@@ -55,19 +56,23 @@ jobs:
         env:
           MAC_APPSTORE_CERTIFICATE_P12_BASE64: ${{ secrets.MAC_APPSTORE_CERTIFICATE_P12_BASE64 }}
           MAC_APPSTORE_CERTIFICATE_PASSWORD: ${{ secrets.MAC_APPSTORE_CERTIFICATE_PASSWORD }}
+          MAC_APPSTORE_INSTALLER_CERTIFICATE_BASE64: ${{ secrets.MAC_APPSTORE_INSTALLER_CERTIFICATE_BASE64 }}
           MAC_APPSTORE_PROVISION_PROFILE_BASE64: ${{ secrets.MAC_APPSTORE_PROVISION_PROFILE_BASE64 }}
         shell: bash
         run: |
           set -euo pipefail
           cert_path="$RUNNER_TEMP/mac-appstore-certs.p12"
+          installer_cert_path="$RUNNER_TEMP/mac-appstore-installer.cer.pem"
           keychain_path="$RUNNER_TEMP/app-signing.keychain-db"
           profile_path="src-tauri/build/appstore/FMO-Dashboard-Mac-AppStore.provisionprofile"
 
           echo "$MAC_APPSTORE_CERTIFICATE_P12_BASE64" | base64 -D > "$cert_path"
+          echo "$MAC_APPSTORE_INSTALLER_CERTIFICATE_BASE64" | base64 -D > "$installer_cert_path"
           security create-keychain -p "$MAC_APPSTORE_CERTIFICATE_PASSWORD" "$keychain_path"
           security set-keychain-settings -lut 21600 "$keychain_path"
           security unlock-keychain -p "$MAC_APPSTORE_CERTIFICATE_PASSWORD" "$keychain_path"
           security import "$cert_path" -P "$MAC_APPSTORE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain_path"
+          security import "$installer_cert_path" -A -t cert -f pemseq -k "$keychain_path"
           security list-keychains -d user -s "$keychain_path" $(security list-keychains -d user | sed 's/[",]//g')
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MAC_APPSTORE_CERTIFICATE_PASSWORD" "$keychain_path"
 
@@ -87,14 +92,16 @@ jobs:
 
       - name: Create signed App Store PKG
         if: ${{ env.HAS_MAC_APPSTORE_SIGNING == 'true' }}
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         shell: bash
         run: |
           set -euo pipefail
           version="$(node -p "require('./package.json').version")"
           app="$(find src-tauri/target -path '*/bundle/macos/*.app' -type d -print -quit)"
           test -n "$app"
-          installer_identity="$(security find-identity -v -p codesigning | sed -n 's/.*"\(3rd Party Mac Developer Installer:[^"]*\)".*/\1/p' | head -n 1)"
-          test -n "$installer_identity"
+          installer_identity="3rd Party Mac Developer Installer: Feng Yu (${APPLE_TEAM_ID})"
+          security find-certificate -c "$installer_identity" "$RUNNER_TEMP/app-signing.keychain-db" >/dev/null
           mkdir -p release/macos-appstore
           pkg="release/macos-appstore/FMO-Dashboard-macOS-AppStore-v${version}.pkg"
           xcrun productbuild --sign "$installer_identity" --component "$app" /Applications "$pkg"
