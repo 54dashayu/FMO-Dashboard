@@ -1,0 +1,11 @@
+{
+  "bundle": {
+    "macOS": {
+      "entitlements": "./Entitlements.appstore.plist",
+      "infoPlist": "./Info.appstore.plist",
+      "files": {
+        "embedded.provisionprofile": "./build/appstore/FMO-Dashboard-Mac-AppStore.provisionprofile"
+      }
+    }
+  }
+}
