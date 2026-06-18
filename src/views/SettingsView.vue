@@ -418,6 +418,7 @@ import { clearGridCache } from '../services/gridService'
 import { addDiagnosticLog } from '../services/diagnosticLog'
 import { playCallsignSpeech } from '../services/callsignSpeech'
 import { formatCallsignForSpeech as formatCallsignForNatoSpeech } from '../utils/callsignSpeechText'
+import { openExternalUrl } from '../utils/desktopBridge'
 import { useModalBackHandler, registerModal } from '../composables/useModalBackHandler'
 import { useLocale } from '../composables/useLocale'
 
@@ -573,7 +574,7 @@ function fmoPreviewGoBack() {
 
 function openFmoExternal() {
   if (!fmoPreviewUrl.value) return
-  window.open(fmoPreviewUrl.value, '_blank', 'noopener,noreferrer')
+  openExternalUrl(fmoPreviewUrl.value)
 }
 
 // 地址编辑弹框状态

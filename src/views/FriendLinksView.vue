@@ -10,6 +10,7 @@
         class="link-card"
         :class="{ disabled: link.disabled }"
         :title="link.description"
+        @click="handleExternalLinkClick($event, link.url)"
       >
         <div class="link-icon">
           <template v-if="link.icon.type === 'emoji'">
@@ -45,6 +46,7 @@
 import { computed } from 'vue'
 import { getProcessedLinks } from '../components/home/modals/friendLinks'
 import { useLocale } from '../composables/useLocale'
+import { handleExternalLinkClick } from '../utils/desktopBridge'
 
 const props = defineProps({
   fmoAddress: {

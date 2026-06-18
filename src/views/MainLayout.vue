@@ -131,6 +131,7 @@
             rel="noopener noreferrer"
             :aria-label="t('footer.githubLabel', 'GitHub 项目主页')"
             :title="t('footer.githubLabel', 'GitHub 项目主页')"
+            @click="handleExternalLinkClick($event, 'https://github.com/54dashayu/FMO-Dashboard')"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -270,6 +271,7 @@ import { useLocale } from '../composables/useLocale'
 import { exportDataToDbFile, exportDataToAdif } from '../services/db'
 import { FmoApiClient } from '../services/fmoApi'
 import { normalizeHost } from '../utils/urlUtils'
+import { isTauriDesktop, pickImportFiles, handleExternalLinkClick } from '../utils/desktopBridge'
 import { NAV_ROUTES } from '../components/home/constants'
 import { getMessageService } from '../services/messageService'
 import packageInfo from '../../package.json'
@@ -882,7 +884,20 @@ async function handleShowCallsignRecords(payload) {
 }
 
 // 数据库操作
-function triggerFileInput() {
+async function triggerFileInput() {
+  if (isTauriDesktop()) {
+    const files = await pickImportFiles()
+    if (!files || files.length === 0) return
+    const success = await selectFiles(files)
+    if (success) {
+      dataQuery.currentQueryType.value = 'all'
+      dataQuery.currentPage.value = 1
+      router.push('/logs')
+      executeQuery()
+    }
+    return
+  }
+
   fileInputRef.value?.click()
 }
 

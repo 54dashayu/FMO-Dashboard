@@ -9,13 +9,18 @@
         </div>
         <p>{{ t('about.intro', aboutIntroFallback) }}</p>
         <div class="intro-links">
-          <a href="https://fmo.bh1jss.net/v2/" target="_blank" rel="noopener noreferrer">{{
-            t('about.v2Web', 'V2 网页版')
-          }}</a>
+          <a
+            href="https://fmo.bh1jss.net/v2/"
+            target="_blank"
+            rel="noopener noreferrer"
+            @click="handleExternalLinkClick($event, 'https://fmo.bh1jss.net/v2/')"
+            >{{ t('about.v2Web', 'V2 网页版') }}</a
+          >
           <a
             href="https://github.com/54dashayu/FMO-Dashboard"
             target="_blank"
             rel="noopener noreferrer"
+            @click="handleExternalLinkClick($event, 'https://github.com/54dashayu/FMO-Dashboard')"
           >
             GitHub
           </a>
@@ -23,6 +28,9 @@
             href="https://github.com/54dashayu/FMO-Dashboard/issues"
             target="_blank"
             rel="noopener noreferrer"
+            @click="
+              handleExternalLinkClick($event, 'https://github.com/54dashayu/FMO-Dashboard/issues')
+            "
           >
             {{ t('about.feedback', '问题反馈') }}
           </a>
@@ -100,6 +108,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useLocale } from '../composables/useLocale'
+import { handleExternalLinkClick } from '../utils/desktopBridge'
 
 const appVersion = 'V2.02'
 const showCoffee = ref(false)

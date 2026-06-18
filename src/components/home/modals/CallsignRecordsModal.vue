@@ -9,7 +9,7 @@
             :href="getQrzUrl(callsign)"
             target="_blank"
             rel="noopener noreferrer"
-            @click.stop
+            @click="handleExternalLinkClick($event, getQrzUrl(callsign))"
           >
             {{ callsign }}
           </a>
@@ -43,7 +43,7 @@
                   :href="getQrzUrl(record.toCallsign)"
                   target="_blank"
                   rel="noopener noreferrer"
-                  @click.stop
+                  @click="handleExternalLinkClick($event, getQrzUrl(record.toCallsign))"
                 >
                   {{ record.toCallsign }}
                 </a>
@@ -64,7 +64,7 @@
                   :href="getQrzUrl(record.fromCallsign)"
                   target="_blank"
                   rel="noopener noreferrer"
-                  @click.stop
+                  @click="handleExternalLinkClick($event, getQrzUrl(record.fromCallsign))"
                 >
                   {{ record.fromCallsign }}
                 </a>
@@ -104,7 +104,7 @@
                     :href="getQrzUrl(record.relayAdmin)"
                     target="_blank"
                     rel="noopener noreferrer"
-                    @click.stop
+                    @click="handleExternalLinkClick($event, getQrzUrl(record.relayAdmin))"
                   >
                     {{ record.relayAdmin }}
                   </a>
@@ -131,6 +131,7 @@ import { gridToAddress } from '../../../services/gridService'
 import { switchStationByRelayName } from '../../../services/stationControl'
 import toast from '../../../composables/useToast'
 import { useLocale } from '../../../composables/useLocale'
+import { handleExternalLinkClick } from '../../../utils/desktopBridge'
 
 const props = defineProps({
   visible: {

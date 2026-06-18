@@ -60,6 +60,7 @@
               :href="item.url"
               target="_blank"
               rel="noopener noreferrer"
+              @click="handleExternalLinkClick($event, item.url)"
             >
               <span class="download-platform">{{ item.icon }}</span>
               <span>
@@ -94,6 +95,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useLocale } from '../../composables/useLocale'
+import { handleExternalLinkClick } from '../../utils/desktopBridge'
 
 const { t } = useLocale()
 const showWechat = ref(false)

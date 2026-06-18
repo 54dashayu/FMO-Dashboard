@@ -8,6 +8,7 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { Filesystem, Directory } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
+import { isTauriDesktop, saveFileWithDialog } from './desktopBridge'
 
 // 原生端统一写入到 Documents/FMO-Dashboard 子目录，便于用户查找
 const NATIVE_SUBDIR = 'FMO-Dashboard'
@@ -67,6 +68,10 @@ function toBlob(data, mimeType) {
  */
 export async function exportFile(filename, data, mimeType) {
   const platform = Capacitor.getPlatform() // 'web' | 'android' | 'ios'
+
+  if (isTauriDesktop()) {
+    return await saveFileWithDialog(filename, data, mimeType)
+  }
 
   // ========== Web 端：保持原有浏览器下载体验 ==========
   if (platform === 'web') {
@@ -164,6 +169,17 @@ function parseFilenameFromHeaders(headers, fallback) {
  */
 export async function downloadRemoteFile(url, fallbackFilename) {
   const platform = Capacitor.getPlatform()
+
+  if (isTauriDesktop()) {
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    const headers = Object.fromEntries(response.headers.entries())
+    const filename = parseFilenameFromHeaders(headers, fallbackFilename)
+    const blob = await response.blob()
+    return await exportFile(filename, blob, blob.type || 'application/octet-stream')
+  }
 
   if (platform === 'web') {
     const link = document.createElement('a')
