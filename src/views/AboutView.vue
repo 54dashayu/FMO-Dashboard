@@ -1,7 +1,7 @@
 <template>
   <div class="about-view">
     <section class="about-intro">
-      <img src="/app-icon.png" :alt="t('app.name', 'FMO仪表盘')" class="about-logo" />
+      <img src="/app-icon-384.png" :alt="t('app.name', 'FMO仪表盘')" class="about-logo" />
       <div>
         <div class="title-line">
           <h1>{{ t('app.name', 'FMO 仪表盘') }}</h1>

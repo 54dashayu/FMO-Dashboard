@@ -32,7 +32,7 @@ echo "==> Checking homepage download links"
 missing_downloads="$(
   comm -23 \
     <(grep -Eo 'href="/downloads/[^"]+' deploy/vps-download-index.html | sed 's#^href="/downloads/##' | sort -u) \
-    <(find deploy/downloads -maxdepth 1 -type f -exec basename {} \; | sort -u)
+    <(find deploy/downloads -type f | sed 's#^deploy/downloads/##' | sort -u)
 )"
 if [[ -n "${missing_downloads}" ]]; then
   echo "Missing files referenced by deploy/vps-download-index.html:" >&2
@@ -49,7 +49,13 @@ mkdir -p "${SITE_DIR}/v2" "${SITE_DIR}/downloads"
 
 cp deploy/vps-download-index.html "${SITE_DIR}/index.html"
 cp deploy/vps-download-index.html "${SITE_DIR}/vps-download-index.html"
-cp deploy/app-icon.png "${SITE_DIR}/app-icon.png"
+cp public/app-icon.png "${SITE_DIR}/app-icon.png"
+cp public/app-icon-384.png "${SITE_DIR}/app-icon-384.png"
+cp public/favicon.ico "${SITE_DIR}/favicon.ico"
+cp public/apple-touch-icon.png "${SITE_DIR}/apple-touch-icon.png"
+cp public/apple-touch-icon-precomposed.png "${SITE_DIR}/apple-touch-icon-precomposed.png"
+cp public/apple-touch-icon-120x120.png "${SITE_DIR}/apple-touch-icon-120x120.png"
+cp public/apple-touch-icon-120x120-precomposed.png "${SITE_DIR}/apple-touch-icon-120x120-precomposed.png"
 cp -R deploy/assets "${SITE_DIR}/assets"
 cp -R deploy/downloads/. "${SITE_DIR}/downloads/"
 cp -R dist/. "${SITE_DIR}/v2/"

@@ -2,7 +2,7 @@
   <div class="dashboard-view">
     <section class="dashboard-command-bar">
       <div class="dashboard-brand">
-        <img src="/app-icon.png" alt="" class="dashboard-brand-mark" />
+        <img src="/app-icon-384.png" alt="" class="dashboard-brand-mark" />
         <strong>{{ t('app.name', 'FMO 仪表盘') }}</strong>
         <div class="mobile-command-stats" aria-label="移动端统计">
           <span

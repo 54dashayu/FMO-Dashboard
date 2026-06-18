@@ -6,7 +6,7 @@
       :title="t('header.backDashboard', '返回仪表盘')"
       @click="router.push('/dashboard')"
     >
-      <img src="/app-icon.png" alt="" class="header-logo" />
+      <img src="/app-icon-384.png" alt="" class="header-logo" />
       <span>{{ t('app.name', 'FMO 仪表盘') }}</span>
     </button>
 

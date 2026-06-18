@@ -14,6 +14,9 @@
 - 估算下行流量：来自 Nginx access log 的返回字节数
 - 设备和浏览器类型
 - 访问路径和主要静态资源流量
+- 下载文件统计：每个 APK、EXE、DMG、ZIP、BIN 的下载次数、独立 IP、估算流量和最近下载时间
+- 下载平台汇总：Android、Windows 64 位、Windows 32 位、macOS、固件/压缩包等类型的下载趋势
+- 404 热点：用于发现失效链接、浏览器默认探测文件和爬虫扫描路径
 - 可识别到的 FMO 呼号、FMO 地址和协议
 
 ## 呼号识别逻辑
@@ -45,6 +48,31 @@ location /stats/ {
     auth_basic "FMO Dashboard Stats";
     auth_basic_user_file /etc/nginx/fmologs-stats.htpasswd;
     add_header Cache-Control "no-store";
+}
+
+location ^~ /downloads/v2.0.2/ {
+    alias /var/www/fmologs/downloads/v2.0.2/;
+    autoindex off;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+    types {
+        application/vnd.microsoft.portable-executable exe;
+        application/zip zip;
+        application/vnd.android.package-archive apk;
+    }
+    default_type application/octet-stream;
+}
+
+location ^~ /v2/assets/ {
+    try_files $uri =404;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
+}
+
+location ^~ /v2/fonts/ {
+    try_files $uri =404;
+    expires 30d;
+    add_header Cache-Control "public, max-age=2592000, immutable";
 }
 
 location / {
@@ -92,6 +120,8 @@ apt install apache2-utils
 - 首次访问时间
 - 最近访问时间
 - 设备和浏览器
+- 下载文件和下载平台汇总
+- 404 热点
 
 ## 定时更新
 
