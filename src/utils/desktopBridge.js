@@ -71,8 +71,9 @@ export async function pickImportFiles() {
     title: '选择 FMO 日志备份或 ADIF 文件',
     multiple: true,
     filters: [
-      { name: 'FMO 日志与 ADIF', extensions: ['db', 'adi', 'adif'] },
+      { name: 'FMO 日志与 ADIF', extensions: ['db', 'adi', 'adif', 'zip'] },
       { name: 'SQLite 数据库', extensions: ['db'] },
+      { name: 'FMO 恢复包', extensions: ['zip'] },
       { name: 'ADIF', extensions: ['adi', 'adif'] }
     ]
   })

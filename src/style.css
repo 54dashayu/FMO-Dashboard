@@ -276,6 +276,12 @@ html[data-theme='dark'] {
   --bg-table-header: #30352f;
   --bg-table-hover: #202620;
   --bg-table-stripe: #20241f;
+  --bg-disabled: #404040;
+  --bg-success-light: #1f3a1f;
+  --bg-warning-light: #3a2e1f;
+  --bg-error-light: #3a1f1f;
+  --bg-https-hint: #3a2e1f;
+  --bg-primary-light: #1a2a3a;
   --text-primary: #e8e8e8;
   --text-secondary: #b8b8b8;
   --text-tertiary: #909399;
@@ -287,10 +293,35 @@ html[data-theme='dark'] {
   --color-primary: #45b6ff;
   --color-primary-hover: #73c9ff;
   --color-success: #65d47e;
+  --color-success-border: #2d5a2d;
+  --color-warning-border: #5a4a2d;
+  --color-danger-hover: #f78989;
+  --bg-friend-card: #3a2e1f;
+  --border-friend-card: #5a4a2d;
+  --bg-today-card: #1f3a1f;
+  --bg-today-row: #1a241a;
+  --bg-today-index: #1e2e1e;
+  --bg-today-index-neutral: #1a281a;
+  --border-today-row: #263626;
+  --border-today-card: #2d5a2d;
+  --color-today-accent: #4caf50;
+  --bg-rank-1: #3d3520;
+  --bg-rank-2: #3a3d42;
+  --bg-rank-3: #3d2e20;
+  --bg-record-card: #20241f;
+  --border-record-card: #3f463f;
   --shadow-card: rgba(0, 0, 0, 0.3);
+  --shadow-modal: rgba(0, 0, 0, 0.5);
+  --overlay-bg: rgba(0, 0, 0, 0.7);
+  --tooltip-bg: #4a4a4a;
   --shadow-panel: 0 18px 46px rgba(0, 0, 0, 0.28);
   --surface-accent: rgba(69, 182, 255, 0.14);
   --surface-success: rgba(101, 212, 126, 0.14);
+  --surface-warning: rgba(255, 191, 95, 0.13);
+  --surface-danger: rgba(255, 118, 118, 0.13);
+  --color-speaking: #4ade80;
+  --bg-speaking-bar: #1f3a1f;
+  --border-speaking-bar: #2d5a2d;
 }
 
 a {

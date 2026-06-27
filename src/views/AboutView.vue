@@ -110,7 +110,7 @@ import { computed, ref } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { handleExternalLinkClick } from '../utils/desktopBridge'
 
-const appVersion = 'V2.02'
+const appVersion = 'V2.03'
 const showCoffee = ref(false)
 const { t } = useLocale()
 const aboutIntroFallback =

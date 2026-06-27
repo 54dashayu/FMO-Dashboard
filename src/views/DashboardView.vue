@@ -264,11 +264,19 @@
               <span v-if="previousContact.grid">{{ previousContact.grid }}</span>
             </div>
             <div class="mobile-previous-meta">
-              <span v-if="previousContact.contactCount">{{
-                t('dashboard.history', `历史 ${previousContact.contactCount} 次`, {
-                  count: previousContact.contactCount
-                })
-              }}</span>
+              <span
+                v-if="previousContact.contactCount || previousContact.qsoConfirmedIncrement"
+                class="history-count"
+              >
+                {{
+                  t('dashboard.history', `历史 ${previousContact.contactCount} 次`, {
+                    count: previousContact.contactCount
+                  })
+                }}
+                <strong v-if="previousContact.qsoConfirmedIncrement" class="qso-plus-one"
+                  >+{{ previousContact.qsoConfirmedIncrement }}</strong
+                >
+              </span>
               <span v-if="previousContact.qth">QTH：{{ previousContact.qth }}</span>
               <span v-if="previousContact.bearing?.direction">{{
                 previousContact.bearing.direction
@@ -311,11 +319,19 @@
                 }}</span>
               </div>
               <div class="contact-tags">
-                <span v-if="previousContact.contactCount">{{
-                  t('dashboard.history', `历史 ${previousContact.contactCount} 次`, {
-                    count: previousContact.contactCount
-                  })
-                }}</span>
+                <span
+                  v-if="previousContact.contactCount || previousContact.qsoConfirmedIncrement"
+                  class="history-count"
+                >
+                  {{
+                    t('dashboard.history', `历史 ${previousContact.contactCount} 次`, {
+                      count: previousContact.contactCount
+                    })
+                  }}
+                  <strong v-if="previousContact.qsoConfirmedIncrement" class="qso-plus-one"
+                    >+{{ previousContact.qsoConfirmedIncrement }}</strong
+                  >
+                </span>
                 <span v-if="previousContact.qth">QTH：{{ previousContact.qth }}</span>
               </div>
             </div>
@@ -423,10 +439,20 @@
                     </button>
                     <template v-else>{{ record.toCallsign || '-' }}</template>
                     <span
-                      v-if="record.hasLoggedContact"
-                      class="logged-star"
-                      :title="t('dashboard.loggedInLogs', '已在通联日志中')"
-                      >★</span
+                      v-if="record.contactCount > 0"
+                      class="contact-count-badge"
+                      :title="
+                        t('dashboard.history', `历史 ${record.contactCount} 次`, {
+                          count: record.contactCount
+                        })
+                      "
+                      >x{{ record.contactCount }}</span
+                    >
+                    <span
+                      v-else-if="record.toCallsign && !record.isSelf"
+                      class="new-callsign-badge"
+                      :title="t('dashboard.newCallsign', '新呼号')"
+                      >{{ t('dashboard.new', '新') }}</span
                     >
                     <span v-if="record.isSelf" class="self-badge">{{
                       t('dashboard.you', '您')
@@ -479,8 +505,8 @@
         <div v-else class="empty-state">
           {{
             refreshing
-              ? t('dashboard.readingContacts', '正在读取最近通联...')
-              : t('dashboard.noContacts', '暂无通联数据')
+              ? t('dashboard.readingContacts', '正在刷新仪表盘...')
+              : t('dashboard.waitingEvents', '等待实时事件')
           }}
         </div>
       </section>
@@ -693,7 +719,7 @@ const controlAccessInfo = computed(() => {
   }
 })
 const speakingStatus = useSpeakingStatusStore()
-const { speakingHistory, primaryConnected } = storeToRefs(speakingStatus)
+const { speakingHistory, allSpeakingHistories, primaryConnected } = storeToRefs(speakingStatus)
 
 const lastRefreshText = computed(() => {
   if (!lastRefreshAt.value) return t('dashboard.neverRefreshed', '尚未刷新')
@@ -878,15 +904,18 @@ const recentRelayCommandTitle = computed(() => {
 })
 
 const displayRecords = computed(() => {
-  const liveRows = speakingHistory.value
-    .filter((item) => item.endTime)
+  const eventRows =
+    allSpeakingHistories.value.length > 0 ? allSpeakingHistories.value : speakingHistory.value
+
+  const liveRows = eventRows
+    .filter((item) => item.callsign)
     .map((item) => {
       const matchedLog = findMatchingLog(item)
       const timestamp = Math.floor(item.startTime / 1000)
       const grid = item.grid || matchedLog?.toGrid || ''
       return {
         ...matchedLog,
-        rowId: `live-${item.callsign}-${item.startTime}`,
+        rowId: `live-${item.addressId || 'single'}-${item.callsign}-${item.startTime}`,
         toCallsign: item.callsign,
         toGrid: grid,
         qth: getRecordQth({ ...matchedLog, toGrid: grid }),
@@ -901,34 +930,41 @@ const displayRecords = computed(() => {
           item.serverName || matchedLog?.relayName || currentStation.value?.name
         ),
         hasLoggedContact: hasLoggedContact(item.callsign, matchedLog),
+        contactCount: getContactCount(item.callsign),
         isSelf: isSelfCallsign(item.callsign),
         isSpeaking: !item.endTime
       }
     })
 
-  const qsoRows = records.value
-    .filter(
-      (record) =>
-        !isSameContact(currentSpeakingRecord.value, record) &&
-        !liveRows.some((row) => isSameContact(row, record))
-    )
+  const sortedRows = liveRows.sort((a, b) => {
+    if (a.isSpeaking !== b.isSpeaking) return a.isSpeaking ? -1 : 1
+    return (b.timestamp || 0) - (a.timestamp || 0)
+  })
+
+  const liveCallsigns = new Set(sortedRows.map((row) => getCallsign(row)).filter(Boolean))
+  const logFillRows = records.value
+    .filter((record) => {
+      const callsign = getCallsign(record)
+      return callsign && !liveCallsigns.has(callsign)
+    })
     .map((record) => ({
       ...record,
       qth: getRecordQth(record),
-      rowId: `log-${record.logId || record.timestamp || ''}-${record.toCallsign || ''}`,
+      rowId: `log-fill-${record.logId || record.timestamp || ''}-${record.toCallsign || ''}`,
       isRelayPinned: isRelayPinned(record.relayName),
       hasLoggedContact: hasLoggedContact(record.toCallsign, record),
+      contactCount: getContactCount(record.toCallsign),
       isSelf: isSelfCallsign(record.toCallsign),
       isSpeaking: false
     }))
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
 
-  const sortedRows = [...liveRows, ...qsoRows].sort(
-    (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
-  )
-  return dedupeLatestByCallsign(sortedRows).slice(0, 20)
+  return dedupeLatestByCallsign([...sortedRows, ...logFillRows]).slice(0, 20)
 })
 
-const previousContact = computed(() => {
+const previousContactBaseline = ref(null)
+
+const previousContactSource = computed(() => {
   const activeCallsign = normalizeCallsign(activeContact.value?.callsign)
   const activeTimestamp = activeContact.value?.timestamp || 0
   const record = displayRecords.value.find((item) => {
@@ -940,13 +976,53 @@ const previousContact = computed(() => {
 
   const callsign = normalizeCallsign(record.toCallsign)
   const grid = normalizeGrid(record.toGrid)
+  const currentContactCount = getContactCount(callsign)
   return {
     ...record,
+    previousKey: callsign,
     callsign,
     grid,
     qth: record.qth || getRecordQth(record),
     bearing: getBearingForGrid(grid, record.isSelf),
-    contactCount: getContactCount(callsign)
+    currentContactCount
+  }
+})
+
+watch(
+  () => previousContactSource.value?.previousKey || '',
+  () => {
+    const source = previousContactSource.value
+    if (!source) {
+      previousContactBaseline.value = null
+      return
+    }
+
+    const previous = previousContactBaseline.value
+    previousContactBaseline.value = {
+      key: source.previousKey,
+      count:
+        previous?.key === source.previousKey
+          ? Math.min(previous.count, source.currentContactCount)
+          : source.currentContactCount
+    }
+  },
+  { immediate: true }
+)
+
+const previousContact = computed(() => {
+  const source = previousContactSource.value
+  if (!source) return null
+
+  const baseline =
+    previousContactBaseline.value?.key === source.previousKey
+      ? previousContactBaseline.value.count
+      : source.currentContactCount
+  const increment = Math.min(1, Math.max(0, source.currentContactCount - baseline))
+
+  return {
+    ...source,
+    contactCount: increment > 0 ? baseline : source.currentContactCount,
+    qsoConfirmedIncrement: increment
   }
 })
 
@@ -1877,16 +1953,6 @@ function dedupeLatestByCallsign(rows) {
   })
 }
 
-function isSameContact(a, b) {
-  const callsignA = getCallsign(a)
-  const callsignB = getCallsign(b)
-  if (!callsignA || callsignA !== callsignB) return false
-  const timestampA = a?.timestamp || Math.floor((a?.startTime || 0) / 1000)
-  const timestampB = b?.timestamp || Math.floor((b?.startTime || 0) / 1000)
-  if (!timestampA || !timestampB) return false
-  return Math.abs(timestampA - timestampB) < 90
-}
-
 function findMatchingLog(speakingRecord) {
   const speakingTimestamp = Math.floor(speakingRecord.startTime / 1000)
   return records.value.find((record) => {
@@ -2617,7 +2683,7 @@ onUnmounted(() => {
 }
 
 .callsign-cell.is-clickable:active .callsign-card-link,
-.callsign-cell.is-clickable:active .logged-star {
+.callsign-cell.is-clickable:active .contact-count-badge {
   opacity: 0.75;
 }
 
@@ -2640,14 +2706,23 @@ onUnmounted(() => {
   vertical-align: middle;
 }
 
-.callsign-cell .logged-star {
+.callsign-cell .contact-count-badge,
+.callsign-cell .new-callsign-badge {
   display: inline-flex;
   align-items: center;
-  margin-left: 0.25rem;
+  margin-left: 0.28rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  vertical-align: middle;
+}
+
+.callsign-cell .contact-count-badge {
   color: #f59e0b;
-  font-size: 0.86rem;
-  line-height: 1;
-  vertical-align: 0.05em;
+}
+
+.callsign-cell .new-callsign-badge {
+  color: var(--color-primary);
 }
 
 .callsign-cell .self-badge {
@@ -3329,6 +3404,18 @@ onUnmounted(() => {
   color: var(--text-secondary);
   background: color-mix(in srgb, var(--bg-table-stripe) 75%, transparent);
   font-size: 0.78rem;
+}
+
+.history-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+}
+
+.qso-plus-one {
+  color: #ff2d55;
+  font-weight: 900;
+  text-shadow: 0 0 12px rgb(255 45 85 / 42%);
 }
 
 .bearing-panel {

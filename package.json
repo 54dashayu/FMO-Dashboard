@@ -2,7 +2,7 @@
   "name": "fmo-dashboard",
   "private": true,
   "license": "MIT",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -55,6 +55,7 @@
     "@tauri-apps/plugin-fs": "^2.5.1",
     "@tauri-apps/plugin-opener": "^2.5.4",
     "crypto-js": "^4.2.0",
+    "fflate": "^0.8.3",
     "pinia": "^3.0.4",
     "sql.js": "^1.13.0",
     "vue": "^3.5.24",

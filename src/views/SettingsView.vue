@@ -270,19 +270,20 @@
             <span class="setting-label">{{ t('settings.dataManagement', '数据管理') }}</span>
           </div>
           <div class="setting-item-data-row">
-            <button class="btn-primary btn-full" @click="$emit('select-files')">
-              {{ t('settings.importLogs', '导入FMO日志') }}
-            </button>
-          </div>
-          <div class="setting-item-data-row">
             <button class="btn-secondary" :disabled="!dbLoaded" @click="$emit('export-data')">
               {{ t('settings.exportDb', '导出数据库文件') }}
             </button>
             <button class="btn-secondary" :disabled="!dbLoaded" @click="$emit('export-adif')">
               {{ t('settings.exportAdif', '导出ADIF') }}
             </button>
+            <button class="btn-secondary" :disabled="!dbLoaded" @click="$emit('export-fmo-backup')">
+              {{ t('settings.exportFmoBackup', '导出备份') }}
+            </button>
+            <button class="btn-primary" @click="$emit('select-files')">
+              {{ t('settings.importBackupToFmo', '导入备份到FMO') }}
+            </button>
           </div>
-          <div v-if="dbLoaded" class="setting-item-data-clear">
+          <div class="setting-item-data-clear">
             <div class="data-clear-info">
               <span class="data-clear-warning">{{
                 t('settings.clearDataWarning', '此操作将永久删除所有本地通联日志，不可恢复！')
@@ -477,6 +478,7 @@ const emit = defineEmits([
   'select-files',
   'export-data',
   'export-adif',
+  'export-fmo-backup',
   'sync-days',
   'sync-incremental',
   'sync-full',

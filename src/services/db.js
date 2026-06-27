@@ -232,35 +232,20 @@ export async function loadDbFilesFromFileList(files) {
   await initSQL() // 确保SQL已经初始化
 
   for (const file of files) {
-    if (file.name.endsWith('.db')) {
+    const lowerName = file.name.toLowerCase()
+    if (lowerName.endsWith('.db')) {
       const arrayBuffer = await file.arrayBuffer()
       const uint8Array = new Uint8Array(arrayBuffer)
-
-      try {
-        // 尝试打开数据库以验证其有效性
-        const db = new SQL.Database(uint8Array)
-
-        // 尝试执行一个简单的查询来确认这是有效的SQLite数据库
-        db.exec('SELECT 1')
-
-        // 验证数据库是否包含预期的表（例如 qso_logs 表）
-        const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table';")
-        const hasQsoLogsTable = tables.some((table) =>
-          table.values.some((row) => row.includes('qso_logs'))
-        )
-
-        if (hasQsoLogsTable) {
-          dbFiles.push({
-            name: file.name,
-            data: uint8Array
-          })
-        }
-
-        // 关闭临时数据库连接
-        db.close()
-      } catch (err) {
-        console.warn(`跳过无效的数据库文件: ${file.name}`, err)
+      const dbFile = readValidQsoDb(file.name, uint8Array)
+      if (dbFile) dbFiles.push(dbFile)
+    } else if (lowerName.endsWith('.zip')) {
+      const dbData = await unzipFmoBackupDb(file)
+      if (!dbData) {
+        console.warn(`跳过未包含 logBook_v1_active.db 的备份包: ${file.name}`)
+        continue
       }
+      const dbFile = readValidQsoDb(`${file.name}/logBook_v1_active.db`, dbData)
+      if (dbFile) dbFiles.push(dbFile)
     }
   }
   return dbFiles
@@ -306,6 +291,49 @@ export function formatTimestamp(timestamp) {
   const minutes = String(date.getMinutes()).padStart(2, '0')
   const seconds = String(date.getSeconds()).padStart(2, '0')
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
+async function unzipFmoBackupDb(file) {
+  const { unzipSync } = await import('fflate')
+  const data = new Uint8Array(await file.arrayBuffer())
+  const entries = unzipSync(data)
+  const exact = entries['logBook_v1_active.db']
+  if (exact) return exact
+
+  const fallbackName = Object.keys(entries).find(
+    (name) => name.split('/').pop() === 'logBook_v1_active.db'
+  )
+  return fallbackName ? entries[fallbackName] : null
+}
+
+async function zipFmoBackupDb(dbData) {
+  const { zipSync } = await import('fflate')
+  return zipSync(
+    {
+      'logBook_v1_active.db': dbData
+    },
+    { level: 6 }
+  )
+}
+
+function readValidQsoDb(name, data) {
+  try {
+    const db = new SQL.Database(data)
+    db.exec('SELECT 1')
+    const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table';")
+    const hasQsoLogsTable = tables.some((table) =>
+      table.values.some((row) => row.includes('qso_logs'))
+    )
+    db.close()
+
+    if (hasQsoLogsTable) {
+      return { name, data }
+    }
+  } catch (err) {
+    console.warn(`跳过无效的数据库文件: ${name}`, err)
+  }
+
+  return null
 }
 
 // ==================== IndexedDB 日志存储功能 ====================
@@ -1199,8 +1227,7 @@ export async function saveQsoBatchToIndexedDB(records) {
   return imported
 }
 
-// 导出IndexedDB数据到SQLite数据库文件
-export async function exportDataToDbFile(fromCallsign) {
+async function buildQsoLogsDbData(fromCallsign) {
   if (!fromCallsign) {
     throw new Error('必须指定呼号才能导出')
   }
@@ -1252,11 +1279,28 @@ export async function exportDataToDbFile(fromCallsign) {
   const data = db.export()
   db.close()
 
+  return data
+}
+
+// 导出IndexedDB数据到SQLite数据库文件
+export async function exportDataToDbFile(fromCallsign) {
+  const data = await buildQsoLogsDbData(fromCallsign)
+
   // 生成文件名：呼号-fmo-logs-秒时间戳.db
   const timestamp = Math.floor(Date.now() / 1000)
   const filename = `${fromCallsign}-fmo-logs-${timestamp}.db`
 
   return await exportFile(filename, data, 'application/x-sqlite3')
+}
+
+// 导出FMO官方恢复包：zip根目录必须包含 logBook_v1_active.db
+export async function exportDataToFmoBackupZip(fromCallsign) {
+  const dbData = await buildQsoLogsDbData(fromCallsign)
+  const zipData = await zipFmoBackupDb(dbData)
+  const timestamp = Math.floor(Date.now() / 1000)
+  const filename = `${fromCallsign}-fmo-backup-${timestamp}.zip`
+
+  return await exportFile(filename, zipData, 'application/zip')
 }
 
 // 导出IndexedDB数据到ADIF文件

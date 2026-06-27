@@ -98,6 +98,7 @@
             @select-files="triggerFileInput"
             @export-data="handleExportData"
             @export-adif="handleExportAdif"
+            @export-fmo-backup="handleExportFmoBackup"
             @sync-days="handleSyncDays"
             @sync-incremental="handleSyncIncremental"
             @sync-full="handleSyncFull"
@@ -176,7 +177,7 @@
       id="db-file-input"
       ref="fileInputRef"
       type="file"
-      accept=".db,.adi,.adif"
+      accept=".db,.adi,.adif,.zip"
       multiple
       class="hidden-input"
       @change="handleFileSelect"
@@ -268,7 +269,7 @@ import {
 import toast from '../composables/useToast'
 import confirmDialog from '../composables/useConfirm'
 import { useLocale } from '../composables/useLocale'
-import { exportDataToDbFile, exportDataToAdif } from '../services/db'
+import { exportDataToDbFile, exportDataToAdif, exportDataToFmoBackupZip } from '../services/db'
 import { FmoApiClient } from '../services/fmoApi'
 import { normalizeHost } from '../utils/urlUtils'
 import { isTauriDesktop, pickImportFiles, handleExternalLinkClick } from '../utils/desktopBridge'
@@ -303,9 +304,9 @@ function normalizeDashboardVoiceMode(mode) {
   if (mode === 'after') return 'radio'
   return ['alert', 'radio', 'off'].includes(mode) ? mode : 'radio'
 }
-const dashboardVoiceMode = ref(
-  normalizeDashboardVoiceMode(localStorage.getItem('fmo_dashboard_voice_mode'))
-)
+const DEFAULT_DASHBOARD_VOICE_MODE = 'radio'
+localStorage.setItem('fmo_dashboard_voice_mode', DEFAULT_DASHBOARD_VOICE_MODE)
+const dashboardVoiceMode = ref(DEFAULT_DASHBOARD_VOICE_MODE)
 const USAGE_STATS_HOSTS = new Set(['fmo.bh1jss.net', 'fmolog.bh1jss.net'])
 const USAGE_STATS_INTERVAL_MS = 30 * 60 * 1000
 const USAGE_STATS_KEY = 'fmo_usage_stats_last_sent'
@@ -957,6 +958,21 @@ async function handleExportAdif() {
   }
 }
 
+// 导出官方 FMO 恢复 ZIP 包
+async function handleExportFmoBackup() {
+  try {
+    loading.value = true
+    const result = await exportDataToFmoBackupZip(selectedFromCallsign.value)
+    loading.value = false
+    if (result && result.displayPath) {
+      toast.success(`已保存到 ${result.displayPath}`)
+    }
+  } catch (err) {
+    loading.value = false
+    toast.error(`导出FMO恢复包失败: ${err.message}`)
+  }
+}
+
 // 备份 FMO 日志（原生端在 App 内完成下载/分享，Web 端走浏览器下载）
 async function handleBackupLogs() {
   try {
@@ -1406,15 +1422,18 @@ async function handleUpdateDashboardVoiceMode(mode) {
 
 // 恢复音频播放状态（页面加载时调用）
 function restoreAudioPlayback() {
-  if (
-    settings.audioPlaying.value &&
-    settings.fmoAddress.value &&
-    dashboardVoiceMode.value === 'radio'
-  ) {
+  if (settings.fmoAddress.value && dashboardVoiceMode.value === 'radio') {
+    settings.setAudioPlaying(true)
     toggleAudio(settings.fmoAddress.value, settings.protocol.value)
-    if (isAudioPlaying.value && !isAudioMuted.value) {
-      setAudioVolumePlayer(settings.audioVolume.value)
-    }
+      .then(() => {
+        settings.setAudioPlaying(isAudioPlaying.value)
+        if (isAudioPlaying.value && !isAudioMuted.value) {
+          setAudioVolumePlayer(settings.audioVolume.value)
+        }
+      })
+      .catch(() => {
+        settings.setAudioPlaying(false)
+      })
     // 注册一次性用户交互监听，恢复 AudioContext
     setupAudioContextResume()
   }

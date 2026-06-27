@@ -3,7 +3,7 @@
     <button
       class="public-tool-btn download-tool-btn"
       type="button"
-      :title="t('public.download', '下载 V2.02')"
+      :title="t('public.download', '下载')"
       :aria-label="t('public.download', '下载')"
       @click="showDownloads = true"
     >
@@ -45,7 +45,7 @@
             ×
           </button>
           <div class="download-heading">
-            <strong>V2.02</strong>
+            <strong>Web V2.03</strong>
             <div>
               <h2>{{ t('public.downloadTitle', 'FMO 仪表盘下载') }}</h2>
               <p>
