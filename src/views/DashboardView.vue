@@ -1209,18 +1209,6 @@ function inferTxRxFromOffset(record, singleText) {
   }
 }
 
-function inferKnownFmoPair(record, singleText) {
-  const mode = String(record?.mode || record?.app_fmo_mode || '').toUpperCase()
-  const singleHz = normalizeFrequencyHz(
-    readFrequencyValue(record, ['freqHz', 'frequencyHz', 'freq'])
-  )
-  if (mode !== 'FMO' || singleHz !== 4382500) return { tx: '', rx: '' }
-  return {
-    tx: '434.2500 MHz',
-    rx: singleText || '438.2500 MHz'
-  }
-}
-
 function getFrequencyParts(record) {
   let tx = formatFrequencyValue(
     readFrequencyValue(record, [
@@ -1284,11 +1272,6 @@ function getFrequencyParts(record) {
     const offsetParts = inferTxRxFromOffset(record, single)
     tx = tx || offsetParts.tx
     rx = rx || offsetParts.rx
-  }
-  if (!tx || !rx) {
-    const knownPair = inferKnownFmoPair(record, single)
-    tx = tx || knownPair.tx
-    rx = rx || knownPair.rx
   }
   return {
     tx,
@@ -4027,20 +4010,101 @@ onUnmounted(() => {
     padding: 0.75rem;
   }
 
+  .active-contact-card {
+    display: grid;
+    grid-template-rows: 1.35rem 10.4rem 7.35rem 5rem;
+    gap: 0.55rem;
+    overflow: hidden;
+  }
+
+  .active-contact-card > .section-label {
+    min-height: 1.35rem;
+    overflow: hidden;
+  }
+
   .active-contact-main {
     grid-template-columns: minmax(0, 1fr) 104px;
     gap: 0.65rem;
     align-items: stretch;
+    min-height: 0;
+    height: 10.4rem;
+    margin-top: 0;
+    overflow: hidden;
+  }
+
+  .active-contact-primary {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 4.25rem 1.8rem 2.55rem;
+    align-content: start;
+    gap: 0.55rem;
+    overflow: hidden;
+  }
+
+  .active-contact-primary .callsign-wrap {
+    min-height: 4.25rem;
+    max-height: 4.25rem;
+    align-content: end;
+    align-items: flex-end;
+    gap: 0.35rem;
+    overflow: hidden;
   }
 
   .active-contact-primary h1,
   .active-contact-primary h2 {
+    max-width: 100%;
+    overflow: hidden;
     font-size: clamp(2rem, 10vw, 2.85rem);
     line-height: 1.02;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .active-contact-primary .grid-square {
+    margin-bottom: 0.18rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .active-contact-primary .active-contact-new-badge {
+    align-self: end;
+    margin-bottom: 0.18rem;
+  }
+
+  .contact-tags {
+    height: 1.8rem;
+    margin-top: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .contact-tags span {
+    min-height: 1.55rem;
+    max-width: 100%;
+    flex: 0 1 auto;
+    padding: 0.18rem 0.45rem;
+    overflow: hidden;
+    font-size: 0.72rem;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .active-contact-controls {
+    height: 2.55rem;
+    margin-top: 0;
+    overflow: hidden;
+  }
+
+  .active-contact-controls .command-refresh {
+    min-height: 2.45rem;
+    padding: 0 0.85rem;
   }
 
   .bearing-panel {
     height: 104px;
+    align-self: start;
     padding: 0.45rem;
   }
 
@@ -4059,14 +4123,20 @@ onUnmounted(() => {
 
   .contact-details {
     grid-template-columns: 1fr;
-    margin-top: 0.7rem;
+    grid-template-rows: repeat(2, 3.45rem);
+    min-height: 0;
+    height: 7.35rem;
+    margin-top: 0;
     gap: 0.45rem;
+    overflow: hidden;
   }
 
   .contact-details > div,
   .contact-detail-card {
-    min-height: 3.3rem;
+    min-height: 0;
+    height: 3.45rem;
     padding: 0.5rem 0.6rem;
+    overflow: hidden;
   }
 
   .frequency-detail-card {
@@ -4075,7 +4145,12 @@ onUnmounted(() => {
   }
 
   .contact-details strong {
+    max-width: 100%;
+    overflow: hidden;
     font-size: 0.85rem;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .contact-details .frequency-line {
@@ -4104,17 +4179,22 @@ onUnmounted(() => {
 
   .mobile-previous-card {
     display: grid;
-    gap: 0.45rem;
-    margin-top: 0.65rem;
+    grid-template-rows: 1.25rem minmax(0, 1fr);
+    gap: 0.35rem;
+    height: 5rem;
+    margin-top: 0;
     padding: 0.6rem;
     border: 1px solid var(--border-light);
     border-radius: 8px;
     background: color-mix(in srgb, var(--bg-table-stripe) 72%, transparent);
+    overflow: hidden;
   }
 
   .mobile-previous-main {
     display: grid;
+    min-height: 0;
     gap: 0.35rem;
+    overflow: hidden;
   }
 
   .mobile-previous-identity {
@@ -4144,6 +4224,8 @@ onUnmounted(() => {
     display: flex;
     flex-wrap: wrap;
     gap: 0.32rem;
+    max-height: 1.6rem;
+    overflow: hidden;
   }
 
   .mobile-previous-meta span,
@@ -4342,14 +4424,50 @@ onUnmounted(() => {
 
   .active-contact-card {
     grid-column: 1 / -1;
+    grid-template-rows: 1.1rem 7.25rem 3.45rem 3.7rem;
+    gap: 0.35rem;
   }
 
   .active-contact-main {
     grid-template-columns: minmax(0, 1fr) 118px;
+    height: 7.25rem;
+  }
+
+  .active-contact-primary {
+    grid-template-rows: 3.1rem 1.4rem 2rem;
+    gap: 0.35rem;
+  }
+
+  .active-contact-primary .callsign-wrap {
+    min-height: 3.1rem;
+    max-height: 3.1rem;
+  }
+
+  .active-contact-primary h1,
+  .active-contact-primary h2 {
+    font-size: clamp(2rem, 8vw, 2.8rem);
+  }
+
+  .contact-tags {
+    height: 1.4rem;
+  }
+
+  .contact-tags span {
+    min-height: 1.28rem;
+  }
+
+  .active-contact-controls {
+    height: 2rem;
+  }
+
+  .active-contact-controls .command-refresh {
+    min-height: 1.9rem;
   }
 
   .contact-details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 3.45rem;
+    height: 3.45rem;
   }
 
   .mobile-previous-main {
@@ -4436,6 +4554,8 @@ onUnmounted(() => {
 
   .active-contact-card {
     padding: 0.38rem;
+    grid-template-rows: 1rem 5.8rem 2.5rem 3.1rem;
+    gap: 0.22rem;
   }
 
   .section-label {
@@ -4447,6 +4567,7 @@ onUnmounted(() => {
   .active-contact-main {
     grid-template-columns: minmax(0, 1fr) 84px;
     gap: 0.32rem;
+    height: 5.8rem;
   }
 
   .active-contact-primary {
@@ -4522,12 +4643,15 @@ onUnmounted(() => {
 
   .contact-details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 2.5rem;
+    height: 2.5rem;
     gap: 0.24rem;
     margin-top: 0.25rem;
   }
 
   .contact-detail-card {
     min-height: 2.04rem;
+    height: 2.5rem;
     padding: 0.24rem 0.38rem;
   }
 
@@ -4553,7 +4677,9 @@ onUnmounted(() => {
 
   .mobile-previous-card {
     display: grid;
+    grid-template-rows: 1rem minmax(0, 1fr);
     gap: 0.18rem;
+    height: 3.1rem;
     margin-top: 0.24rem;
     padding: 0.3rem 0.34rem;
     border: 1px solid var(--border-light);
