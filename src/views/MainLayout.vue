@@ -2086,6 +2086,7 @@ provide('protocol', settings.protocol)
 @media (max-height: 520px) and (max-width: 950px) and (orientation: landscape) {
   .container {
     max-width: none;
+    height: 100vh;
     height: 100dvh;
   }
 

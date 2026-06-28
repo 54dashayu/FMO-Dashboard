@@ -323,6 +323,8 @@
               type="text"
               :placeholder="t('settings.namePlaceholder', '如：家里的FMO')"
               class="form-input"
+              @keydown.enter.prevent="submitAddressForm"
+              @blur="restoreLegacyAndroidViewport"
             />
           </div>
           <div class="form-group">
@@ -340,6 +342,11 @@
               type="text"
               :placeholder="addressHostPlaceholder"
               class="form-input"
+              inputmode="url"
+              autocomplete="off"
+              autocapitalize="none"
+              @keydown.enter.prevent="submitAddressForm"
+              @blur="restoreLegacyAndroidViewport"
             />
           </div>
           <div v-if="!isMobileDevice" class="form-hint">
@@ -782,6 +789,7 @@ function cancelAddressDialog() {
   editingId.value = null
   formData.value = { name: '', host: '', addressType: 'local', protocol: 'ws' }
   formError.value = ''
+  restoreLegacyAndroidViewport()
 }
 
 async function submitAddressForm() {
@@ -929,6 +937,15 @@ async function handleRefreshUserInfo(id) {
 
 // 同步按钮点击处理
 async function handleSyncDays() {
+  if (isLegacyAndroidWebView()) {
+    if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
+      emit('sync-multiple', { syncType: 'today', days: syncDays.value })
+      return
+    }
+    emit('sync-days', syncDays.value)
+    return
+  }
+
   // 多选模式且选中多个地址
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
     const confirmed = await confirmDialog.show(
@@ -951,6 +968,15 @@ async function handleSyncDays() {
 }
 
 async function handleSyncIncremental() {
+  if (isLegacyAndroidWebView()) {
+    if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
+      emit('sync-multiple', { syncType: 'incremental', days: 1 })
+      return
+    }
+    emit('sync-incremental')
+    return
+  }
+
   // 多选模式且选中多个地址
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
     const confirmed = await confirmDialog.show(
@@ -978,6 +1004,15 @@ async function handleSyncIncremental() {
 }
 
 async function handleSyncFull() {
+  if (isLegacyAndroidWebView()) {
+    if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
+      emit('sync-multiple', { syncType: 'full', days: 1 })
+      return
+    }
+    emit('sync-full')
+    return
+  }
+
   // 多选模式且选中多个地址
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
     const confirmed = await confirmDialog.show(
@@ -1018,6 +1053,39 @@ function handleVolumeChange(e) {
 
 function isNativeAndroid() {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+}
+
+function getAndroidWebViewMajor() {
+  const precheck = window.__FMO_ANDROID_WEBVIEW_PRECHECK__
+  if (precheck?.isAndroid && precheck?.chromeMajor) return precheck.chromeMajor
+  const match = String(navigator.userAgent || '').match(/(?:Chrome|CriOS)\/(\d+)/i)
+  return match ? Number(match[1]) : null
+}
+
+function isLegacyAndroidWebView() {
+  const major = getAndroidWebViewMajor()
+  return isNativeAndroid() && Boolean(major && major < 64)
+}
+
+function restoreLegacyAndroidViewport() {
+  if (!isLegacyAndroidWebView()) return
+  window.setTimeout(() => {
+    try {
+      document.activeElement?.blur?.()
+    } catch (err) {
+      void err
+    }
+    try {
+      window.dispatchEvent(new window.Event('resize'))
+    } catch (err) {
+      void err
+    }
+    try {
+      document.querySelector('.settings-view')?.scrollTo?.({ top: 0, behavior: 'auto' })
+    } catch (err) {
+      void err
+    }
+  }, 120)
 }
 
 function isNativeIos() {
@@ -2114,6 +2182,7 @@ async function handleVoiceTest() {
   .dialog {
     width: min(28rem, calc(100vw - 0.7rem));
     max-width: calc(100vw - 0.7rem);
+    max-height: calc(100vh - 0.7rem);
     max-height: calc(100dvh - 0.7rem);
     display: flex;
     flex-direction: column;
@@ -2170,6 +2239,8 @@ async function handleVoiceTest() {
   .fmo-preview-dialog {
     width: calc(100vw - 0.7rem);
     max-width: calc(100vw - 0.7rem);
+    height: calc(100vh - 0.7rem);
+    max-height: calc(100vh - 0.7rem);
     height: calc(100dvh - 0.7rem);
     max-height: calc(100dvh - 0.7rem);
   }

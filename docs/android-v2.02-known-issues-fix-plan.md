@@ -724,13 +724,39 @@ adb logcat -d | grep -iE "fmodashboard|FmoSystemUi|FmoAudio|FmoLocation|AndroidR
 新 APK SHA256：
 
 ```text
-7fe703bfb6aec7d5ddffe6640f0af87e2b3307f0d45029c19a167a2e493e13aa  FMO-Dashboard-Android-V2.03.apk
+9fc4e1affe5b4dd9fa3db403074c26749017ffafe1a31c212cb74ac1b46f58a8  FMO-Dashboard-Android-V2.03.apk
 ```
 
 后续要求：
 
 - 后续 Android 正式包必须检查 APK 内是否存在 `script nomodule` / `index-legacy-*.js` / `polyfills-legacy-*.js`。
 - 若目标包含小爱音箱、老车机或 WebView61-63 设备，必须继续确认 legacy 首入口不直接包含 `BigInt`、`WebAssembly`、`sql-wasm.wasm`。
+
+### 2026-06-28 V2.03 小爱音箱设置页同步与键盘占位补丁
+
+反馈现象：
+
+- 小爱音箱可以进入主界面，但设置页输入 FMO IP 后，软键盘退出后页面占位不恢复。
+- 在该状态下增量同步 / 全量同步按钮看起来没有响应，疑似旧 WebView 键盘占位或确认弹窗遮挡点击区域。
+
+已处理：
+
+- 地址输入框增加回车提交和失焦后的旧 WebView 视口恢复：
+  - 主动 `blur()` 当前输入；
+  - 触发一次 `resize`；
+  - 将设置页滚动复位。
+- WebView/Chrome 64 以下的 Android 设备上，同步今日、增量同步、全量同步不再弹二次确认，直接执行同步。
+- 设置页小横屏弹窗和 FMO 预览弹窗增加 `vh` 兜底，避免旧 WebView 不支持 `dvh` 导致键盘收起后高度卡死。
+- 全局确认弹窗增加确定的背景、文字和阴影 fallback，降低旧 WebView / CSS 变量异常时出现纯白遮挡块的概率。
+- 重打 V2.03 APK，拆包确认：
+  - 存在 `script nomodule`、`polyfills-legacy-DL4hYy9C.js`、`index-legacy-DiT9g5Zm.js`。
+  - legacy 首入口中 `BigInt`、`WebAssembly`、`sql-wasm.wasm` 计数均为 `0`。
+
+补丁后 APK SHA256：
+
+```text
+9fc4e1affe5b4dd9fa3db403074c26749017ffafe1a31c212cb74ac1b46f58a8  FMO-Dashboard-Android-V2.03.apk
+```
 
 ## 当前结论
 
