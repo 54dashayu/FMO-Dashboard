@@ -693,6 +693,45 @@ adb logcat -d | grep -iE "fmodashboard|FmoSystemUi|FmoAudio|FmoLocation|AndroidR
   - `清空通联日志` 可见；
   - `清理地址缓存` 可见。
 
+### 2026-06-28 V2.03 小爱音箱 / WebView61 启动回归
+
+反馈现象：
+
+- 老旧 Android 设备（小爱音箱，WebView/Chrome 61）运行 V2.03 后进入启动兜底页：
+  - `启动阶段：12 秒内未完成界面加载`
+  - `Android: 是，WebView/Chrome: 61，ES module: 支持`
+
+原因确认：
+
+- 拆包检查 `release/android/FMO-Dashboard-Android-V2.03.apk` 时发现 V2.03 首次发布包只包含现代 `type="module"` 入口。
+- APK 内缺少 V2.02 兼容方案要求的 `index-legacy-*.js`、`polyfills-legacy-*.js` 和 `script nomodule`。
+- 构建脚本 `scripts/build-android-apk.sh` 默认执行普通 `npm run build`，没有默认带上 `FMO_LEGACY_ANDROID=1`，导致 V2.03 Android 包回归为现代构建。
+
+已处理：
+
+- `scripts/build-android-apk.sh` 默认设置 `FMO_LEGACY_ANDROID=1`，Android 打包默认生成 legacy/nomodule 产物。
+- 使用 V2.02 兼容工具链重打 V2.03 release APK。
+- 新包拆包确认：
+  - 存在 `script nomodule`、`polyfills-legacy-DL4hYy9C.js`、`index-legacy-DBrDH3I3.js`。
+  - legacy 首入口中 `BigInt`、`WebAssembly`、`sql-wasm.wasm` 计数均为 `0`。
+- `aapt dump badging` 确认包名与版本：
+  - `net.bh1jss.fmodashboard`
+  - `versionCode 20300`
+  - `versionName V2.03`
+  - `minSdkVersion 24`
+  - `targetSdkVersion 36`
+
+新 APK SHA256：
+
+```text
+7fe703bfb6aec7d5ddffe6640f0af87e2b3307f0d45029c19a167a2e493e13aa  FMO-Dashboard-Android-V2.03.apk
+```
+
+后续要求：
+
+- 后续 Android 正式包必须检查 APK 内是否存在 `script nomodule` / `index-legacy-*.js` / `polyfills-legacy-*.js`。
+- 若目标包含小爱音箱、老车机或 WebView61-63 设备，必须继续确认 legacy 首入口不直接包含 `BigInt`、`WebAssembly`、`sql-wasm.wasm`。
+
 ## 当前结论
 
 截至本次文档生成，V2.02 的本地 APK 基础信息是自洽的：包名、版本递增、最低 SDK、签名延续和文件校验均未发现明显错误。
