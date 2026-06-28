@@ -759,17 +759,21 @@ const todayContactCount = computed(() => {
 
 const currentFrequencyDisplay = computed(() => {
   const candidates = [
-    currentStation.value,
-    activeContact.value?.frequencySource,
-    findStationByName(activeContact.value?.relayName),
-    findStationByName(recentActiveRelayName.value),
-    records.value.find((record) => getFrequencyParts(record).hasFrequency),
-    activeContact.value
+    { source: currentStation.value, allowSplit: true },
+    { source: findStationByName(activeContact.value?.relayName), allowSplit: true },
+    { source: findStationByName(recentActiveRelayName.value), allowSplit: true },
+    { source: activeContact.value?.frequencySource, allowSplit: false },
+    {
+      source: records.value.find((record) => getFrequencyParts(record).hasFrequency),
+      allowSplit: false
+    },
+    { source: activeContact.value, allowSplit: false }
   ].filter(Boolean)
 
   let fallback = null
   for (const candidate of candidates) {
-    const display = formatFrequencyDisplay(candidate)
+    if (!candidate.source) continue
+    const display = formatFrequencyDisplay(candidate.source, { allowSplit: candidate.allowSplit })
     if (display.tx || display.rx) return display
     if (!fallback && (display.hasFrequency || display.mode !== 'FMO')) fallback = display
   }
@@ -1209,7 +1213,8 @@ function inferTxRxFromOffset(record, singleText) {
   }
 }
 
-function getFrequencyParts(record) {
+function getFrequencyParts(record, options = {}) {
+  const allowSplit = options.allowSplit !== false
   let tx = formatFrequencyValue(
     readFrequencyValue(record, [
       'txFreqHz',
@@ -1263,6 +1268,14 @@ function getFrequencyParts(record) {
     ])
   )
   const single = formatFrequencyValue(readFrequencyValue(record, ['freqHz', 'frequencyHz', 'freq']))
+  if (!allowSplit) {
+    return {
+      tx: '',
+      rx: '',
+      single,
+      hasFrequency: Boolean(single)
+    }
+  }
   if (!tx || !rx) {
     const combined = parseCombinedFrequencyParts(record)
     tx = tx || combined.tx
@@ -1281,8 +1294,8 @@ function getFrequencyParts(record) {
   }
 }
 
-function formatFrequencyDisplay(record) {
-  const parts = getFrequencyParts(record)
+function formatFrequencyDisplay(record, options = {}) {
+  const parts = getFrequencyParts(record, options)
   return {
     ...parts,
     mode: record?.mode || record?.app_fmo_mode || 'FMO'
