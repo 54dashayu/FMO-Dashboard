@@ -1,9 +1,9 @@
 apply plugin: 'com.android.application'
 
 // ========== Android 原生安装包版本 ==========
-// V2.03 Android 通用包：同步深色模式、实时列表、备份 ZIP 和通联播报默认开启修复。
-def appVersionCode = 20300
-def appVersionName = "V2.03"
+// V2.03.01 Android 修补包：重点修复小米等安卓设备竖屏/横屏首屏约束。
+def appVersionCode = 20301
+def appVersionName = "V2.03.01"
 
 // ========== 读取正式签名参数（env 或 ~/.gradle/gradle.properties 均可） ==========
 // Gradle 的 file() 不会自动展开 ~，这里手动处理成绝对路径

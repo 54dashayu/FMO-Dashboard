@@ -4264,32 +4264,38 @@ onUnmounted(() => {
     line-height: 1.25;
   }
 
-  :global(.native-android) .active-contact-card {
-    grid-template-rows: 1.35rem 12rem 7.35rem 7.3rem;
+  :global(.native-android .active-contact-card) {
+    grid-template-rows: 1.35rem 12.9rem 7.35rem 8.9rem;
   }
 
-  :global(.native-android) .active-contact-main {
-    height: 12rem;
+  :global(.native-android .active-contact-main) {
+    height: 12.9rem;
   }
 
-  :global(.native-android) .active-contact-primary {
-    grid-template-rows: 4.35rem 2.05rem 3rem;
+  :global(.native-android .active-contact-primary) {
+    grid-template-rows: 4.55rem 2.15rem 3rem;
   }
 
-  :global(.native-android) .active-contact-controls {
+  :global(.native-android .active-contact-controls) {
     height: 3rem;
   }
 
-  :global(.native-android) .active-contact-controls .command-refresh {
+  :global(.native-android .active-contact-controls .command-refresh) {
     min-height: 2.65rem;
   }
 
-  :global(.native-android) .mobile-previous-card {
-    height: 7.3rem;
+  :global(.native-android .mobile-previous-card) {
+    height: 8.9rem;
+    grid-template-rows: 1.25rem minmax(0, 1fr);
   }
 
-  :global(.native-android) .mobile-previous-meta {
-    max-height: 3.25rem;
+  :global(.native-android .mobile-previous-meta) {
+    align-content: start;
+    max-height: 4.6rem;
+  }
+
+  :global(.native-android .mobile-previous-meta span:not(.history-count)) {
+    flex: 1 1 100%;
   }
 
   .mini-bearing {
@@ -4434,6 +4440,10 @@ onUnmounted(() => {
     margin-top: 0.55rem;
   }
 
+  :global(.native-android .contact-tags) {
+    margin-top: 0;
+  }
+
   .contact-tags span {
     min-height: 1.55rem;
     padding: 0.18rem 0.45rem;
@@ -4530,16 +4540,16 @@ onUnmounted(() => {
     max-height: 1.35rem;
   }
 
-  :global(.native-android) .active-contact-card {
+  :global(.native-android .active-contact-card) {
     grid-template-rows: 1.1rem 7.25rem 3.65rem 4.15rem;
   }
 
-  :global(.native-android) .contact-details {
+  :global(.native-android .contact-details) {
     grid-template-rows: 3.65rem;
     height: 3.65rem;
   }
 
-  :global(.native-android) .mobile-previous-card {
+  :global(.native-android .mobile-previous-card) {
     height: 4.15rem;
   }
 
@@ -4789,56 +4799,56 @@ onUnmounted(() => {
     line-height: 1.1;
   }
 
-  :global(.native-android) .active-contact-card {
+  :global(.native-android .active-contact-card) {
     grid-template-rows: 1rem 6.45rem 3rem 3.75rem;
   }
 
-  :global(.native-android) .active-contact-main {
+  :global(.native-android .active-contact-main) {
     height: 6.45rem;
   }
 
-  :global(.native-android) .active-contact-primary {
+  :global(.native-android .active-contact-primary) {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: 3.8rem 1.12rem 1.55rem;
     min-height: 0;
     align-items: start;
   }
 
-  :global(.native-android) .active-contact-primary .callsign-wrap {
+  :global(.native-android .active-contact-primary .callsign-wrap) {
     min-height: 3.8rem;
     max-height: 3.8rem;
   }
 
-  :global(.native-android) .active-contact-primary h1,
-  :global(.native-android) .active-contact-primary h2 {
+  :global(.native-android .active-contact-primary h1),
+  :global(.native-android .active-contact-primary h2) {
     font-size: clamp(44px, 13vw, 68px);
   }
 
-  :global(.native-android) .contact-tags {
+  :global(.native-android .contact-tags) {
     grid-row: 2;
     height: 1.12rem;
   }
 
-  :global(.native-android) .active-contact-controls {
+  :global(.native-android .active-contact-controls) {
     grid-column: 1 / -1;
     height: 1.55rem;
   }
 
-  :global(.native-android) .command-refresh {
+  :global(.native-android .command-refresh) {
     min-height: 1.48rem;
   }
 
-  :global(.native-android) .contact-details {
+  :global(.native-android .contact-details) {
     grid-template-rows: 3rem;
     height: 3rem;
     margin-top: 0;
   }
 
-  :global(.native-android) .contact-detail-card {
+  :global(.native-android .contact-detail-card) {
     height: 3rem;
   }
 
-  :global(.native-android) .mobile-previous-card {
+  :global(.native-android .mobile-previous-card) {
     height: 3.75rem;
     margin-top: 0;
   }
@@ -4849,6 +4859,241 @@ onUnmounted(() => {
   }
 
   .live-table-wrap {
+    max-height: none;
+    overflow: auto;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 620px) {
+  :global(.native-android .dashboard-view) {
+    height: auto;
+    min-height: auto;
+    gap: 0.22rem;
+    overflow: visible;
+    padding-bottom: 2.35rem;
+  }
+
+  :global(.native-android .dashboard-command-bar) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    min-height: 2.36rem;
+    padding: 0.2rem 0.36rem;
+  }
+
+  :global(.native-android .dashboard-brand) {
+    min-width: 0;
+    gap: 0.32rem;
+  }
+
+  :global(.native-android .dashboard-brand strong),
+  :global(.native-android .connection-strip),
+  :global(.native-android .command-stats),
+  :global(.native-android .mobile-command-stats),
+  :global(.native-android .command-tools .public-tool-btn),
+  :global(.native-android .command-tools .download-tool-btn) {
+    display: none;
+  }
+
+  :global(.native-android .dashboard-brand-mark) {
+    width: 1.68rem;
+    height: 1.68rem;
+  }
+
+  :global(.native-android .command-tools) {
+    gap: 0.22rem;
+  }
+
+  :global(.native-android .command-tool-wide),
+  :global(.native-android .command-tool) {
+    width: 1.72rem;
+    height: 1.72rem;
+    padding: 0;
+  }
+
+  :global(.native-android .command-tool-wide span:last-child) {
+    display: none;
+  }
+
+  :global(.native-android .command-select-wrap) {
+    width: 5.8rem;
+    height: 1.72rem;
+    padding: 0 0.28rem 0 0.34rem;
+  }
+
+  :global(.native-android .command-select) {
+    font-size: 0.58rem;
+  }
+
+  :global(.native-android .dashboard-grid) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 0.24rem;
+    padding: 0.24rem;
+    overflow: visible;
+  }
+
+  :global(.native-android .active-contact-card) {
+    grid-column: 1;
+    grid-template-rows: 1rem 6.35rem 2.95rem 4.4rem;
+    gap: 0.22rem;
+    padding: 0.36rem;
+  }
+
+  :global(.native-android .section-label) {
+    margin-bottom: 0;
+    font-size: 0.62rem;
+    line-height: 1.1;
+  }
+
+  :global(.native-android .active-contact-main) {
+    grid-template-columns: minmax(0, 1fr) 86px;
+    gap: 0.32rem;
+    height: 6.35rem;
+  }
+
+  :global(.native-android .active-contact-primary) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 3.55rem 1.1rem 1.45rem;
+    min-height: 0;
+    align-items: start;
+    column-gap: 0.28rem;
+    row-gap: 0.12rem;
+  }
+
+  :global(.native-android .active-contact-primary .callsign-wrap) {
+    grid-column: 1 / -1;
+    min-height: 3.55rem;
+    max-height: 3.55rem;
+    align-items: end;
+  }
+
+  :global(.native-android .active-contact-primary h1),
+  :global(.native-android .active-contact-primary h2) {
+    font-size: clamp(34px, 11vw, 54px);
+    line-height: 0.92;
+  }
+
+  :global(.native-android .active-contact-primary .grid-square) {
+    font-size: 0.62rem;
+  }
+
+  :global(.native-android .contact-tags) {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    height: 1.1rem;
+    gap: 0.18rem;
+    margin-top: 0;
+  }
+
+  :global(.native-android .contact-tags span) {
+    min-height: 1.02rem;
+    padding: 0.06rem 0.24rem;
+    font-size: 0.52rem;
+    line-height: 1.1;
+  }
+
+  :global(.native-android .active-contact-controls) {
+    grid-row: 3;
+    grid-column: 1 / -1;
+    height: 1.45rem;
+  }
+
+  :global(.native-android .command-refresh) {
+    min-height: 1.38rem;
+    padding: 0.08rem 0.38rem;
+    font-size: 0.58rem;
+  }
+
+  :global(.native-android .bearing-panel) {
+    height: 74px;
+    padding: 0.28rem;
+    gap: 0.22rem;
+  }
+
+  :global(.native-android .bearing-panel .compass) {
+    width: 34px;
+    height: 34px;
+  }
+
+  :global(.native-android .bearing-meta strong) {
+    font-size: 0.62rem;
+  }
+
+  :global(.native-android .bearing-meta span) {
+    font-size: 0.52rem;
+  }
+
+  :global(.native-android .contact-details) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 2.95rem;
+    height: 2.95rem;
+    gap: 0.24rem;
+    margin-top: 0;
+  }
+
+  :global(.native-android .contact-detail-card) {
+    height: 2.95rem;
+    padding: 0.22rem 0.36rem;
+  }
+
+  :global(.native-android .contact-details span) {
+    font-size: 0.54rem;
+  }
+
+  :global(.native-android .contact-details strong) {
+    margin-top: 0.08rem;
+    font-size: 0.66rem;
+  }
+
+  :global(.native-android .contact-details .frequency-line) {
+    font-size: clamp(0.58rem, 2vw, 0.7rem);
+  }
+
+  :global(.native-android .dashboard-actions),
+  :global(.native-android .dashboard-side),
+  :global(.native-android .previous-card),
+  :global(.native-android .server-card) {
+    display: none;
+  }
+
+  :global(.native-android .mobile-previous-card) {
+    height: 4.4rem;
+    margin-top: 0;
+    padding: 0.3rem 0.34rem;
+  }
+
+  :global(.native-android .mobile-previous-main) {
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.28rem;
+  }
+
+  :global(.native-android .mobile-previous-identity strong) {
+    font-size: 0.9rem;
+  }
+
+  :global(.native-android .mobile-previous-identity span) {
+    font-size: 0.55rem;
+  }
+
+  :global(.native-android .mobile-previous-meta) {
+    gap: 0.16rem;
+    max-height: 1.6rem;
+  }
+
+  :global(.native-android .mobile-previous-meta span),
+  :global(.native-android .mobile-previous-empty) {
+    min-height: 1.02rem;
+    padding: 0.08rem 0.24rem;
+    font-size: 0.54rem;
+    line-height: 1.1;
+  }
+
+  :global(.native-android .live-panel) {
+    grid-column: 1;
+    min-height: 10.5rem;
+  }
+
+  :global(.native-android .live-table-wrap) {
     max-height: none;
     overflow: auto;
   }

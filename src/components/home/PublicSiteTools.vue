@@ -122,10 +122,10 @@ const downloads = [
   {
     icon: 'APK',
     titleKey: 'public.androidApk',
-    title: 'Android APK V2.02',
+    title: 'Android APK V2.03.01',
     hintKey: 'public.androidApkHint',
-    hint: 'V2.02 兼容性升级版，适用于安卓手机、平板和部分车机。',
-    url: `${vpsDownloadBase}/FMO-Dashboard-Android-V2.02.apk`
+    hint: 'V2.03.01 兼容性修补版，适用于安卓手机、平板和部分车机。',
+    url: `${vpsDownloadBase}/FMO-Dashboard-Android-V2.03.01.apk`
   },
   {
     icon: 'iOS',
