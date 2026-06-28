@@ -587,6 +587,51 @@ function parseAdifDateTime(qsoDate, timeOn) {
   return Math.floor(Date.UTC(year, month, day, hour, minute, second) / 1000)
 }
 
+function adifRecordToFmoRecord(record, fallbackFromCallsign = '') {
+  const fromCallsign =
+    record.station_callsign ||
+    record.operator ||
+    record.owner_callsign ||
+    fallbackFromCallsign ||
+    ''
+
+  return {
+    timestamp: parseAdifDateTime(record.qso_date, record.time_on),
+    freqHz: record.freq ? Math.round(parseFloat(record.freq) * 10000) : null,
+    fromCallsign,
+    fromGrid: record.my_gridsquare || '',
+    toCallsign: record.call || '',
+    toGrid: record.gridsquare || '',
+    toComment: record.app_fmo_comment_utf8 || record.comment || '',
+    mode: record.app_fmo_mode || 'FMO',
+    relayName: record.app_fmo_relayname || '',
+    relayAdmin: record.app_fmo_relayadmin || ''
+  }
+}
+
+async function parseAdifFilesToFmoRecords(adifFiles, fallbackFromCallsign = '') {
+  const allRecords = []
+
+  for (const file of adifFiles) {
+    try {
+      const arrayBuffer = await file.arrayBuffer()
+      const parsed = AdifParser.parseAdi(arrayBuffer)
+      const records = Array.isArray(parsed.records) ? parsed.records : []
+
+      for (const record of records) {
+        const fmoRecord = adifRecordToFmoRecord(record, fallbackFromCallsign)
+        if (!fmoRecord.toCallsign && !fmoRecord.timestamp) continue
+        allRecords.push(fmoRecord)
+      }
+    } catch (err) {
+      console.error(`解析ADIF文件 ${file.name} 失败:`, err)
+      throw new Error(`解析ADIF文件 ${file.name} 失败: ${err.message}`)
+    }
+  }
+
+  return allRecords
+}
+
 // 将ADIF文件数据导入到IndexedDB
 export async function importAdifFilesToIndexedDB(adifFiles, onProgress = null) {
   // 解析ADIF文件
@@ -601,20 +646,7 @@ export async function importAdifFilesToIndexedDB(adifFiles, onProgress = null) {
       // 筛选 app_fmo_mode === 'FMO' 的记录
       const fmoRecords = parsed.records.filter((r) => r.app_fmo_mode?.toUpperCase() === 'FMO')
 
-      for (const r of fmoRecords) {
-        allRecords.push({
-          timestamp: parseAdifDateTime(r.qso_date, r.time_on),
-          freqHz: r.freq ? Math.round(parseFloat(r.freq) * 10000) : null,
-          fromCallsign: r.station_callsign || '',
-          fromGrid: r.my_gridsquare || '',
-          toCallsign: r.call || '',
-          toGrid: r.gridsquare || '',
-          toComment: r.app_fmo_comment_utf8 || r.comment || '',
-          mode: r.app_fmo_mode || 'FMO',
-          relayName: r.app_fmo_relayname || '',
-          relayAdmin: r.app_fmo_relayadmin || ''
-        })
-      }
+      for (const r of fmoRecords) allRecords.push(adifRecordToFmoRecord(r))
     } catch (err) {
       console.error(`解析ADIF文件 ${file.name} 失败:`, err)
     }
@@ -1232,13 +1264,21 @@ async function buildQsoLogsDbData(fromCallsign) {
     throw new Error('必须指定呼号才能导出')
   }
 
-  await initSQL()
-
   // 获取指定呼号的数据
   const allRecords = await getDataFromIndexedDB(fromCallsign)
 
   if (allRecords.length === 0) {
     throw new Error('没有数据可导出')
+  }
+
+  return buildQsoLogsDbDataFromRecords(allRecords)
+}
+
+async function buildQsoLogsDbDataFromRecords(records) {
+  await initSQL()
+
+  if (!records || records.length === 0) {
+    throw new Error('没有可转换的ADIF记录')
   }
 
   // 创建新的SQLite数据库
@@ -1257,7 +1297,7 @@ async function buildQsoLogsDbData(fromCallsign) {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
-  for (const record of allRecords) {
+  for (const record of records) {
     insertStmt.run([
       record.timestamp || null,
       record.freqHz || null,
@@ -1299,6 +1339,22 @@ export async function exportDataToFmoBackupZip(fromCallsign) {
   const zipData = await zipFmoBackupDb(dbData)
   const timestamp = Math.floor(Date.now() / 1000)
   const filename = `${fromCallsign}-fmo-backup-${timestamp}.zip`
+
+  return await exportFile(filename, zipData, 'application/zip')
+}
+
+export async function convertAdifFilesToFmoBackupZip(adifFiles, fallbackFromCallsign = '') {
+  const records = await parseAdifFilesToFmoRecords(adifFiles, fallbackFromCallsign)
+  if (records.length === 0) {
+    throw new Error('ADIF文件中没有可转换的通联记录')
+  }
+
+  const dbData = await buildQsoLogsDbDataFromRecords(records)
+  const zipData = await zipFmoBackupDb(dbData)
+  const timestamp = Math.floor(Date.now() / 1000)
+  const firstFromCallsign = records.find((record) => record.fromCallsign)?.fromCallsign
+  const callsign = (firstFromCallsign || fallbackFromCallsign || 'fmo').replace(/[^\w-]+/g, '_')
+  const filename = `${callsign}-adif-to-fmo-backup-${timestamp}.zip`
 
   return await exportFile(filename, zipData, 'application/zip')
 }

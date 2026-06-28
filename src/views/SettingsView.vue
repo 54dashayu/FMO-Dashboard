@@ -201,15 +201,6 @@
               {{ getSyncFullButtonText }}
             </button>
           </div>
-          <div v-if="addressList.length > 0" class="setting-item-buttons setting-item-buttons-full">
-            <button
-              class="btn-ghost"
-              :disabled="!fmoAddress || syncing"
-              @click="$emit('backup-logs')"
-            >
-              {{ t('settings.backupLogs', '备份FMO日志') }}
-            </button>
-          </div>
           <div v-if="syncStatus" class="sync-status">
             {{ syncStatus }}
           </div>
@@ -281,6 +272,11 @@
             </button>
             <button class="btn-primary" @click="$emit('select-files')">
               {{ t('settings.importBackupToFmo', '导入备份到FMO') }}
+            </button>
+          </div>
+          <div class="setting-item-data-row">
+            <button class="btn-tool btn-full" @click="$emit('convert-adif-to-fmo')">
+              {{ t('settings.convertAdifToFmoBackup', 'ADIF转FMO备份包工具') }}
             </button>
           </div>
           <div class="setting-item-data-clear">
@@ -479,10 +475,10 @@ const emit = defineEmits([
   'export-data',
   'export-adif',
   'export-fmo-backup',
+  'convert-adif-to-fmo',
   'sync-days',
   'sync-incremental',
   'sync-full',
-  'backup-logs',
   'clear-all-data',
   'add-address',
   'update-address',
@@ -1442,7 +1438,8 @@ async function handleVoiceTest() {
 }
 
 .setting-item-data-row .btn-primary,
-.setting-item-data-row .btn-secondary {
+.setting-item-data-row .btn-secondary,
+.setting-item-data-row .btn-tool {
   flex: 1;
   min-width: 120px;
   white-space: nowrap;
@@ -1825,6 +1822,22 @@ async function handleVoiceTest() {
 .btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-tool {
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: rgba(103, 194, 58, 0.22);
+  color: var(--color-success, #67c23a);
+  border: 1px solid rgba(103, 194, 58, 0.55);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-tool:hover {
+  background: rgba(103, 194, 58, 0.32);
+  border-color: var(--color-success, #67c23a);
 }
 
 .btn-danger {

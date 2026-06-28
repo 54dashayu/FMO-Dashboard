@@ -99,10 +99,10 @@
             @export-data="handleExportData"
             @export-adif="handleExportAdif"
             @export-fmo-backup="handleExportFmoBackup"
+            @convert-adif-to-fmo="triggerAdifConvertInput"
             @sync-days="handleSyncDays"
             @sync-incremental="handleSyncIncremental"
             @sync-full="handleSyncFull"
-            @backup-logs="handleBackupLogs"
             @clear-all-data="handleClearAllData"
             @update:multi-select-mode="handleSetMultiSelectMode"
             @toggle-address-selection="handleToggleAddressSelection"
@@ -177,10 +177,18 @@
       id="db-file-input"
       ref="fileInputRef"
       type="file"
-      accept=".db,.adi,.adif,.zip"
-      multiple
+      accept=".zip"
       class="hidden-input"
       @change="handleFileSelect"
+    />
+    <input
+      id="adif-convert-file-input"
+      ref="adifConvertInputRef"
+      type="file"
+      accept=".adi,.adif"
+      multiple
+      class="hidden-input"
+      @change="handleAdifConvertFileSelect"
     />
 
     <!-- 发言历史弹框 -->
@@ -269,10 +277,20 @@ import {
 import toast from '../composables/useToast'
 import confirmDialog from '../composables/useConfirm'
 import { useLocale } from '../composables/useLocale'
-import { exportDataToDbFile, exportDataToAdif, exportDataToFmoBackupZip } from '../services/db'
+import {
+  exportDataToDbFile,
+  exportDataToAdif,
+  exportDataToFmoBackupZip,
+  convertAdifFilesToFmoBackupZip
+} from '../services/db'
 import { FmoApiClient } from '../services/fmoApi'
 import { normalizeHost } from '../utils/urlUtils'
-import { isTauriDesktop, pickImportFiles, handleExternalLinkClick } from '../utils/desktopBridge'
+import {
+  isTauriDesktop,
+  pickFmoBackupZipFile,
+  pickAdifFiles,
+  handleExternalLinkClick
+} from '../utils/desktopBridge'
 import { NAV_ROUTES } from '../components/home/constants'
 import { getMessageService } from '../services/messageService'
 import packageInfo from '../../package.json'
@@ -290,6 +308,7 @@ function routeLabel(item) {
 // UI 状态
 const showSpeakingHistory = ref(false)
 const fileInputRef = ref(null)
+const adifConvertInputRef = ref(null)
 const contentAreaRef = ref(null)
 const showBackToTop = ref(false)
 let scrollTimer = null
@@ -500,7 +519,6 @@ const {
   uniqueCallsigns,
   updateStats,
   tryRestoreDirectory,
-  selectFiles,
   clearAllData
 } = useDbManager()
 
@@ -524,7 +542,6 @@ const settings = {
   isMobileDevice: _settingsStore.isMobileDevice,
   initFmoAddress: _settingsStore.initFmoAddress,
   validateAndSaveFmoAddress: _settingsStore.validateAndSaveFmoAddress,
-  backupLogs: _settingsStore.backupLogs,
   loadTodayContactedCallsigns: _settingsStore.loadTodayContactedCallsigns,
   loadContactCounts: _settingsStore.loadContactCounts,
   addFmoAddress: _settingsStore.addFmoAddress,
@@ -887,15 +904,9 @@ async function handleShowCallsignRecords(payload) {
 // 数据库操作
 async function triggerFileInput() {
   if (isTauriDesktop()) {
-    const files = await pickImportFiles()
-    if (!files || files.length === 0) return
-    const success = await selectFiles(files)
-    if (success) {
-      dataQuery.currentQueryType.value = 'all'
-      dataQuery.currentPage.value = 1
-      router.push('/logs')
-      executeQuery()
-    }
+    const file = await pickFmoBackupZipFile()
+    if (!file) return
+    await restoreBackupToFmo(file)
     return
   }
 
@@ -903,15 +914,161 @@ async function triggerFileInput() {
 }
 
 async function handleFileSelect(event) {
-  const files = event.target.files
-  const success = await selectFiles(files)
-  if (success) {
-    dataQuery.currentQueryType.value = 'all'
-    dataQuery.currentPage.value = 1
-    router.push('/logs')
-    executeQuery()
-  }
+  const file = event.target.files?.[0]
+  await restoreBackupToFmo(file)
   event.target.value = ''
+}
+
+function getActiveFmoHttpBaseUrl() {
+  const host = settings.fmoAddress.value || settings.activeAddress.value?.host || ''
+  if (!host) throw new Error('请先设置并选择 FMO 地址')
+
+  const httpProtocol = settings.protocol.value === 'wss' ? 'https' : 'http'
+  const normalizedHost = normalizeHost(host)
+  if (!normalizedHost) throw new Error('请先设置并选择 FMO 地址')
+  return `${httpProtocol}://${normalizedHost}`
+}
+
+async function fileLikeToBlob(file) {
+  if (file instanceof Blob) return file
+  const buffer = await file.arrayBuffer()
+  return new Blob([buffer], { type: 'application/zip' })
+}
+
+function submitRestoreFormInBrowser(file, url) {
+  return new Promise((resolve, reject) => {
+    const iframeName = `fmo-restore-target-${Date.now()}`
+    const iframe = document.createElement('iframe')
+    iframe.name = iframeName
+    iframe.style.display = 'none'
+
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = url
+    form.enctype = 'multipart/form-data'
+    form.target = iframeName
+    form.style.display = 'none'
+
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.name = 'file'
+
+    const cleanup = () => {
+      window.setTimeout(() => {
+        form.remove()
+        iframe.remove()
+      }, 1000)
+    }
+
+    try {
+      const transfer = new window.DataTransfer()
+      transfer.items.add(file)
+      input.files = transfer.files
+    } catch (err) {
+      cleanup()
+      reject(new Error(`浏览器不允许程序化提交文件: ${err.message}`))
+      return
+    }
+
+    form.appendChild(input)
+    document.body.appendChild(iframe)
+    document.body.appendChild(form)
+
+    let settled = false
+    iframe.addEventListener('load', () => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve()
+    })
+
+    form.submit()
+
+    window.setTimeout(() => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve()
+    }, 4000)
+  })
+}
+
+async function restoreBackupToFmo(file) {
+  if (!file) return
+  if (
+    !String(file.name || '')
+      .toLowerCase()
+      .endsWith('.zip')
+  ) {
+    toast.error('请选择 FMO 备份 ZIP 文件')
+    return
+  }
+
+  const url = `${getActiveFmoHttpBaseUrl()}/api/qso/restore`
+  const confirmed = await confirmDialog.show(
+    '将备份 ZIP 导入到当前 FMO 设备后，设备可能会在 1-2 秒内重启。确定继续吗？'
+  )
+  if (!confirmed) return
+
+  try {
+    loading.value = true
+    if (!isTauriDesktop() && file instanceof window.File) {
+      await submitRestoreFormInBrowser(file, url)
+    } else {
+      const formData = new window.FormData()
+      const blob = await fileLikeToBlob(file)
+      formData.append('file', blob, file.name || 'fmo-backup.zip')
+      const response = await fetch(url, { method: 'POST', body: formData })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    }
+    loading.value = false
+    toast.success('已提交恢复到 FMO，设备即将重启')
+  } catch (err) {
+    loading.value = false
+    toast.error(`导入备份到FMO失败: ${err.message}`)
+  }
+}
+
+async function triggerAdifConvertInput() {
+  if (isTauriDesktop()) {
+    const files = await pickAdifFiles()
+    if (!files || files.length === 0) return
+    await handleConvertAdifFiles(files)
+    return
+  }
+
+  adifConvertInputRef.value?.click()
+}
+
+async function handleAdifConvertFileSelect(event) {
+  await handleConvertAdifFiles(Array.from(event.target.files || []))
+  event.target.value = ''
+}
+
+async function handleConvertAdifFiles(files) {
+  if (!files || files.length === 0) return
+
+  try {
+    loading.value = true
+    const result = await convertAdifFilesToFmoBackupZip(
+      Array.from(files),
+      selectedFromCallsign.value
+    )
+    loading.value = false
+    if (result?.canceled) return
+    if (result?.displayPath) {
+      const message =
+        result.platform === 'web'
+          ? `已开始下载 ${result.displayPath}`
+          : `已保存到 ${result.displayPath}`
+      toast.success(message)
+    } else {
+      toast.success('已生成FMO备份包')
+    }
+  } catch (err) {
+    loading.value = false
+    toast.error(`ADIF转换失败: ${err.message}`)
+  }
 }
 
 async function handleClearAllData() {
@@ -970,18 +1127,6 @@ async function handleExportFmoBackup() {
   } catch (err) {
     loading.value = false
     toast.error(`导出FMO恢复包失败: ${err.message}`)
-  }
-}
-
-// 备份 FMO 日志（原生端在 App 内完成下载/分享，Web 端走浏览器下载）
-async function handleBackupLogs() {
-  try {
-    const result = await settings.backupLogs()
-    if (result && result.displayPath) {
-      toast.success(`已保存到 ${result.displayPath}`)
-    }
-  } catch (err) {
-    toast.error(`备份失败: ${err.message}`)
   }
 }
 

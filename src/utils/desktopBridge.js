@@ -95,6 +95,53 @@ export async function pickImportFiles() {
   )
 }
 
+export async function pickFmoBackupZipFile() {
+  if (!isDesktopTauri()) return null
+
+  const selected = await openDialog({
+    title: '选择 FMO 备份 ZIP 文件',
+    multiple: false,
+    filters: [{ name: 'FMO 备份 ZIP', extensions: ['zip'] }]
+  })
+
+  if (!selected) return null
+
+  const bytes = await readFile(selected)
+  return {
+    name: pathBasename(selected),
+    path: selected,
+    async arrayBuffer() {
+      return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+    }
+  }
+}
+
+export async function pickAdifFiles() {
+  if (!isDesktopTauri()) return null
+
+  const selected = await openDialog({
+    title: '选择 ADIF 文件',
+    multiple: true,
+    filters: [{ name: 'ADIF', extensions: ['adi', 'adif'] }]
+  })
+
+  const paths = Array.isArray(selected) ? selected : selected ? [selected] : []
+  if (paths.length === 0) return []
+
+  return Promise.all(
+    paths.map(async (path) => {
+      const bytes = await readFile(path)
+      return {
+        name: pathBasename(path),
+        path,
+        async arrayBuffer() {
+          return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+        }
+      }
+    })
+  )
+}
+
 export async function openExternalUrl(url) {
   if (!url) return
   if (isDesktopTauri()) {
