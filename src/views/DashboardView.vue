@@ -207,11 +207,16 @@
               </svg>
             </div>
             <div class="bearing-meta">
-              <strong>{{
-                activeContact?.bearing?.direction || t('dashboard.bearingUnknown', '方位未知')
-              }}</strong>
-              <span v-if="activeContact?.bearing">
-                {{ activeContact.bearing.bearing }}° · {{ activeContact.bearing.distanceText }}
+              <strong>
+                <span class="bearing-direction">{{
+                  activeContact?.bearing?.direction || t('dashboard.bearingUnknown', '方位未知')
+                }}</span>
+                <span v-if="activeContact?.bearing" class="bearing-angle">
+                  {{ activeContact.bearing.bearing }}°
+                </span>
+              </strong>
+              <span v-if="activeContact?.bearing" class="bearing-distance">
+                {{ activeContact.bearing.distanceText }}
               </span>
               <span v-else>{{
                 activeContact?.bearingHint || t('dashboard.waitingLocation', '等待呼叫位置')
@@ -2461,10 +2466,12 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   min-width: 210px;
+  height: 116px;
   padding: 0.75rem;
   border: 1px solid color-mix(in srgb, var(--border-light) 70%, var(--color-success));
   border-radius: 8px;
   background: var(--surface-success);
+  overflow: hidden;
 }
 
 .bearing-panel strong,
@@ -2474,13 +2481,25 @@ onUnmounted(() => {
 }
 
 .bearing-panel strong {
+  align-items: baseline;
+  gap: 0.28rem;
   color: var(--text-primary);
   font-size: 1rem;
+  line-height: 1.15;
 }
 
 .bearing-panel span {
   color: var(--text-tertiary);
   font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.bearing-direction,
+.bearing-angle,
+.bearing-distance {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
 }
 
 .compass {
@@ -2882,6 +2901,7 @@ onUnmounted(() => {
   .bearing-panel {
     min-width: 154px;
     width: auto;
+    height: 92px;
     flex: 0 0 auto;
     gap: 0.55rem;
     padding: 0.5rem 0.6rem;
@@ -2956,6 +2976,7 @@ onUnmounted(() => {
 
   .bearing-panel {
     min-width: 138px;
+    height: 86px;
     gap: 0.45rem;
     padding: 0.45rem 0.5rem;
   }
@@ -3420,13 +3441,14 @@ onUnmounted(() => {
 
 .bearing-panel {
   min-width: 0;
-  min-height: 148px;
+  height: 148px;
   display: grid;
   place-items: center;
   align-content: center;
   gap: 0.45rem;
   padding: 0.7rem;
   background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .bearing-panel .compass {
@@ -3435,13 +3457,48 @@ onUnmounted(() => {
 }
 
 .bearing-meta {
+  display: grid;
+  grid-template-rows: 1.2em 1.2em;
+  align-content: center;
+  justify-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.4em;
   text-align: center;
 }
 
 .bearing-meta strong,
 .bearing-meta span {
   display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  line-height: 1.2;
+  text-overflow: ellipsis;
   white-space: normal;
+}
+
+.bearing-meta strong {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.24rem;
+  min-height: 1.2em;
+}
+
+.bearing-direction,
+.bearing-angle,
+.bearing-distance {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bearing-angle {
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  font-size: 0.72em;
 }
 
 :global(html[lang='en']) .bearing-meta strong,
@@ -3809,7 +3866,7 @@ onUnmounted(() => {
   }
 
   .bearing-panel {
-    min-height: 128px;
+    height: 128px;
   }
 
   .bearing-panel .compass {
@@ -3983,7 +4040,7 @@ onUnmounted(() => {
   }
 
   .bearing-panel {
-    min-height: 104px;
+    height: 104px;
     padding: 0.45rem;
   }
 
@@ -4250,7 +4307,7 @@ onUnmounted(() => {
   }
 
   .bearing-panel {
-    min-height: 92px;
+    height: 92px;
   }
 
   .bearing-panel .compass {
@@ -4445,7 +4502,7 @@ onUnmounted(() => {
   }
 
   .bearing-panel {
-    min-height: 72px;
+    height: 72px;
     padding: 0.28rem;
     gap: 0.24rem;
   }
