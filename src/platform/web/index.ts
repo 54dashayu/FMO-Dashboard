@@ -7,6 +7,7 @@ import { WebBackgroundService } from './BackgroundService.web'
 import { WebEventsService } from './EventsService.web'
 import { WebLocationService } from './LocationService.web'
 import { WebStorageService } from './StorageService.web'
+import { WebStationLocationService } from './StationLocationService.web'
 
 export function createWebPlatform(): Platform {
   return {
@@ -16,6 +17,7 @@ export function createWebPlatform(): Platform {
     grid: new WebGridService(),
     background: new WebBackgroundService(),
     location: new WebLocationService(),
+    stationLocation: new WebStationLocationService(),
     storage: new WebStorageService(),
     capabilities: webCapabilities
   }

@@ -43,7 +43,7 @@ if [[ "$#" -gt 0 ]]; then
       echo "Artifact not found: $file" >&2
       exit 1
     fi
-    rel="${file#$RELEASE_DIR/}"
+    rel="$(basename "$file")"
     hash="$(hash_file "$file")"
     printf '%s  %s\n' "$hash" "$rel" >> "$OUTPUT_FILE"
   done
@@ -52,7 +52,7 @@ else
     \( -name '*.exe' -o -name '*.zip' -o -name '*.apk' -o -name '*.aab' \) \
     | sort \
     | while IFS= read -r file; do
-      rel="${file#$RELEASE_DIR/}"
+      rel="$(basename "$file")"
       hash="$(hash_file "$file")"
       printf '%s  %s\n' "$hash" "$rel" >> "$OUTPUT_FILE"
     done

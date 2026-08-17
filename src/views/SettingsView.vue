@@ -201,15 +201,6 @@
               {{ getSyncFullButtonText }}
             </button>
           </div>
-          <div v-if="addressList.length > 0" class="setting-item-buttons setting-item-buttons-full">
-            <button
-              class="btn-ghost"
-              :disabled="!fmoAddress || syncing"
-              @click="$emit('backup-logs')"
-            >
-              {{ t('settings.backupLogs', '备份FMO日志') }}
-            </button>
-          </div>
           <div v-if="syncStatus" class="sync-status">
             {{ syncStatus }}
           </div>
@@ -270,19 +261,25 @@
             <span class="setting-label">{{ t('settings.dataManagement', '数据管理') }}</span>
           </div>
           <div class="setting-item-data-row">
-            <button class="btn-primary btn-full" @click="$emit('select-files')">
-              {{ t('settings.importLogs', '导入FMO日志') }}
-            </button>
-          </div>
-          <div class="setting-item-data-row">
             <button class="btn-secondary" :disabled="!dbLoaded" @click="$emit('export-data')">
               {{ t('settings.exportDb', '导出数据库文件') }}
             </button>
             <button class="btn-secondary" :disabled="!dbLoaded" @click="$emit('export-adif')">
               {{ t('settings.exportAdif', '导出ADIF') }}
             </button>
+            <button class="btn-secondary" :disabled="!dbLoaded" @click="$emit('export-fmo-backup')">
+              {{ t('settings.exportFmoBackup', '导出备份') }}
+            </button>
+            <button class="btn-primary" @click="$emit('select-files')">
+              {{ t('settings.importBackupToFmo', '导入备份到FMO') }}
+            </button>
           </div>
-          <div v-if="dbLoaded" class="setting-item-data-clear">
+          <div class="setting-item-data-row">
+            <button class="btn-tool btn-full" @click="$emit('convert-adif-to-fmo')">
+              {{ t('settings.convertAdifToFmoBackup', 'ADIF转FMO备份包工具') }}
+            </button>
+          </div>
+          <div class="setting-item-data-clear">
             <div class="data-clear-info">
               <span class="data-clear-warning">{{
                 t('settings.clearDataWarning', '此操作将永久删除所有本地通联日志，不可恢复！')
@@ -326,6 +323,8 @@
               type="text"
               :placeholder="t('settings.namePlaceholder', '如：家里的FMO')"
               class="form-input"
+              @keydown.enter.prevent="submitAddressForm"
+              @blur="restoreLegacyAndroidViewport"
             />
           </div>
           <div class="form-group">
@@ -343,6 +342,11 @@
               type="text"
               :placeholder="addressHostPlaceholder"
               class="form-input"
+              inputmode="url"
+              autocomplete="off"
+              autocapitalize="none"
+              @keydown.enter.prevent="submitAddressForm"
+              @blur="restoreLegacyAndroidViewport"
             />
           </div>
           <div v-if="!isMobileDevice" class="form-hint">
@@ -477,10 +481,11 @@ const emit = defineEmits([
   'select-files',
   'export-data',
   'export-adif',
+  'export-fmo-backup',
+  'convert-adif-to-fmo',
   'sync-days',
   'sync-incremental',
   'sync-full',
-  'backup-logs',
   'clear-all-data',
   'add-address',
   'update-address',
@@ -784,6 +789,7 @@ function cancelAddressDialog() {
   editingId.value = null
   formData.value = { name: '', host: '', addressType: 'local', protocol: 'ws' }
   formError.value = ''
+  restoreLegacyAndroidViewport()
 }
 
 async function submitAddressForm() {
@@ -931,6 +937,15 @@ async function handleRefreshUserInfo(id) {
 
 // 同步按钮点击处理
 async function handleSyncDays() {
+  if (isLegacyAndroidWebView()) {
+    if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
+      emit('sync-multiple', { syncType: 'today', days: syncDays.value })
+      return
+    }
+    emit('sync-days', syncDays.value)
+    return
+  }
+
   // 多选模式且选中多个地址
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
     const confirmed = await confirmDialog.show(
@@ -953,6 +968,15 @@ async function handleSyncDays() {
 }
 
 async function handleSyncIncremental() {
+  if (isLegacyAndroidWebView()) {
+    if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
+      emit('sync-multiple', { syncType: 'incremental', days: 1 })
+      return
+    }
+    emit('sync-incremental')
+    return
+  }
+
   // 多选模式且选中多个地址
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
     const confirmed = await confirmDialog.show(
@@ -980,6 +1004,15 @@ async function handleSyncIncremental() {
 }
 
 async function handleSyncFull() {
+  if (isLegacyAndroidWebView()) {
+    if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
+      emit('sync-multiple', { syncType: 'full', days: 1 })
+      return
+    }
+    emit('sync-full')
+    return
+  }
+
   // 多选模式且选中多个地址
   if (props.multiSelectMode && props.selectedAddressIds.length > 1) {
     const confirmed = await confirmDialog.show(
@@ -1020,6 +1053,39 @@ function handleVolumeChange(e) {
 
 function isNativeAndroid() {
   return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
+}
+
+function getAndroidWebViewMajor() {
+  const precheck = window.__FMO_ANDROID_WEBVIEW_PRECHECK__
+  if (precheck?.isAndroid && precheck?.chromeMajor) return precheck.chromeMajor
+  const match = String(navigator.userAgent || '').match(/(?:Chrome|CriOS)\/(\d+)/i)
+  return match ? Number(match[1]) : null
+}
+
+function isLegacyAndroidWebView() {
+  const major = getAndroidWebViewMajor()
+  return isNativeAndroid() && Boolean(major && major < 64)
+}
+
+function restoreLegacyAndroidViewport() {
+  if (!isLegacyAndroidWebView()) return
+  window.setTimeout(() => {
+    try {
+      document.activeElement?.blur?.()
+    } catch (err) {
+      void err
+    }
+    try {
+      window.dispatchEvent(new window.Event('resize'))
+    } catch (err) {
+      void err
+    }
+    try {
+      document.querySelector('.settings-view')?.scrollTo?.({ top: 0, behavior: 'auto' })
+    } catch (err) {
+      void err
+    }
+  }, 120)
 }
 
 function isNativeIos() {
@@ -1440,7 +1506,8 @@ async function handleVoiceTest() {
 }
 
 .setting-item-data-row .btn-primary,
-.setting-item-data-row .btn-secondary {
+.setting-item-data-row .btn-secondary,
+.setting-item-data-row .btn-tool {
   flex: 1;
   min-width: 120px;
   white-space: nowrap;
@@ -1825,6 +1892,22 @@ async function handleVoiceTest() {
   cursor: not-allowed;
 }
 
+.btn-tool {
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: rgba(103, 194, 58, 0.22);
+  color: var(--color-success, #67c23a);
+  border: 1px solid rgba(103, 194, 58, 0.55);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-tool:hover {
+  background: rgba(103, 194, 58, 0.32);
+  border-color: var(--color-success, #67c23a);
+}
+
 .btn-danger {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
@@ -2099,6 +2182,7 @@ async function handleVoiceTest() {
   .dialog {
     width: min(28rem, calc(100vw - 0.7rem));
     max-width: calc(100vw - 0.7rem);
+    max-height: calc(100vh - 0.7rem);
     max-height: calc(100dvh - 0.7rem);
     display: flex;
     flex-direction: column;
@@ -2155,6 +2239,8 @@ async function handleVoiceTest() {
   .fmo-preview-dialog {
     width: calc(100vw - 0.7rem);
     max-width: calc(100vw - 0.7rem);
+    height: calc(100vh - 0.7rem);
+    max-height: calc(100vh - 0.7rem);
     height: calc(100dvh - 0.7rem);
     max-height: calc(100dvh - 0.7rem);
   }

@@ -98,10 +98,11 @@
             @select-files="triggerFileInput"
             @export-data="handleExportData"
             @export-adif="handleExportAdif"
+            @export-fmo-backup="handleExportFmoBackup"
+            @convert-adif-to-fmo="triggerAdifConvertInput"
             @sync-days="handleSyncDays"
             @sync-incremental="handleSyncIncremental"
             @sync-full="handleSyncFull"
-            @backup-logs="handleBackupLogs"
             @clear-all-data="handleClearAllData"
             @update:multi-select-mode="handleSetMultiSelectMode"
             @toggle-address-selection="handleToggleAddressSelection"
@@ -176,10 +177,18 @@
       id="db-file-input"
       ref="fileInputRef"
       type="file"
-      accept=".db,.adi,.adif"
-      multiple
+      accept=".zip"
       class="hidden-input"
       @change="handleFileSelect"
+    />
+    <input
+      id="adif-convert-file-input"
+      ref="adifConvertInputRef"
+      type="file"
+      accept=".adi,.adif"
+      multiple
+      class="hidden-input"
+      @change="handleAdifConvertFileSelect"
     />
 
     <!-- 发言历史弹框 -->
@@ -251,7 +260,7 @@ import SvgIcon from '../components/common/SvgIcon.vue'
 
 // Composables
 import { storeToRefs } from 'pinia'
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { useSpeakingStatusStore } from '../stores/speakingStore'
 import { useSyncStore } from '../stores/syncStore'
@@ -268,10 +277,20 @@ import {
 import toast from '../composables/useToast'
 import confirmDialog from '../composables/useConfirm'
 import { useLocale } from '../composables/useLocale'
-import { exportDataToDbFile, exportDataToAdif } from '../services/db'
+import {
+  exportDataToDbFile,
+  exportDataToAdif,
+  exportDataToFmoBackupZip,
+  convertAdifFilesToFmoBackupZip
+} from '../services/db'
 import { FmoApiClient } from '../services/fmoApi'
 import { normalizeHost } from '../utils/urlUtils'
-import { isTauriDesktop, pickImportFiles, handleExternalLinkClick } from '../utils/desktopBridge'
+import {
+  isTauriDesktop,
+  pickFmoBackupZipFile,
+  pickAdifFiles,
+  handleExternalLinkClick
+} from '../utils/desktopBridge'
 import { NAV_ROUTES } from '../components/home/constants'
 import { getMessageService } from '../services/messageService'
 import packageInfo from '../../package.json'
@@ -289,6 +308,7 @@ function routeLabel(item) {
 // UI 状态
 const showSpeakingHistory = ref(false)
 const fileInputRef = ref(null)
+const adifConvertInputRef = ref(null)
 const contentAreaRef = ref(null)
 const showBackToTop = ref(false)
 let scrollTimer = null
@@ -303,9 +323,9 @@ function normalizeDashboardVoiceMode(mode) {
   if (mode === 'after') return 'radio'
   return ['alert', 'radio', 'off'].includes(mode) ? mode : 'radio'
 }
-const dashboardVoiceMode = ref(
-  normalizeDashboardVoiceMode(localStorage.getItem('fmo_dashboard_voice_mode'))
-)
+const DEFAULT_DASHBOARD_VOICE_MODE = 'radio'
+localStorage.setItem('fmo_dashboard_voice_mode', DEFAULT_DASHBOARD_VOICE_MODE)
+const dashboardVoiceMode = ref(DEFAULT_DASHBOARD_VOICE_MODE)
 const USAGE_STATS_HOSTS = new Set(['fmo.bh1jss.net', 'fmolog.bh1jss.net'])
 const USAGE_STATS_INTERVAL_MS = 30 * 60 * 1000
 const USAGE_STATS_KEY = 'fmo_usage_stats_last_sent'
@@ -499,7 +519,6 @@ const {
   uniqueCallsigns,
   updateStats,
   tryRestoreDirectory,
-  selectFiles,
   clearAllData
 } = useDbManager()
 
@@ -523,7 +542,6 @@ const settings = {
   isMobileDevice: _settingsStore.isMobileDevice,
   initFmoAddress: _settingsStore.initFmoAddress,
   validateAndSaveFmoAddress: _settingsStore.validateAndSaveFmoAddress,
-  backupLogs: _settingsStore.backupLogs,
   loadTodayContactedCallsigns: _settingsStore.loadTodayContactedCallsigns,
   loadContactCounts: _settingsStore.loadContactCounts,
   addFmoAddress: _settingsStore.addFmoAddress,
@@ -886,15 +904,9 @@ async function handleShowCallsignRecords(payload) {
 // 数据库操作
 async function triggerFileInput() {
   if (isTauriDesktop()) {
-    const files = await pickImportFiles()
-    if (!files || files.length === 0) return
-    const success = await selectFiles(files)
-    if (success) {
-      dataQuery.currentQueryType.value = 'all'
-      dataQuery.currentPage.value = 1
-      router.push('/logs')
-      executeQuery()
-    }
+    const file = await pickFmoBackupZipFile()
+    if (!file) return
+    await restoreBackupToFmo(file)
     return
   }
 
@@ -902,15 +914,207 @@ async function triggerFileInput() {
 }
 
 async function handleFileSelect(event) {
-  const files = event.target.files
-  const success = await selectFiles(files)
-  if (success) {
-    dataQuery.currentQueryType.value = 'all'
-    dataQuery.currentPage.value = 1
-    router.push('/logs')
-    executeQuery()
-  }
+  const file = event.target.files?.[0]
+  await restoreBackupToFmo(file)
   event.target.value = ''
+}
+
+function getActiveFmoHttpBaseUrl() {
+  const host = settings.fmoAddress.value || settings.activeAddress.value?.host || ''
+  if (!host) throw new Error('请先设置并选择 FMO 地址')
+
+  const httpProtocol = settings.protocol.value === 'wss' ? 'https' : 'http'
+  const normalizedHost = normalizeHost(host)
+  if (!normalizedHost) throw new Error('请先设置并选择 FMO 地址')
+  return `${httpProtocol}://${normalizedHost}`
+}
+
+async function fileLikeToBlob(file) {
+  if (file instanceof Blob) return file
+  const buffer = await file.arrayBuffer()
+  return new Blob([buffer], { type: 'application/zip' })
+}
+
+function isNativeMobile() {
+  return Capacitor.isNativePlatform() && ['android', 'ios'].includes(Capacitor.getPlatform())
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const result = String(reader.result || '')
+      resolve(result.includes(',') ? result.split(',')[1] : result)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+async function uploadRestoreZipNative(file, url) {
+  const blob = await fileLikeToBlob(file)
+  const base64 = await blobToBase64(blob)
+  const filename = file.name || 'fmo-backup.zip'
+  const response = await CapacitorHttp.request({
+    method: 'POST',
+    url,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    dataType: 'formData',
+    data: [
+      {
+        type: 'base64File',
+        key: 'file',
+        value: base64,
+        fileName: filename,
+        contentType: 'application/zip'
+      }
+    ],
+    connectTimeout: 10_000,
+    readTimeout: 10_000
+  })
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`HTTP ${response.status}`)
+  }
+}
+
+function submitRestoreFormInBrowser(file, url) {
+  return new Promise((resolve, reject) => {
+    const iframeName = `fmo-restore-target-${Date.now()}`
+    const iframe = document.createElement('iframe')
+    iframe.name = iframeName
+    iframe.style.display = 'none'
+
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = url
+    form.enctype = 'multipart/form-data'
+    form.target = iframeName
+    form.style.display = 'none'
+
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.name = 'file'
+
+    const cleanup = () => {
+      window.setTimeout(() => {
+        form.remove()
+        iframe.remove()
+      }, 1000)
+    }
+
+    try {
+      const transfer = new window.DataTransfer()
+      transfer.items.add(file)
+      input.files = transfer.files
+    } catch (err) {
+      cleanup()
+      reject(new Error(`浏览器不允许程序化提交文件: ${err.message}`))
+      return
+    }
+
+    form.appendChild(input)
+    document.body.appendChild(iframe)
+    document.body.appendChild(form)
+
+    let settled = false
+    iframe.addEventListener('load', () => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve()
+    })
+
+    form.submit()
+
+    window.setTimeout(() => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve()
+    }, 4000)
+  })
+}
+
+async function restoreBackupToFmo(file) {
+  if (!file) return
+  if (
+    !String(file.name || '')
+      .toLowerCase()
+      .endsWith('.zip')
+  ) {
+    toast.error('请选择 FMO 备份 ZIP 文件')
+    return
+  }
+
+  const url = `${getActiveFmoHttpBaseUrl()}/api/qso/restore`
+  const confirmed = await confirmDialog.show(
+    '将备份 ZIP 导入到当前 FMO 设备后，设备可能会在 1-2 秒内重启。确定继续吗？'
+  )
+  if (!confirmed) return
+
+  try {
+    loading.value = true
+    if (isNativeMobile()) {
+      await uploadRestoreZipNative(file, url)
+    } else if (!isTauriDesktop() && file instanceof window.File) {
+      await submitRestoreFormInBrowser(file, url)
+    } else {
+      const formData = new window.FormData()
+      const blob = await fileLikeToBlob(file)
+      formData.append('file', blob, file.name || 'fmo-backup.zip')
+      const response = await fetch(url, { method: 'POST', body: formData })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    }
+    loading.value = false
+    toast.success('已提交恢复到 FMO，设备即将重启')
+  } catch (err) {
+    loading.value = false
+    toast.error(`导入备份到FMO失败: ${err.message}`)
+  }
+}
+
+async function triggerAdifConvertInput() {
+  if (isTauriDesktop()) {
+    const files = await pickAdifFiles()
+    if (!files || files.length === 0) return
+    await handleConvertAdifFiles(files)
+    return
+  }
+
+  adifConvertInputRef.value?.click()
+}
+
+async function handleAdifConvertFileSelect(event) {
+  await handleConvertAdifFiles(Array.from(event.target.files || []))
+  event.target.value = ''
+}
+
+async function handleConvertAdifFiles(files) {
+  if (!files || files.length === 0) return
+
+  try {
+    loading.value = true
+    const result = await convertAdifFilesToFmoBackupZip(
+      Array.from(files),
+      selectedFromCallsign.value
+    )
+    loading.value = false
+    if (result?.canceled) return
+    if (result?.displayPath) {
+      const message =
+        result.platform === 'web'
+          ? `已开始下载 ${result.displayPath}`
+          : `已保存到 ${result.displayPath}`
+      toast.success(message)
+    } else {
+      toast.success('已生成FMO备份包')
+    }
+  } catch (err) {
+    loading.value = false
+    toast.error(`ADIF转换失败: ${err.message}`)
+  }
 }
 
 async function handleClearAllData() {
@@ -957,15 +1161,18 @@ async function handleExportAdif() {
   }
 }
 
-// 备份 FMO 日志（原生端在 App 内完成下载/分享，Web 端走浏览器下载）
-async function handleBackupLogs() {
+// 导出官方 FMO 恢复 ZIP 包
+async function handleExportFmoBackup() {
   try {
-    const result = await settings.backupLogs()
+    loading.value = true
+    const result = await exportDataToFmoBackupZip(selectedFromCallsign.value)
+    loading.value = false
     if (result && result.displayPath) {
       toast.success(`已保存到 ${result.displayPath}`)
     }
   } catch (err) {
-    toast.error(`备份失败: ${err.message}`)
+    loading.value = false
+    toast.error(`导出FMO恢复包失败: ${err.message}`)
   }
 }
 
@@ -1406,15 +1613,18 @@ async function handleUpdateDashboardVoiceMode(mode) {
 
 // 恢复音频播放状态（页面加载时调用）
 function restoreAudioPlayback() {
-  if (
-    settings.audioPlaying.value &&
-    settings.fmoAddress.value &&
-    dashboardVoiceMode.value === 'radio'
-  ) {
+  if (settings.fmoAddress.value && dashboardVoiceMode.value === 'radio') {
+    settings.setAudioPlaying(true)
     toggleAudio(settings.fmoAddress.value, settings.protocol.value)
-    if (isAudioPlaying.value && !isAudioMuted.value) {
-      setAudioVolumePlayer(settings.audioVolume.value)
-    }
+      .then(() => {
+        settings.setAudioPlaying(isAudioPlaying.value)
+        if (isAudioPlaying.value && !isAudioMuted.value) {
+          setAudioVolumePlayer(settings.audioVolume.value)
+        }
+      })
+      .catch(() => {
+        settings.setAudioPlaying(false)
+      })
     // 注册一次性用户交互监听，恢复 AudioContext
     setupAudioContextResume()
   }
@@ -1922,6 +2132,7 @@ provide('protocol', settings.protocol)
 @media (max-height: 520px) and (max-width: 950px) and (orientation: landscape) {
   .container {
     max-width: none;
+    height: 100vh;
     height: 100dvh;
   }
 

@@ -32,7 +32,7 @@ const { visible, title, message, confirmText, cancelText, confirm, cancel } = co
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--overlay-bg);
+  background: var(--overlay-bg, rgba(0, 0, 0, 0.55));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -40,11 +40,12 @@ const { visible, title, message, confirmText, cancelText, confirm, cancel } = co
 }
 
 .confirm-dialog {
-  background: var(--bg-card);
+  box-sizing: border-box;
+  background: var(--bg-card, #1b211c);
   border-radius: 8px;
   width: 360px;
-  max-width: 90%;
-  box-shadow: 0 4px 20px var(--shadow-modal);
+  max-width: calc(100vw - 2rem);
+  box-shadow: 0 4px 20px var(--shadow-modal, rgba(0, 0, 0, 0.35));
 }
 
 .confirm-header {
@@ -55,7 +56,7 @@ const { visible, title, message, confirmText, cancelText, confirm, cancel } = co
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-primary, #f2f4f1);
 }
 
 .confirm-body {
@@ -65,7 +66,7 @@ const { visible, title, message, confirmText, cancelText, confirm, cancel } = co
 .confirm-body p {
   margin: 0;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #c7cec5);
   line-height: 1.6;
   word-break: break-word;
 }
@@ -87,8 +88,8 @@ const { visible, title, message, confirmText, cancelText, confirm, cancel } = co
 }
 
 .btn-cancel {
-  background: var(--bg-disabled);
-  color: var(--text-secondary);
+  background: var(--bg-disabled, #2b332d);
+  color: var(--text-secondary, #c7cec5);
 }
 
 .btn-cancel:hover {
@@ -96,8 +97,8 @@ const { visible, title, message, confirmText, cancelText, confirm, cancel } = co
 }
 
 .btn-confirm {
-  background: var(--color-primary);
-  color: var(--text-white);
+  background: var(--color-primary, #48b6ff);
+  color: var(--text-white, #ffffff);
 }
 
 .btn-confirm:hover {

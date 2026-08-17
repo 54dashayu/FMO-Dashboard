@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+import { Capacitor } from '@capacitor/core'
 // @ts-ignore - legacy JS
 import { FmoApiClient } from '../services/fmoApi'
 // @ts-ignore - legacy JS
@@ -82,8 +83,20 @@ export const useLocationStore = defineStore('location', () => {
   // ========== 内部状态 ==========
   let isTearingDown = false
   let _initCalled = false
+  let webReportTimer: ReturnType<typeof globalThis.setInterval> | null = null
 
   // ========== 帮助方法 ==========
+
+  function isIosNativePlatform(): boolean {
+    return Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios'
+  }
+
+  function clearWebReportTimer() {
+    if (webReportTimer !== null) {
+      globalThis.clearInterval(webReportTimer)
+      webReportTimer = null
+    }
+  }
 
   /** 获取当前活跃的 FMO 地址信息 */
   function getActiveAddress(): { host: string; protocol: string } | null {
@@ -524,6 +537,26 @@ export const useLocationStore = defineStore('location', () => {
     // 配置 FMO URL 到原生侧
     await setFmoConfigAction()
 
+    if (isIosNativePlatform()) {
+      try {
+        await getPlatform().location.startWatching(intervalSeconds.value)
+      } catch (e) {
+        console.warn('[locationStore] 启动 iOS 定位监听失败:', e)
+      }
+
+      clearWebReportTimer()
+      webReportTimer = globalThis.setInterval(() => {
+        if (!isTearingDown && enabled.value && isReporting.value) {
+          reportLocation()
+        }
+      }, intervalSeconds.value * 1000)
+
+      isReporting.value = true
+      lastReportResult.value = `间隔 ${formatInterval(intervalSeconds.value)}，等待首次上报`
+      reportLocation()
+      return
+    }
+
     // 启动前台服务（原生侧接管定时上报 + 通知栏管理）
     try {
       await getPlatform().location.startForegroundService(
@@ -541,17 +574,27 @@ export const useLocationStore = defineStore('location', () => {
   /** 停止定时上报 */
   async function stopReporting() {
     isReporting.value = false
+    clearWebReportTimer()
 
     try {
       await getPlatform().location.stopForegroundService()
     } catch (e) {
       console.warn('[locationStore] 停止前台服务失败:', e)
     }
+
+    if (isIosNativePlatform()) {
+      try {
+        await getPlatform().location.stopWatching()
+      } catch (e) {
+        console.warn('[locationStore] 停止 iOS 定位监听失败:', e)
+      }
+    }
   }
 
   /** 组件卸载时清理 */
   function teardown() {
     isTearingDown = true
+    clearWebReportTimer()
     isTearingDown = false
   }
 

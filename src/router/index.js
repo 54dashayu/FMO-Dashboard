@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
 import MainLayout from '../views/MainLayout.vue'
 import DashboardView from '../views/DashboardView.vue'
 import LogsView from '../views/LogsView.vue'
@@ -81,7 +81,7 @@ const children = [
   }
 ]
 
-// 仅 Android 端注册定位上报路由
+// 具备原生定位能力的平台注册定位上报路由（Android / iOS）
 if (getPlatform().capabilities.hasNativeLocation) {
   children.push({
     path: 'location-report',
@@ -91,7 +91,10 @@ if (getPlatform().capabilities.hasNativeLocation) {
 }
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history:
+    import.meta.env.VITE_TVOS === '1'
+      ? createWebHashHistory(import.meta.env.BASE_URL)
+      : createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',

@@ -7,6 +7,7 @@ import { NativeBackgroundService } from './BackgroundService.native'
 import { NativeEventsService } from './EventsService.native'
 import { NativeLocationService } from './LocationService.native'
 import { NativeStorageService } from './StorageService.native'
+import { NativeStationLocationService } from './StationLocationService.native'
 
 export function createNativePlatform(): Platform {
   return {
@@ -16,6 +17,7 @@ export function createNativePlatform(): Platform {
     grid: new NativeGridService(),
     background: new NativeBackgroundService(),
     location: new NativeLocationService(),
+    stationLocation: new NativeStationLocationService(),
     storage: new NativeStorageService(),
     capabilities: nativeCapabilities
   }

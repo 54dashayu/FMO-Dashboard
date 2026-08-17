@@ -26,6 +26,16 @@ export default defineConfig({
     }
   },
   server: {
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    proxy: {
+      '/grid/api': {
+        target: 'https://fmo.bh1jss.net',
+        changeOrigin: true
+      },
+      '/aprs/api': {
+        target: 'https://fmo.bh1jss.net',
+        changeOrigin: true
+      }
+    }
   }
 })

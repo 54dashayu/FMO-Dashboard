@@ -162,15 +162,15 @@
               }}</span>
             </div>
             <div class="contact-tags">
-              <span v-if="activeContact?.hasLoggedContact">{{
+              <span v-if="activeContact?.hasLoggedContact" class="contact-status-tag">{{
                 t('dashboard.contacted', '已通联')
               }}</span>
-              <span v-if="activeContact?.contactCount">{{
+              <span v-if="activeContact?.contactCount" class="history-count">{{
                 t('dashboard.history', `历史 ${activeContact.contactCount} 次`, {
                   count: activeContact.contactCount
                 })
               }}</span>
-              <span v-if="activeContact?.qth">QTH：{{ activeContact.qth }}</span>
+              <span v-if="activeContact?.qth" class="qth-tag">QTH：{{ activeContact.qth }}</span>
               <span v-if="!activeContact">{{ t('dashboard.waitingEvents', '等待实时事件') }}</span>
             </div>
             <div class="active-contact-controls">
@@ -207,11 +207,16 @@
               </svg>
             </div>
             <div class="bearing-meta">
-              <strong>{{
-                activeContact?.bearing?.direction || t('dashboard.bearingUnknown', '方位未知')
-              }}</strong>
-              <span v-if="activeContact?.bearing">
-                {{ activeContact.bearing.bearing }}° · {{ activeContact.bearing.distanceText }}
+              <strong>
+                <span class="bearing-direction">{{
+                  activeContact?.bearing?.direction || t('dashboard.bearingUnknown', '方位未知')
+                }}</span>
+                <span v-if="activeContact?.bearing" class="bearing-angle">
+                  {{ activeContact.bearing.bearing }}°
+                </span>
+              </strong>
+              <span v-if="activeContact?.bearing" class="bearing-distance">
+                {{ activeContact.bearing.distanceText }}
               </span>
               <span v-else>{{
                 activeContact?.bearingHint || t('dashboard.waitingLocation', '等待呼叫位置')
@@ -264,12 +269,20 @@
               <span v-if="previousContact.grid">{{ previousContact.grid }}</span>
             </div>
             <div class="mobile-previous-meta">
-              <span v-if="previousContact.contactCount">{{
-                t('dashboard.history', `历史 ${previousContact.contactCount} 次`, {
-                  count: previousContact.contactCount
-                })
-              }}</span>
-              <span v-if="previousContact.qth">QTH：{{ previousContact.qth }}</span>
+              <span
+                v-if="previousContact.contactCount || previousContact.qsoConfirmedIncrement"
+                class="history-count"
+              >
+                {{
+                  t('dashboard.history', `历史 ${previousContact.contactCount} 次`, {
+                    count: previousContact.contactCount
+                  })
+                }}
+                <strong v-if="previousContact.qsoConfirmedIncrement" class="qso-plus-one"
+                  >+{{ previousContact.qsoConfirmedIncrement }}</strong
+                >
+              </span>
+              <span v-if="previousContact.qth" class="qth-tag">QTH：{{ previousContact.qth }}</span>
               <span v-if="previousContact.bearing?.direction">{{
                 previousContact.bearing.direction
               }}</span>
@@ -311,11 +324,19 @@
                 }}</span>
               </div>
               <div class="contact-tags">
-                <span v-if="previousContact.contactCount">{{
-                  t('dashboard.history', `历史 ${previousContact.contactCount} 次`, {
-                    count: previousContact.contactCount
-                  })
-                }}</span>
+                <span
+                  v-if="previousContact.contactCount || previousContact.qsoConfirmedIncrement"
+                  class="history-count"
+                >
+                  {{
+                    t('dashboard.history', `历史 ${previousContact.contactCount} 次`, {
+                      count: previousContact.contactCount
+                    })
+                  }}
+                  <strong v-if="previousContact.qsoConfirmedIncrement" class="qso-plus-one"
+                    >+{{ previousContact.qsoConfirmedIncrement }}</strong
+                  >
+                </span>
                 <span v-if="previousContact.qth">QTH：{{ previousContact.qth }}</span>
               </div>
             </div>
@@ -423,10 +444,20 @@
                     </button>
                     <template v-else>{{ record.toCallsign || '-' }}</template>
                     <span
-                      v-if="record.hasLoggedContact"
-                      class="logged-star"
-                      :title="t('dashboard.loggedInLogs', '已在通联日志中')"
-                      >★</span
+                      v-if="record.contactCount > 0"
+                      class="contact-count-badge"
+                      :title="
+                        t('dashboard.history', `历史 ${record.contactCount} 次`, {
+                          count: record.contactCount
+                        })
+                      "
+                      >x{{ record.contactCount }}</span
+                    >
+                    <span
+                      v-else-if="record.toCallsign && !record.isSelf"
+                      class="new-callsign-badge"
+                      :title="t('dashboard.newCallsign', '新呼号')"
+                      >{{ t('dashboard.new', '新') }}</span
                     >
                     <span v-if="record.isSelf" class="self-badge">{{
                       t('dashboard.you', '您')
@@ -479,8 +510,8 @@
         <div v-else class="empty-state">
           {{
             refreshing
-              ? t('dashboard.readingContacts', '正在读取最近通联...')
-              : t('dashboard.noContacts', '暂无通联数据')
+              ? t('dashboard.readingContacts', '正在刷新仪表盘...')
+              : t('dashboard.waitingEvents', '等待实时事件')
           }}
         </div>
       </section>
@@ -504,6 +535,8 @@ import {
 import { getControlTarget, switchStationByRelayName } from '../services/stationControl'
 import { useSpeakingStatusStore } from '../stores/speakingStore'
 import { gridToAddress } from '../services/gridService'
+import { getPlatform } from '../platform'
+import { coordinatesToMaidenhead } from '../core/maidenhead'
 import { addDiagnosticLog } from '../services/diagnosticLog'
 import { playCallsignSpeech } from '../services/callsignSpeech'
 import { formatCallsignForSpeech as formatCallsignForNatoSpeech } from '../utils/callsignSpeechText'
@@ -607,6 +640,7 @@ const pinnedRelayNames = ref([])
 const pinnedStations = ref([])
 const allStations = ref([])
 const qthCache = ref({})
+const qthLoadingKeys = new Set()
 const fmoCoordinate = ref(null)
 const voiceStatus = ref('')
 const activeNow = ref(Date.now())
@@ -693,7 +727,7 @@ const controlAccessInfo = computed(() => {
   }
 })
 const speakingStatus = useSpeakingStatusStore()
-const { speakingHistory, primaryConnected } = storeToRefs(speakingStatus)
+const { speakingHistory, allSpeakingHistories, primaryConnected } = storeToRefs(speakingStatus)
 
 const lastRefreshText = computed(() => {
   if (!lastRefreshAt.value) return t('dashboard.neverRefreshed', '尚未刷新')
@@ -878,15 +912,18 @@ const recentRelayCommandTitle = computed(() => {
 })
 
 const displayRecords = computed(() => {
-  const liveRows = speakingHistory.value
-    .filter((item) => item.endTime)
+  const eventRows =
+    allSpeakingHistories.value.length > 0 ? allSpeakingHistories.value : speakingHistory.value
+
+  const liveRows = eventRows
+    .filter((item) => item.callsign)
     .map((item) => {
       const matchedLog = findMatchingLog(item)
       const timestamp = Math.floor(item.startTime / 1000)
       const grid = item.grid || matchedLog?.toGrid || ''
       return {
         ...matchedLog,
-        rowId: `live-${item.callsign}-${item.startTime}`,
+        rowId: `live-${item.addressId || 'single'}-${item.callsign}-${item.startTime}`,
         toCallsign: item.callsign,
         toGrid: grid,
         qth: getRecordQth({ ...matchedLog, toGrid: grid }),
@@ -901,34 +938,41 @@ const displayRecords = computed(() => {
           item.serverName || matchedLog?.relayName || currentStation.value?.name
         ),
         hasLoggedContact: hasLoggedContact(item.callsign, matchedLog),
+        contactCount: getContactCount(item.callsign),
         isSelf: isSelfCallsign(item.callsign),
         isSpeaking: !item.endTime
       }
     })
 
-  const qsoRows = records.value
-    .filter(
-      (record) =>
-        !isSameContact(currentSpeakingRecord.value, record) &&
-        !liveRows.some((row) => isSameContact(row, record))
-    )
+  const sortedRows = liveRows.sort((a, b) => {
+    if (a.isSpeaking !== b.isSpeaking) return a.isSpeaking ? -1 : 1
+    return (b.timestamp || 0) - (a.timestamp || 0)
+  })
+
+  const liveCallsigns = new Set(sortedRows.map((row) => getCallsign(row)).filter(Boolean))
+  const logFillRows = records.value
+    .filter((record) => {
+      const callsign = getCallsign(record)
+      return callsign && !liveCallsigns.has(callsign)
+    })
     .map((record) => ({
       ...record,
       qth: getRecordQth(record),
-      rowId: `log-${record.logId || record.timestamp || ''}-${record.toCallsign || ''}`,
+      rowId: `log-fill-${record.logId || record.timestamp || ''}-${record.toCallsign || ''}`,
       isRelayPinned: isRelayPinned(record.relayName),
       hasLoggedContact: hasLoggedContact(record.toCallsign, record),
+      contactCount: getContactCount(record.toCallsign),
       isSelf: isSelfCallsign(record.toCallsign),
       isSpeaking: false
     }))
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
 
-  const sortedRows = [...liveRows, ...qsoRows].sort(
-    (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
-  )
-  return dedupeLatestByCallsign(sortedRows).slice(0, 20)
+  return dedupeLatestByCallsign([...sortedRows, ...logFillRows]).slice(0, 20)
 })
 
-const previousContact = computed(() => {
+const previousContactBaseline = ref(null)
+
+const previousContactSource = computed(() => {
   const activeCallsign = normalizeCallsign(activeContact.value?.callsign)
   const activeTimestamp = activeContact.value?.timestamp || 0
   const record = displayRecords.value.find((item) => {
@@ -940,13 +984,53 @@ const previousContact = computed(() => {
 
   const callsign = normalizeCallsign(record.toCallsign)
   const grid = normalizeGrid(record.toGrid)
+  const currentContactCount = getContactCount(callsign)
   return {
     ...record,
+    previousKey: callsign,
     callsign,
     grid,
-    qth: record.qth || getRecordQth(record),
+    qth: getRecordQth(record),
     bearing: getBearingForGrid(grid, record.isSelf),
-    contactCount: getContactCount(callsign)
+    currentContactCount
+  }
+})
+
+watch(
+  () => previousContactSource.value?.previousKey || '',
+  () => {
+    const source = previousContactSource.value
+    if (!source) {
+      previousContactBaseline.value = null
+      return
+    }
+
+    const previous = previousContactBaseline.value
+    previousContactBaseline.value = {
+      key: source.previousKey,
+      count:
+        previous?.key === source.previousKey
+          ? Math.min(previous.count, source.currentContactCount)
+          : source.currentContactCount
+    }
+  },
+  { immediate: true }
+)
+
+const previousContact = computed(() => {
+  const source = previousContactSource.value
+  if (!source) return null
+
+  const baseline =
+    previousContactBaseline.value?.key === source.previousKey
+      ? previousContactBaseline.value.count
+      : source.currentContactCount
+  const increment = Math.min(1, Math.max(0, source.currentContactCount - baseline))
+
+  return {
+    ...source,
+    contactCount: increment > 0 ? baseline : source.currentContactCount,
+    qsoConfirmedIncrement: increment
   }
 })
 
@@ -1128,18 +1212,6 @@ function inferTxRxFromOffset(record, singleText) {
   }
 }
 
-function inferKnownFmoPair(record, singleText) {
-  const mode = String(record?.mode || record?.app_fmo_mode || '').toUpperCase()
-  const singleHz = normalizeFrequencyHz(
-    readFrequencyValue(record, ['freqHz', 'frequencyHz', 'freq'])
-  )
-  if (mode !== 'FMO' || singleHz !== 4382500) return { tx: '', rx: '' }
-  return {
-    tx: '434.2500 MHz',
-    rx: singleText || '438.2500 MHz'
-  }
-}
-
 function getFrequencyParts(record) {
   let tx = formatFrequencyValue(
     readFrequencyValue(record, [
@@ -1204,11 +1276,6 @@ function getFrequencyParts(record) {
     tx = tx || offsetParts.tx
     rx = rx || offsetParts.rx
   }
-  if (!tx || !rx) {
-    const knownPair = inferKnownFmoPair(record, single)
-    tx = tx || knownPair.tx
-    rx = rx || knownPair.rx
-  }
   return {
     tx,
     rx,
@@ -1245,10 +1312,20 @@ function normalizeRecord(item, detail) {
 
 function formatAddress(address) {
   if (!address) return ''
-  return [address.province, address.city, address.district]
+  const region = [address.province, address.city, address.district]
     .filter(Boolean)
     .filter((part, index, arr) => arr.indexOf(part) === index)
     .join('')
+  if (region) return region
+
+  const direct =
+    address.formattedAddress ||
+    address.formatted ||
+    address.fullAddress ||
+    address.address ||
+    address.name
+  if (direct && !isMaidenheadGrid(direct)) return direct
+  return ''
 }
 
 function stripHostPort(host) {
@@ -1276,8 +1353,16 @@ function isLocalAccessHost(host) {
 }
 
 function getRecordQth(record) {
+  const qthGrid = isMaidenheadGrid(record?.qth) ? record.qth : ''
+  const grid = normalizeGrid(record?.toGrid || record?.grid || qthGrid)
+  if (grid) {
+    const callsign = getCallsign(record)
+    const resolved = qthCache.value[getQthCacheKey(callsign, grid)] || qthCache.value[grid]
+    if (resolved) return resolved
+  }
+
   const direct =
-    record?.qth ||
+    (isMaidenheadGrid(record?.qth) ? '' : record?.qth) ||
     record?.address ||
     record?.location ||
     record?.toAddress ||
@@ -1285,9 +1370,15 @@ function getRecordQth(record) {
     record?.province
   if (direct) return direct
 
-  const grid = normalizeGrid(record?.toGrid || record?.grid)
-  if (!grid) return ''
-  return qthCache.value[grid] || grid
+  return grid
+}
+
+function getQthCacheKey(callsign, grid) {
+  return `${normalizeCallsign(callsign)}|${normalizeGrid(grid)}`
+}
+
+function isMaidenheadGrid(value) {
+  return /^[A-R]{2}\d{2}(?:[A-X]{2}(?:\d{2})?)?$/i.test(String(value || '').trim())
 }
 
 function normalizeGrid(grid) {
@@ -1451,27 +1542,74 @@ function isRelayPinned(relayName) {
   return Boolean(name && pinnedRelayNames.value.includes(name))
 }
 
-function collectVisibleGrids() {
-  const grids = new Set()
+function collectVisibleLocations() {
+  const locations = new Map()
+  // 当前发言记录通常位于 speakingHistory 首位，优先发起其 QTH 查询。
+  const eventRows =
+    allSpeakingHistories.value.length > 0 ? allSpeakingHistories.value : speakingHistory.value
+  for (const item of eventRows) {
+    const grid = normalizeGrid(item.grid)
+    const callsign = getCallsign(item)
+    if (grid && callsign) locations.set(getQthCacheKey(callsign, grid), { callsign, grid })
+  }
   for (const record of records.value) {
     const grid = normalizeGrid(record.toGrid)
-    if (grid) grids.add(grid)
+    const callsign = getCallsign(record)
+    if (grid && callsign) locations.set(getQthCacheKey(callsign, grid), { callsign, grid })
   }
-  for (const item of speakingHistory.value) {
-    const grid = normalizeGrid(item.grid)
-    if (grid) grids.add(grid)
-  }
-  return Array.from(grids)
+  return Array.from(locations.values())
 }
 
-async function loadQthForGrid(grid) {
-  if (!grid || qthCache.value[grid]) return
+async function loadQthForStation(callsign, grid) {
+  const cacheKey = getQthCacheKey(callsign, grid)
+  if (!grid || qthCache.value[cacheKey] || qthLoadingKeys.has(cacheKey)) return
+  qthLoadingKeys.add(cacheKey)
+  let preciseAddressApplied = false
+  // 6 位网格反查立即并行执行，先让实时卡片和列表尽快显示可读地址。
+  // 若 APRS 稍后返回更精确的位置，下面会覆盖这个临时结果。
+  const fallbackPromise = gridToAddress(grid)
+    .then((address) => formatAddress(address))
+    .then((fallbackAddress) => {
+      if (fallbackAddress && !preciseAddressApplied) {
+        qthCache.value = {
+          ...qthCache.value,
+          [grid]: fallbackAddress,
+          [cacheKey]: fallbackAddress
+        }
+      }
+      return fallbackAddress
+    })
+    .catch(() => '')
+
   try {
-    const address = await gridToAddress(grid)
-    const qth = formatAddress(address) || grid
-    qthCache.value = { ...qthCache.value, [grid]: qth }
-  } catch {
-    qthCache.value = { ...qthCache.value, [grid]: grid }
+    // 1. 优先使用 APRS 经纬度直接逆地理编码。
+    try {
+      const position = await getPlatform().stationLocation.getLatest(callsign)
+      if (position) {
+        const coordinateAddress = formatAddress(position.address)
+        if (coordinateAddress) {
+          preciseAddressApplied = true
+          qthCache.value = { ...qthCache.value, [cacheKey]: coordinateAddress }
+          return
+        }
+
+        // 2. 坐标直查失败后，转换成 8 位梅登海德网格反查。
+        const preciseGrid = coordinatesToMaidenhead(position.latitude, position.longitude, 8)
+        const preciseAddress = formatAddress(await gridToAddress(preciseGrid))
+        if (preciseAddress) {
+          preciseAddressApplied = true
+          qthCache.value = { ...qthCache.value, [cacheKey]: preciseAddress }
+          return
+        }
+      }
+    } catch {
+      // 继续使用事件内的 6 位网格。
+    }
+
+    // 3. APRS 不可用时，保留并行完成的 SW 事件 6 位网格地址。
+    await fallbackPromise
+  } finally {
+    qthLoadingKeys.delete(cacheKey)
   }
 }
 
@@ -1877,16 +2015,6 @@ function dedupeLatestByCallsign(rows) {
   })
 }
 
-function isSameContact(a, b) {
-  const callsignA = getCallsign(a)
-  const callsignB = getCallsign(b)
-  if (!callsignA || callsignA !== callsignB) return false
-  const timestampA = a?.timestamp || Math.floor((a?.startTime || 0) / 1000)
-  const timestampB = b?.timestamp || Math.floor((b?.startTime || 0) / 1000)
-  if (!timestampA || !timestampB) return false
-  return Math.abs(timestampA - timestampB) < 90
-}
-
 function findMatchingLog(speakingRecord) {
   const speakingTimestamp = Math.floor(speakingRecord.startTime / 1000)
   return records.value.find((record) => {
@@ -2015,11 +2143,11 @@ function handleAppStateChange(state) {
 }
 
 watch(
-  () => collectVisibleGrids().join('|'),
-  (gridKey) => {
-    if (!gridKey) return
-    for (const grid of gridKey.split('|')) {
-      loadQthForGrid(grid)
+  () => JSON.stringify(collectVisibleLocations()),
+  (locationKey) => {
+    if (!locationKey) return
+    for (const item of JSON.parse(locationKey)) {
+      loadQthForStation(item.callsign, item.grid)
     }
   },
   { immediate: true }
@@ -2395,10 +2523,12 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   min-width: 210px;
+  height: 116px;
   padding: 0.75rem;
   border: 1px solid color-mix(in srgb, var(--border-light) 70%, var(--color-success));
   border-radius: 8px;
   background: var(--surface-success);
+  overflow: hidden;
 }
 
 .bearing-panel strong,
@@ -2408,13 +2538,25 @@ onUnmounted(() => {
 }
 
 .bearing-panel strong {
+  align-items: baseline;
+  gap: 0.28rem;
   color: var(--text-primary);
   font-size: 1rem;
+  line-height: 1.15;
 }
 
 .bearing-panel span {
   color: var(--text-tertiary);
   font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.bearing-direction,
+.bearing-angle,
+.bearing-distance {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
 }
 
 .compass {
@@ -2617,7 +2759,7 @@ onUnmounted(() => {
 }
 
 .callsign-cell.is-clickable:active .callsign-card-link,
-.callsign-cell.is-clickable:active .logged-star {
+.callsign-cell.is-clickable:active .contact-count-badge {
   opacity: 0.75;
 }
 
@@ -2640,14 +2782,23 @@ onUnmounted(() => {
   vertical-align: middle;
 }
 
-.callsign-cell .logged-star {
+.callsign-cell .contact-count-badge,
+.callsign-cell .new-callsign-badge {
   display: inline-flex;
   align-items: center;
-  margin-left: 0.25rem;
+  margin-left: 0.28rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  vertical-align: middle;
+}
+
+.callsign-cell .contact-count-badge {
   color: #f59e0b;
-  font-size: 0.86rem;
-  line-height: 1;
-  vertical-align: 0.05em;
+}
+
+.callsign-cell .new-callsign-badge {
+  color: var(--color-primary);
 }
 
 .callsign-cell .self-badge {
@@ -2807,6 +2958,7 @@ onUnmounted(() => {
   .bearing-panel {
     min-width: 154px;
     width: auto;
+    height: 92px;
     flex: 0 0 auto;
     gap: 0.55rem;
     padding: 0.5rem 0.6rem;
@@ -2881,6 +3033,7 @@ onUnmounted(() => {
 
   .bearing-panel {
     min-width: 138px;
+    height: 86px;
     gap: 0.45rem;
     padding: 0.45rem 0.5rem;
   }
@@ -3331,15 +3484,28 @@ onUnmounted(() => {
   font-size: 0.78rem;
 }
 
+.history-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+}
+
+.qso-plus-one {
+  color: #ff2d55;
+  font-weight: 900;
+  text-shadow: 0 0 12px rgb(255 45 85 / 42%);
+}
+
 .bearing-panel {
   min-width: 0;
-  min-height: 148px;
+  height: 148px;
   display: grid;
   place-items: center;
   align-content: center;
   gap: 0.45rem;
   padding: 0.7rem;
   background: rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .bearing-panel .compass {
@@ -3348,13 +3514,48 @@ onUnmounted(() => {
 }
 
 .bearing-meta {
+  display: grid;
+  grid-template-rows: 1.2em 1.2em;
+  align-content: center;
+  justify-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.4em;
   text-align: center;
 }
 
 .bearing-meta strong,
 .bearing-meta span {
   display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  line-height: 1.2;
+  text-overflow: ellipsis;
   white-space: normal;
+}
+
+.bearing-meta strong {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.24rem;
+  min-height: 1.2em;
+}
+
+.bearing-direction,
+.bearing-angle,
+.bearing-distance {
+  overflow: hidden;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bearing-angle {
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  font-size: 0.72em;
 }
 
 :global(html[lang='en']) .bearing-meta strong,
@@ -3722,7 +3923,7 @@ onUnmounted(() => {
   }
 
   .bearing-panel {
-    min-height: 128px;
+    height: 128px;
   }
 
   .bearing-panel .compass {
@@ -3883,20 +4084,99 @@ onUnmounted(() => {
     padding: 0.75rem;
   }
 
+  .active-contact-card {
+    display: grid;
+    grid-template-rows: 1.35rem 7.3rem 7.35rem 5rem;
+    gap: 0.55rem;
+    overflow: hidden;
+  }
+
+  .active-contact-card > .section-label {
+    min-height: 1.35rem;
+    overflow: hidden;
+  }
+
   .active-contact-main {
     grid-template-columns: minmax(0, 1fr) 104px;
     gap: 0.65rem;
     align-items: stretch;
+    min-height: 0;
+    height: 7.3rem;
+    margin-top: 0;
+    overflow: hidden;
+  }
+
+  .active-contact-primary {
+    min-width: 0;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 4.25rem 1.8rem;
+    align-content: start;
+    gap: 0.55rem;
+    overflow: hidden;
+  }
+
+  .active-contact-primary .callsign-wrap {
+    min-height: 4.25rem;
+    max-height: 4.25rem;
+    align-content: end;
+    align-items: flex-end;
+    gap: 0.35rem;
+    overflow: hidden;
   }
 
   .active-contact-primary h1,
   .active-contact-primary h2 {
+    max-width: 100%;
+    overflow: hidden;
     font-size: clamp(2rem, 10vw, 2.85rem);
     line-height: 1.02;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .active-contact-primary .grid-square {
+    margin-bottom: 0.18rem;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .active-contact-primary .active-contact-new-badge {
+    align-self: end;
+    margin-bottom: 0.18rem;
+  }
+
+  .contact-tags {
+    height: 1.8rem;
+    margin-top: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .contact-tags span {
+    min-height: 1.55rem;
+    max-width: 100%;
+    flex: 0 1 auto;
+    padding: 0.18rem 0.45rem;
+    overflow: hidden;
+    font-size: 0.72rem;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .active-contact-controls {
+    display: none;
+  }
+
+  .active-contact-controls .command-refresh {
+    min-height: 2.45rem;
+    padding: 0 0.85rem;
   }
 
   .bearing-panel {
-    min-height: 104px;
+    height: 104px;
+    align-self: start;
     padding: 0.45rem;
   }
 
@@ -3915,14 +4195,20 @@ onUnmounted(() => {
 
   .contact-details {
     grid-template-columns: 1fr;
-    margin-top: 0.7rem;
+    grid-template-rows: repeat(2, 3.45rem);
+    min-height: 0;
+    height: 7.35rem;
+    margin-top: 0;
     gap: 0.45rem;
+    overflow: hidden;
   }
 
   .contact-details > div,
   .contact-detail-card {
-    min-height: 3.3rem;
+    min-height: 0;
+    height: 3.45rem;
     padding: 0.5rem 0.6rem;
+    overflow: hidden;
   }
 
   .frequency-detail-card {
@@ -3931,7 +4217,12 @@ onUnmounted(() => {
   }
 
   .contact-details strong {
+    max-width: 100%;
+    overflow: hidden;
     font-size: 0.85rem;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .contact-details .frequency-line {
@@ -3960,17 +4251,22 @@ onUnmounted(() => {
 
   .mobile-previous-card {
     display: grid;
-    gap: 0.45rem;
-    margin-top: 0.65rem;
+    grid-template-rows: 1.25rem minmax(0, 1fr);
+    gap: 0.35rem;
+    height: 5rem;
+    margin-top: 0;
     padding: 0.6rem;
     border: 1px solid var(--border-light);
     border-radius: 8px;
     background: color-mix(in srgb, var(--bg-table-stripe) 72%, transparent);
+    overflow: hidden;
   }
 
   .mobile-previous-main {
     display: grid;
+    min-height: 0;
     gap: 0.35rem;
+    overflow: hidden;
   }
 
   .mobile-previous-identity {
@@ -4000,6 +4296,8 @@ onUnmounted(() => {
     display: flex;
     flex-wrap: wrap;
     gap: 0.32rem;
+    max-height: 1.6rem;
+    overflow: hidden;
   }
 
   .mobile-previous-meta span,
@@ -4163,7 +4461,7 @@ onUnmounted(() => {
   }
 
   .bearing-panel {
-    min-height: 92px;
+    height: 92px;
   }
 
   .bearing-panel .compass {
@@ -4198,19 +4496,68 @@ onUnmounted(() => {
 
   .active-contact-card {
     grid-column: 1 / -1;
+    grid-template-rows: 1.1rem 5.15rem 3.45rem 5.25rem;
+    gap: 0.35rem;
   }
 
   .active-contact-main {
     grid-template-columns: minmax(0, 1fr) 118px;
+    height: 5.15rem;
+  }
+
+  .active-contact-primary {
+    grid-template-rows: 3.1rem 1.4rem;
+    gap: 0.35rem;
+  }
+
+  .active-contact-primary .callsign-wrap {
+    min-height: 3.1rem;
+    max-height: 3.1rem;
+  }
+
+  .active-contact-primary h1,
+  .active-contact-primary h2 {
+    font-size: clamp(2rem, 8vw, 2.8rem);
+  }
+
+  .contact-tags {
+    height: 1.4rem;
+  }
+
+  .contact-tags span {
+    min-height: 1.28rem;
+  }
+
+  .active-contact-controls {
+    display: none;
+  }
+
+  .active-contact-controls .command-refresh {
+    min-height: 1.9rem;
   }
 
   .contact-details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 3.45rem;
+    height: 3.45rem;
   }
 
   .mobile-previous-main {
-    grid-template-columns: minmax(0, 0.52fr) minmax(0, 1fr);
-    align-items: center;
+    grid-template-columns: minmax(0, 0.36fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .mobile-previous-card {
+    height: 5.25rem;
+  }
+
+  .mobile-previous-meta {
+    max-height: 2.8rem;
+  }
+
+  .mobile-previous-meta .qth-tag {
+    flex: 1 1 100%;
+    max-width: 100%;
   }
 
   .live-panel {
@@ -4292,6 +4639,8 @@ onUnmounted(() => {
 
   .active-contact-card {
     padding: 0.38rem;
+    grid-template-rows: 1rem 5.45rem 2.35rem 4.65rem;
+    gap: 0.22rem;
   }
 
   .section-label {
@@ -4303,11 +4652,12 @@ onUnmounted(() => {
   .active-contact-main {
     grid-template-columns: minmax(0, 1fr) 84px;
     gap: 0.32rem;
+    height: 5.45rem;
   }
 
   .active-contact-primary {
     grid-template-columns: minmax(0, max-content) auto;
-    grid-template-rows: auto minmax(0.25rem, 1fr) auto;
+    grid-template-rows: auto minmax(0.2rem, 1fr) auto;
     min-height: 92px;
     align-content: stretch;
     align-items: end;
@@ -4343,12 +4693,7 @@ onUnmounted(() => {
   }
 
   .active-contact-controls {
-    grid-row: 3;
-    grid-column: 2;
-    align-self: start;
-    justify-self: start;
-    margin-top: 0;
-    padding-top: 0;
+    display: none;
   }
 
   .command-refresh {
@@ -4358,7 +4703,7 @@ onUnmounted(() => {
   }
 
   .bearing-panel {
-    min-height: 72px;
+    height: 72px;
     padding: 0.28rem;
     gap: 0.24rem;
   }
@@ -4378,12 +4723,15 @@ onUnmounted(() => {
 
   .contact-details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 2.35rem;
+    height: 2.35rem;
     gap: 0.24rem;
     margin-top: 0.25rem;
   }
 
   .contact-detail-card {
     min-height: 2.04rem;
+    height: 2.35rem;
     padding: 0.24rem 0.38rem;
   }
 
@@ -4409,7 +4757,9 @@ onUnmounted(() => {
 
   .mobile-previous-card {
     display: grid;
+    grid-template-rows: 1rem minmax(0, 1fr);
     gap: 0.18rem;
+    height: 4.65rem;
     margin-top: 0.24rem;
     padding: 0.3rem 0.34rem;
     border: 1px solid var(--border-light);
@@ -4418,8 +4768,8 @@ onUnmounted(() => {
   }
 
   .mobile-previous-main {
-    grid-template-columns: minmax(0, 0.4fr) minmax(0, 1fr);
-    align-items: center;
+    grid-template-columns: minmax(0, 0.34fr) minmax(0, 1fr);
+    align-items: start;
     gap: 0.28rem;
   }
 
@@ -4433,6 +4783,7 @@ onUnmounted(() => {
 
   .mobile-previous-meta {
     gap: 0.18rem;
+    max-height: 2.5rem;
     overflow: hidden;
   }
 
@@ -4444,6 +4795,11 @@ onUnmounted(() => {
     line-height: 1.1;
   }
 
+  .mobile-previous-meta .qth-tag {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
   .live-panel {
     grid-column: 1;
     min-height: 12rem;
@@ -4452,6 +4808,202 @@ onUnmounted(() => {
   .live-table-wrap {
     max-height: none;
     overflow: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  :global(.native-android .active-contact-card) {
+    grid-template-rows: 1.35rem 9.45rem 7.35rem 7.35rem;
+  }
+
+  :global(.native-android .active-contact-main) {
+    grid-template-columns: minmax(0, 1fr) 104px;
+    height: 9.45rem;
+  }
+
+  :global(.native-android .active-contact-primary) {
+    grid-template-rows: 4.7rem 3rem 0;
+    gap: 0.55rem;
+  }
+
+  :global(.native-android .active-contact-primary .callsign-wrap) {
+    min-height: 4.7rem;
+    max-height: 4.7rem;
+  }
+
+  :global(.native-android .contact-tags) {
+    height: 3rem;
+    align-content: start;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    margin-top: 0;
+  }
+
+  :global(.native-android .contact-tags span) {
+    min-height: 1.28rem;
+    padding: 0.14rem 0.42rem;
+    font-size: 0.66rem;
+    line-height: 1.1;
+  }
+
+  :global(.native-android .contact-tags .contact-status-tag),
+  :global(.native-android .contact-tags .history-count) {
+    flex: 0 0 auto;
+    max-width: none;
+    text-overflow: clip;
+  }
+
+  :global(.native-android .contact-tags .qth-tag) {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  :global(.native-android .active-contact-controls) {
+    display: none;
+  }
+
+  :global(.native-android .bearing-panel) {
+    height: 104px;
+    min-height: 104px;
+    padding: 0.5rem 0.42rem;
+    gap: 0.25rem;
+  }
+
+  :global(.native-android .bearing-panel .compass) {
+    width: 48px;
+    height: 48px;
+  }
+
+  :global(.native-android .bearing-meta) {
+    display: grid;
+    gap: 0.1rem;
+    justify-items: center;
+  }
+
+  :global(.native-android .bearing-meta strong),
+  :global(.native-android .bearing-meta span) {
+    line-height: 1.05;
+  }
+
+  :global(.native-android .mobile-previous-card) {
+    height: 7.35rem;
+    grid-template-rows: 1.25rem minmax(0, 1fr);
+  }
+
+  :global(.native-android .mobile-previous-main) {
+    gap: 0.38rem;
+    align-content: start;
+  }
+
+  :global(.native-android .mobile-previous-meta) {
+    align-content: start;
+    gap: 0.28rem;
+    max-height: 3.45rem;
+  }
+
+  :global(.native-android .mobile-previous-meta span) {
+    min-height: 1.32rem;
+    padding: 0.12rem 0.42rem;
+    font-size: 0.64rem;
+    line-height: 1.12;
+  }
+
+  :global(.native-android .mobile-previous-meta .history-count) {
+    flex: 0 0 auto;
+  }
+
+  :global(.native-android .mobile-previous-meta .qth-tag) {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+  :global(.native-android .active-contact-card) {
+    grid-template-rows: 1.1rem 5.75rem 3.45rem 4.7rem;
+  }
+
+  :global(.native-android .active-contact-main) {
+    height: 5.75rem;
+  }
+
+  :global(.native-android .active-contact-primary) {
+    grid-template-rows: 3.35rem 1.45rem;
+  }
+
+  :global(.native-android .active-contact-primary .callsign-wrap) {
+    min-height: 3.35rem;
+    max-height: 3.35rem;
+  }
+
+  :global(.native-android .active-contact-controls) {
+    display: none;
+  }
+
+  :global(.native-android .contact-tags) {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    height: 1.45rem;
+    align-content: start;
+    overflow: hidden;
+  }
+
+  :global(.native-android .contact-tags .qth-tag) {
+    display: none;
+  }
+
+  :global(.native-android .mobile-previous-card) {
+    height: 4.7rem;
+  }
+
+  :global(.native-android .mobile-previous-meta) {
+    max-height: 2rem;
+  }
+}
+
+@media (max-height: 520px) and (max-width: 950px) and (orientation: landscape) {
+  :global(.native-android .active-contact-card) {
+    grid-template-rows: 1rem 5.05rem 2.95rem 4.95rem;
+  }
+
+  :global(.native-android .active-contact-main) {
+    height: 5.05rem;
+  }
+
+  :global(.native-android .active-contact-primary) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 3.55rem 1.12rem;
+    min-height: 0;
+    align-content: start;
+  }
+
+  :global(.native-android .active-contact-primary .callsign-wrap) {
+    min-height: 3.55rem;
+    max-height: 3.55rem;
+  }
+
+  :global(.native-android .active-contact-controls) {
+    display: none;
+  }
+
+  :global(.native-android .contact-tags) {
+    grid-row: 2;
+    grid-column: 1;
+    height: 1.12rem;
+    align-content: start;
+    overflow: hidden;
+  }
+
+  :global(.native-android .contact-tags .qth-tag) {
+    display: none;
+  }
+
+  :global(.native-android .mobile-previous-card) {
+    height: 4.95rem;
+  }
+
+  :global(.native-android .mobile-previous-meta) {
+    max-height: 2.05rem;
   }
 }
 </style>

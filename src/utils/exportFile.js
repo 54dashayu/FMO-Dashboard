@@ -40,10 +40,13 @@ function downloadInBrowser(filename, blob) {
   const link = document.createElement('a')
   link.href = url
   link.download = filename
+  link.rel = 'noopener'
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+
+  // 部分 WebView / 内嵌浏览器需要下载动作完成后再释放 blob URL。
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000)
 }
 
 /**
@@ -76,7 +79,7 @@ export async function exportFile(filename, data, mimeType) {
   // ========== Web 端：保持原有浏览器下载体验 ==========
   if (platform === 'web') {
     downloadInBrowser(filename, toBlob(data, mimeType))
-    return { platform }
+    return { platform, filename, displayPath: filename }
   }
 
   // ========== Android/iOS：直接保存到 Documents 目录 ==========

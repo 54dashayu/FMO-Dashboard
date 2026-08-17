@@ -11,7 +11,7 @@ export const NAV_ROUTES = [
   { path: '/more', label: '更多', type: 'more', icon: 'more' }
 ]
 
-// 自动定位条目（仅 Android 端有）
+// 自动定位条目（具备原生定位能力的平台显示）
 const locationReportRoute = {
   path: '/location-report',
   label: '自动定位',
@@ -28,7 +28,7 @@ const aboutRoute = {
   description: '版本信息与特别感谢'
 }
 
-// 更多页面内的子路由（"自动定位"位于"关于"之前，仅 Android 端有此项）
+// 更多页面内的子路由（"自动定位"位于"关于"之前，仅原生定位平台有此项）
 export const MORE_ROUTES = [
   {
     path: '/top20',
@@ -72,7 +72,7 @@ export const MORE_ROUTES = [
     icon: 'diagnostic',
     description: '导出错误与连接诊断信息'
   },
-  // 仅 Android 端追加"自动定位"，位于"关于"之前
+  // 具备原生定位能力的平台追加"自动定位"，位于"关于"之前
   ...(getPlatform().capabilities.hasNativeLocation ? [locationReportRoute] : []),
   aboutRoute
 ]
