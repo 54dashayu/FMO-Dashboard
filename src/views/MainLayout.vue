@@ -260,7 +260,7 @@ import SvgIcon from '../components/common/SvgIcon.vue'
 
 // Composables
 import { storeToRefs } from 'pinia'
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { useSpeakingStatusStore } from '../stores/speakingStore'
 import { useSyncStore } from '../stores/syncStore'
@@ -935,6 +935,50 @@ async function fileLikeToBlob(file) {
   return new Blob([buffer], { type: 'application/zip' })
 }
 
+function isNativeMobile() {
+  return Capacitor.isNativePlatform() && ['android', 'ios'].includes(Capacitor.getPlatform())
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const result = String(reader.result || '')
+      resolve(result.includes(',') ? result.split(',')[1] : result)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+async function uploadRestoreZipNative(file, url) {
+  const blob = await fileLikeToBlob(file)
+  const base64 = await blobToBase64(blob)
+  const filename = file.name || 'fmo-backup.zip'
+  const response = await CapacitorHttp.request({
+    method: 'POST',
+    url,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    dataType: 'formData',
+    data: [
+      {
+        type: 'base64File',
+        key: 'file',
+        value: base64,
+        fileName: filename,
+        contentType: 'application/zip'
+      }
+    ],
+    connectTimeout: 10_000,
+    readTimeout: 10_000
+  })
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`HTTP ${response.status}`)
+  }
+}
+
 function submitRestoreFormInBrowser(file, url) {
   return new Promise((resolve, reject) => {
     const iframeName = `fmo-restore-target-${Date.now()}`
@@ -1012,7 +1056,9 @@ async function restoreBackupToFmo(file) {
 
   try {
     loading.value = true
-    if (!isTauriDesktop() && file instanceof window.File) {
+    if (isNativeMobile()) {
+      await uploadRestoreZipNative(file, url)
+    } else if (!isTauriDesktop() && file instanceof window.File) {
       await submitRestoreFormInBrowser(file, url)
     } else {
       const formData = new window.FormData()
@@ -2140,75 +2186,6 @@ provide('protocol', settings.protocol)
   }
 
   .back-to-top-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-}
-
-@media (orientation: landscape) and (max-height: 620px) {
-  :global(.native-android .container) {
-    max-width: none;
-    height: 100vh;
-    height: 100dvh;
-  }
-
-  :global(.native-android .container .header),
-  :global(.native-android .container .speaking-bar) {
-    display: none;
-  }
-
-  :global(.native-android .dashboard-route .content-area),
-  :global(.native-android .content-area) {
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 0;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-  }
-
-  :global(.native-android .mobile-nav) {
-    display: flex;
-    min-height: 2.05rem;
-    max-height: 2.15rem;
-    padding: 0.05rem 0;
-    padding-bottom: 0.05rem;
-  }
-
-  :global(.native-android .mobile-nav .nav-tab) {
-    flex: 1 1 0;
-    gap: 0;
-    min-width: 0;
-    padding: 0.04rem 0.28rem;
-    border-radius: 6px;
-  }
-
-  :global(.native-android .nav-icon) {
-    width: 16px;
-    height: 16px;
-  }
-
-  :global(.native-android .nav-label) {
-    max-width: 100%;
-    overflow: hidden;
-    font-size: 0.48rem;
-    line-height: 1.05;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  :global(.native-android .dashboard-route .app-footer) {
-    display: none;
-  }
-
-  :global(.native-android .back-to-top-btn) {
-    right: 0.55rem;
-    bottom: 2.3rem;
-    width: 34px;
-    height: 34px;
-  }
-
-  :global(.native-android .back-to-top-btn svg) {
     width: 18px;
     height: 18px;
   }

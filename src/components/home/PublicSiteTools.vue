@@ -45,7 +45,7 @@
             ×
           </button>
           <div class="download-heading">
-            <strong>Web V2.03</strong>
+            <strong>Web V2.05</strong>
             <div>
               <h2>{{ t('public.downloadTitle', 'FMO 仪表盘下载') }}</h2>
               <p>
@@ -122,10 +122,10 @@ const downloads = [
   {
     icon: 'APK',
     titleKey: 'public.androidApk',
-    title: 'Android APK V2.03.01',
+    title: 'Android APK V2.05',
     hintKey: 'public.androidApkHint',
-    hint: 'V2.03.01 兼容性修补版，适用于安卓手机、平板和部分车机。',
-    url: `${vpsDownloadBase}/FMO-Dashboard-Android-V2.03.01.apk`
+    hint: 'V2.05 统一版，包含完整核心功能、QTH 显示修正及安卓设备适配。',
+    url: `${vpsDownloadBase}/FMO-Dashboard-Android-V2.05.apk`
   },
   {
     icon: 'iOS',

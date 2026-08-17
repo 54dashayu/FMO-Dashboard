@@ -203,8 +203,6 @@ const messages = {
     'about.v2Web': 'V2 Web',
     'about.intro':
       'A multi-platform console for FMO monitoring, contacts, and log management. It puts live calls, current server, bearing, distance, and recent contacts on the first screen so desktop, tablet, and mobile users can understand the radio scene quickly.',
-    'about.v1Title': 'FMO Dashboard 1.0',
-    'about.v1Subtitle': 'Evolved from a log viewer into a standalone multi-platform FMO dashboard.',
     'about.v2Title': 'V2 Web Experience',
     'about.v2Subtitle':
       'The desktop web version is the first V2 stage, reorganizing high-frequency information and actions.',
@@ -213,23 +211,6 @@ const messages = {
       'If FMO Dashboard helps you, you can support ongoing maintenance through the QR codes.',
     'about.wechatPay': 'WeChat Pay',
     'about.alipay': 'Alipay',
-    'about.featureLive': 'Live Contact Dashboard',
-    'about.featureLiveDesc':
-      'Shows current speaker, QTH, grid, relative bearing, distance, and recent contacts.',
-    'about.featureRelay': 'FMO Server Control',
-    'about.featureRelayDesc':
-      'Reads the current server, browses and favorites servers, and supports quick server switching.',
-    'about.featureLogs': 'Logs and Friends',
-    'about.featureLogsDesc':
-      'Sync, import, search, and export contact logs while identifying today contacts and old friends.',
-    'about.featureVoice': 'Three Broadcast Modes',
-    'about.featureVoiceDesc':
-      'Supports new callsign alerts, contact broadcast, and all broadcasts off, with your choice remembered.',
-    'about.featurePlatforms': 'Multi-Platform',
-    'about.featurePlatformsDesc': 'Provides web, Windows portable, Android, and iOS forms.',
-    'about.featureLocal': 'Local Data First',
-    'about.featureLocalDesc':
-      'Logs and settings stay on user devices; the public web mainly hosts static pages.',
     'about.v2FirstScreen': 'Redesigned First Screen',
     'about.v2FirstScreenDesc':
       'Current call, previous contact, favorite servers, and recent 20 contacts are presented together.',

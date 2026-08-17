@@ -2,7 +2,7 @@
   "name": "fmo-dashboard",
   "private": true,
   "license": "MIT",
-  "version": "2.0.3",
+  "version": "2.0.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,6 +23,8 @@
     "ios:open": "npm run ios:sync && cap open ios",
     "ios:sim": "bash scripts/ios-simulator.sh",
     "ios:device": "bash scripts/ios-device.sh",
+    "tvos:web": "VITE_TVOS=1 vite build --base ./ --outDir tvos/FMODashboardTV/Web",
+    "tvos:sim": "bash scripts/tvos-simulator.sh",
     "android:apk": "bash scripts/build-android-apk.sh",
     "android:apk:release": "bash scripts/build-android-apk.sh --release",
     "android:deploy": "bash scripts/android-deploy.sh",

@@ -6,6 +6,7 @@ import { buildWebSocketUrl, normalizeHost } from '../utils/urlUtils'
 import { gridToAddress } from '../services/gridService'
 import { getPlatform } from '../platform'
 import type { ServerInfo, EventsStatus } from '../platform/types/speaking'
+import { coordinatesToMaidenhead } from '../core/maidenhead'
 
 // 是否由原生侧（Android）托管 events：连接池、快照、通知栏等
 const hasNativeEvents = getPlatform().capabilities.hasNativeEvents
@@ -57,6 +58,25 @@ function saveToStorage(addressId: string, list: SpeakingRecord[]) {
 function formatAddr(data: any): string {
   if (!data) return ''
   return data.city || data.province || ''
+}
+
+async function resolveSpeakerAddress(callsign: string, fallbackGrid: string): Promise<string> {
+  if (!fallbackGrid) return ''
+  if (!hasNativeEvents && callsign) {
+    try {
+      const position = await getPlatform().stationLocation.getLatest(callsign)
+      if (position) {
+        const coordinateAddress = formatAddr(position.address)
+        if (coordinateAddress) return coordinateAddress
+        const preciseGrid = coordinatesToMaidenhead(position.latitude, position.longitude, 8)
+        const preciseAddress = formatAddr(await gridToAddress(preciseGrid))
+        if (preciseAddress) return preciseAddress
+      }
+    } catch {
+      // 精确位置不可用时继续使用事件内的原始网格。
+    }
+  }
+  return formatAddr(await gridToAddress(fallbackGrid))
 }
 
 /**
@@ -198,13 +218,9 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
               continue
             }
 
-            if (grid) {
-              gridToAddress(grid)
-                .then((r: any) => speakerAddressMap.set(addressId, formatAddr(r)))
-                .catch(() => speakerAddressMap.set(addressId, ''))
-            } else {
-              speakerAddressMap.set(addressId, '')
-            }
+            resolveSpeakerAddress(callsign, grid)
+              .then((address) => speakerAddressMap.set(addressId, address))
+              .catch(() => speakerAddressMap.set(addressId, ''))
 
             history.forEach((h) => {
               if (!h.endTime) h.endTime = now
@@ -274,8 +290,8 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
     isHostSpeakingMap.set(addressId, !!currentIsHost)
 
     if (currentGrid) {
-      gridToAddress(currentGrid)
-        .then((r: any) => speakerAddressMap.set(addressId, formatAddr(r)))
+      resolveSpeakerAddress(currentSpeaker || '', currentGrid)
+        .then((address) => speakerAddressMap.set(addressId, address))
         .catch(() => speakerAddressMap.set(addressId, ''))
     } else {
       speakerAddressMap.set(addressId, '')

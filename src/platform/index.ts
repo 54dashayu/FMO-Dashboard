@@ -7,10 +7,12 @@ import type {
   IEventsService,
   IGridService,
   ILocationService,
+  IStationLocationService,
   IStorageService
 } from './interfaces'
 import { createWebPlatform } from './web'
 import { createNativePlatform } from './native-capacitor'
+import { createIosPlatform } from './native-capacitor/ios'
 
 export interface Platform {
   events: IEventsService
@@ -19,6 +21,7 @@ export interface Platform {
   grid: IGridService
   background: IBackgroundService
   location: ILocationService
+  stationLocation: IStationLocationService
   storage: IStorageService
   capabilities: ICapabilities
 }
@@ -28,12 +31,19 @@ let instance: Platform | null = null
 /**
  * 获取当前平台实例（单例）。
  * - Android：Capacitor 原生实现
+ * - iOS：仅定位走原生，其余沿用 Web 实现
  * - Web / Tauri 桌面：Web 实现
  */
 export function getPlatform(): Platform {
   if (instance) return instance
-  const isAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android'
-  instance = isAndroid ? createNativePlatform() : createWebPlatform()
+  const nativePlatform = Capacitor.isNativePlatform() ? Capacitor.getPlatform() : 'web'
+  if (nativePlatform === 'android') {
+    instance = createNativePlatform()
+  } else if (nativePlatform === 'ios') {
+    instance = createIosPlatform()
+  } else {
+    instance = createWebPlatform()
+  }
   return instance
 }
 
@@ -50,5 +60,6 @@ export type {
   IEventsService,
   IGridService,
   ILocationService,
+  IStationLocationService,
   IStorageService
 }

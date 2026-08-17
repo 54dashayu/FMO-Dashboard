@@ -5,7 +5,7 @@
 
     <!-- 过滤区域 -->
     <QuerySection
-      v-model:old-friends-search-keyword="dataQuery.oldFriendsSearchKeyword.value"
+      :old-friends-search-keyword="dataQuery.oldFriendsSearchKeyword.value"
       :current-query-type="'oldFriends'"
       :from-callsign="selectedFromCallsign"
       :db-loaded="dbLoaded"
@@ -63,7 +63,9 @@ const hasMore = computed(() => {
 // 防抖定时器
 let oldFriendsSearchTimer = null
 
-function onOldFriendsSearchInput() {
+function onOldFriendsSearchInput(value) {
+  props.dataQuery.oldFriendsSearchKeyword.value = value
+
   if (oldFriendsSearchTimer) clearTimeout(oldFriendsSearchTimer)
   oldFriendsSearchTimer = setTimeout(() => {
     props.dataQuery.oldFriendsPage.value = 1

@@ -40,25 +40,6 @@
 
     <section class="version-section">
       <div class="version-heading">
-        <span class="version-mark stable">1.0</span>
-        <div>
-          <h2>{{ t('about.v1Title', 'FMO 仪表盘 1.0') }}</h2>
-          <p>{{ t('about.v1Subtitle', '从日志查看工具发展为可独立使用的 FMO 多端仪表盘。') }}</p>
-        </div>
-      </div>
-      <div class="feature-grid">
-        <article v-for="feature in v1Features" :key="feature.title">
-          <span>{{ feature.icon }}</span>
-          <div>
-            <h3>{{ feature.title }}</h3>
-            <p>{{ feature.description }}</p>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="version-section">
-      <div class="version-heading">
         <span class="version-mark preview">V2</span>
         <div>
           <h2>{{ t('about.v2Title', 'V2 网页版新体验') }}</h2>
@@ -110,59 +91,11 @@ import { computed, ref } from 'vue'
 import { useLocale } from '../composables/useLocale'
 import { handleExternalLinkClick } from '../utils/desktopBridge'
 
-const appVersion = 'V2.03.01'
+const appVersion = 'V2.05'
 const showCoffee = ref(false)
 const { t } = useLocale()
 const aboutIntroFallback =
   '面向 FMO 守听、通联和日志管理的多端控制台。它将实时呼叫、当前中继、方位距离和最近通联放在第一屏，让电脑、平板与移动设备都能快速掌握通联现场。'
-
-const v1Features = computed(() => [
-  {
-    icon: '◉',
-    title: t('about.featureLive', '实时通联仪表盘'),
-    description: t(
-      'about.featureLiveDesc',
-      '显示当前发言呼号、QTH、网格、相对方位、距离与最近通联。'
-    )
-  },
-  {
-    icon: '⌁',
-    title: t('about.featureRelay', 'FMO 中继控制'),
-    description: t('about.featureRelayDesc', '读取当前中继、浏览与收藏服务器，并支持快捷切换中继。')
-  },
-  {
-    icon: '▤',
-    title: t('about.featureLogs', '日志与好友'),
-    description: t(
-      'about.featureLogsDesc',
-      '同步、导入、查询和导出通联记录，识别今日通联与历史好友。'
-    )
-  },
-  {
-    icon: '●',
-    title: t('about.featureVoice', '三档播报模式'),
-    description: t(
-      'about.featureVoiceDesc',
-      '支持新呼号提醒、通联播报和关闭所有播报，并记忆用户选择。'
-    )
-  },
-  {
-    icon: '⌖',
-    title: t('about.featurePlatforms', '多平台运行'),
-    description: t(
-      'about.featurePlatformsDesc',
-      '提供网页版、Windows 便携版、Android 与 iOS 项目形态。'
-    )
-  },
-  {
-    icon: '◆',
-    title: t('about.featureLocal', '本地数据优先'),
-    description: t(
-      'about.featureLocalDesc',
-      '通联日志与设置保存在用户设备，公网网页主要承担静态页面托管。'
-    )
-  }
-])
 
 const v2Features = computed(() => [
   {
@@ -339,11 +272,6 @@ const v2Features = computed(() => [
   border-radius: 6px;
   font-size: 0.76rem;
   font-weight: 800;
-}
-
-.version-mark.stable {
-  color: var(--color-success);
-  background: var(--surface-success);
 }
 
 .version-mark.preview {

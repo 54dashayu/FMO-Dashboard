@@ -6,3 +6,7 @@ export type { IEventsService, EventsConnectConfig } from './IEventsService'
 export type { IGridService } from './IGridService'
 export type { ILocationService } from './ILocationService'
 export type { IStorageService } from './IStorageService'
+export type {
+  IStationLocationService,
+  StationLocation
+} from './IStationLocationService'

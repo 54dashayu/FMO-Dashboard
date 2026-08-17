@@ -16,7 +16,7 @@ Environment for deploy:
   ALIYUN_USER    Optional. Defaults to root
   ALIYUN_PATH    Optional. Defaults to /var/www/fmologs/dist
 
-This packages the public homepage, downloads, and V2.03 web app for fmo.bh1jss.net.
+This packages the public homepage, downloads, and V2.05 web app for fmo.bh1jss.net.
 EOF
 }
 
@@ -40,7 +40,7 @@ if [[ -n "${missing_downloads}" ]]; then
   exit 1
 fi
 
-echo "==> Building Web V2.03 with /v2/ base"
+echo "==> Building Web V2.05 with /v2/ base"
 npm run build -- --base=/v2/
 
 echo "==> Preparing site directory: ${SITE_DIR}"

@@ -1,5 +1,8 @@
 # iOS 打包说明
 
+> 2026-06-09 更新：iOS V2.0 已通过 App Store 审核并发布，当前封版状态请以
+> `docs/v2.0-ios-release-handoff.md` 为准。本文保留为 iOS 打包与 V2 发布前准备过程的历史说明。
+
 本项目的 iOS 版本使用 Capacitor 生成 Xcode 工程。当前 iOS 端默认走 Web 平台能力：
 Android 专属的定位上报、APRS 原生直连、后台音频前台服务等能力暂未移植到 iOS 原生插件。
 

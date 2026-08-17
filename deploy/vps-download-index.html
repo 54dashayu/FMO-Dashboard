@@ -644,13 +644,12 @@
         <div class="notes">
           <h3>多端实时看板</h3>
           <p>
-            V2.03 修正了仪表盘最近 20 个通联的实时来源逻辑，优化深色模式在桌面/旧设备 WebView
-            下的对比度，并补充 FMO 备份包导入/导出和通联播报默认开启。Android V2.03.01 继续保留低版本
-            Android 和特殊车机/音箱系统适配，并修补小米等设备竖屏/横屏首屏布局。
+            Web 与 Android 已统一到 V2.05：保留 V2.03.02 的完整核心功能，并合入 V2.04 至
+            V2.05 的 QTH 显示修正。Windows 与 macOS 安装包暂时保持 V2.03。
           </p>
           <div class="meta">
-            <span class="pill info">Web V2.03</span>
-            <span class="pill good">Android V2.03.01</span>
+            <span class="pill info">Web V2.05</span>
+            <span class="pill good">Android V2.05</span>
             <span class="pill good">Windows / macOS V2.03</span>
             <span class="pill">iOS App Store</span>
           </div>
@@ -679,14 +678,17 @@
         <div class="download-grid">
           <article class="card recommended">
             <span class="tag">推荐</span>
-            <h3>Android APK V2.03.01</h3>
+            <h3>Android APK V2.05</h3>
             <p>
-              适用于 Android 手机、平板、车机和音箱类设备。V2.03.01 包含深色模式、实时列表、
-              FMO 备份包和通联播报默认开启修复；继续优化小米等设备竖屏/横屏首屏布局。
+              适用于 Android 手机、平板、车机和音箱类设备。V2.05 保留 V2.03.02 的完整核心功能、
+              深色模式、实时列表、FMO 备份包和通联播报，并合入 QTH 显示修正及 Android 设备适配。
             </p>
             <div class="actions">
-              <a class="button primary" href="/downloads/FMO-Dashboard-Android-V2.03.01.apk"
-                >下载 Android V2.03.01</a
+              <a class="button primary" href="/downloads/FMO-Dashboard-Android-V2.05.apk"
+                >下载 Android V2.05</a
+              >
+              <a class="button subtle" href="/downloads/FMO-Dashboard-Android-V2.02.apk"
+                >V2.02 回退版</a
               >
             </div>
           </article>
@@ -917,8 +919,8 @@
           <a class="button subtle" href="/downloads/SHA256SUMS-fmo-companion-m5core-v0.2-v2.0.txt"
             >FMO伴侣屏历史版本校验</a
           >
-          <a class="button subtle" href="/downloads/SHA256SUMS-android-V2.03.01.txt"
-            >Android V2.03.01 校验</a
+          <a class="button subtle" href="/downloads/SHA256SUMS-android-V2.05.txt"
+            >Android V2.05 校验</a
           >
           <a class="button subtle" href="/downloads/SHA256SUMS-android-V2.01.txt"
             >Android V2.01 校验</a
@@ -932,7 +934,7 @@
           <li>Windows 桌面版添加本地 FMO 地址时，建议填写设备局域网 IP，例如 192.168.x.x。</li>
           <li>部分 Windows 环境无法解析 fmo.local 这类 .local 地址，可能导致同步失败。</li>
           <li>Windows 桌面版当前未配置商业签名证书，首次安装时可能出现安全提示。</li>
-          <li>网页版、Windows、macOS 当前为 V2.03；Android 最新修补包为 V2.03.01。</li>
+          <li>网页版与 Android 当前已统一为 V2.05；Windows、macOS 安装包暂时保持 V2.03。</li>
           <li>macOS 桌面版已完成 Developer ID 签名与 Apple 公证，建议下载最新 V2.03 DMG。</li>
           <li>
             FMO伴侣屏普通用户优先使用 Windows 一键刷写包；V2.01 已支持 TF 卡根目录读取
