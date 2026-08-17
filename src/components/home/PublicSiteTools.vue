@@ -106,18 +106,18 @@ const downloads = [
   {
     icon: 'Win64',
     titleKey: 'public.windowsX64',
-    title: 'Windows 桌面版 Win64',
+    title: 'Windows 桌面版 Win64 V2.05',
     hintKey: 'public.windowsX64Hint',
     hint: '推荐 Win10 / Win11 64 位用户下载，不依赖外部浏览器。',
-    url: `${vpsDownloadBase}/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.0.exe`
+    url: `${vpsDownloadBase}/v2.0.5/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.5.exe`
   },
   {
     icon: 'Win32',
     titleKey: 'public.windowsX86',
-    title: 'Windows 桌面版 Win32',
+    title: 'Windows 桌面版 Win32 V2.05',
     hintKey: 'public.windowsX86Hint',
     hint: '32 位 Windows 或兼容备用版本，64 位系统也可运行。',
-    url: `${vpsDownloadBase}/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.0.exe`
+    url: `${vpsDownloadBase}/v2.0.5/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.5.exe`
   },
   {
     icon: 'APK',
@@ -128,11 +128,17 @@ const downloads = [
     url: `${vpsDownloadBase}/FMO-Dashboard-Android-V2.05.apk`
   },
   {
+    icon: 'DMG',
+    title: 'macOS Universal V2.05',
+    hint: '支持 Apple Silicon 与 Intel Mac，使用 Developer ID 签名并通过 Apple 公证。',
+    url: `${vpsDownloadBase}/v2.0.5/FMO-Dashboard-macOS-Universal-v2.0.5.dmg`
+  },
+  {
     icon: 'iOS',
     titleKey: 'public.iosApp',
-    title: 'iOS App Store',
+    title: 'iOS / iPadOS V2.05',
     hintKey: 'public.iosAppHint',
-    hint: '前往 App Store 下载 FMO Dashboard。',
+    hint: 'V2.05 已提交 App Store 审核，通过后可在 App Store 更新。',
     url: 'https://apps.apple.com/cn/app/fmo-dashboard/id6772919070'
   }
 ]
