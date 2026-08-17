@@ -210,7 +210,11 @@ jobs:
         run: |
           set -euo pipefail
           version="$(node -p "require('./package.json').version")"
-          shasum -a 256 release/macos/* > "release/macos/SHA256SUMS-macos-v${version}.txt"
+          (
+            cd release/macos
+            shasum -a 256 FMO-Dashboard-macOS-Universal-v${version}.dmg \
+              > "SHA256SUMS-macos-v${version}.txt"
+          )
           ls -lh release/macos
 
       - name: Upload macOS desktop artifacts
