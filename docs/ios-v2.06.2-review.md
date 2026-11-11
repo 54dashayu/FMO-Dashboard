@@ -34,6 +34,12 @@ iOS/iPadOS 不启用自动定位或后台持续定位，不提供无线电发射
 - 截图：`output/ios/v262-20804-scene-ios27.png`。此前 iOS 26.5 的 iPhone/iPad 版式测试另有截图保留。
 - 20802 不用于提交；最终关联与审核状态以下续记为准。
 
+### 最终构建递增至 20805
+
+20804 经 Apple 处理完成，但收到 90683 定位用途声明警告：未启用的 FmoLocationPlugin 仍属于编译源。20805 从 iOS Sources 编译阶段排除该文件（保留源码），没有为消除警告重新启用定位或增加用途声明。归档和模拟器构建均成功；归档二进制 strings 检查未再检出 FmoLocationPlugin、CLLocationManager 或两项定位授权调用。
+
+最终归档：`output/ios/v2.06.2-20805/FMO-Dashboard.xcarchive`。专用 iOS 27 / iPhone 14 Pro Max 模拟器覆盖安装并冷启动后，仪表盘正常加载，无定位授权弹窗；截图 `output/ios/v262-20805-ios27-dashboard.png`。上传与审核状态继续下记。
+
 ## 发布设置
 
 用户于 2026-11-12 明确授权填写资料、提交审核、审核通过后自动发布。选择“自动发布此版本”，立即向所有用户发布更新；不重设评分，不修改定价或销售地区。沿用既有 iPhone/iPad 各六张截图，保留既有联系信息和不需要登录的设置。
