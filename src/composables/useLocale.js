@@ -78,7 +78,7 @@ const messages = {
     'public.download': 'Download',
     'public.downloadTitle': 'FMO Dashboard Downloads',
     'public.downloadHint': 'Choose the package for your device.',
-    'public.windowsX64': 'Windows Desktop Win64',
+    'public.windowsX64': 'Windows Desktop Win64 V2.06.2',
     'public.windowsX64Hint': 'Recommended for Windows 10/11 64-bit. No external browser required.',
     'public.windowsX86': 'Windows Desktop Win32',
     'public.windowsX86Hint': 'Compatibility build for 32-bit Windows or fallback use.',

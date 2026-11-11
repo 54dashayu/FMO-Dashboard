@@ -31,7 +31,7 @@ let instance: Platform | null = null
 /**
  * 获取当前平台实例（单例）。
  * - Android：Capacitor 原生实现
- * - iOS：仅定位走原生，其余沿用 Web 实现
+ * - iOS：沿用 Web 实现，保持自动定位和后台定位禁用
  * - Web / Tauri 桌面：Web 实现
  */
 export function getPlatform(): Platform {

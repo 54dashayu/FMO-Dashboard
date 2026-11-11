@@ -35,18 +35,29 @@
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>用于连接同一局域网内的 FMO 设备并同步通联、消息和坐标。</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>用于在开启自动上报后将当前位置定时同步到当前 FMO 设备。</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>用于获取当前 GPS 坐标并上报到当前 FMO 设备。</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>location</string>
-	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>
