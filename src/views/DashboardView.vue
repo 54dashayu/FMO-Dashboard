@@ -171,6 +171,9 @@
                 })
               }}</span>
               <span v-if="activeContact?.qth" class="qth-tag">QTH：{{ activeContact.qth }}</span>
+              <small v-if="activeContact && locationLabel(activeContact)">{{
+                locationLabel(activeContact)
+              }}</small>
               <span v-if="!activeContact">{{ t('dashboard.waitingEvents', '等待实时事件') }}</span>
             </div>
             <div class="active-contact-controls">
@@ -474,9 +477,19 @@
                 </td>
                 <td class="qth-cell">
                   <span class="qth-content">{{ record.qth || '-' }}</span>
+                  <small v-if="locationLabel(record)" style="display: block">
+                    {{ locationLabel(record) }}
+                    <a
+                      v-if="aprsFiSource(record)"
+                      href="https://aprs.fi/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      >aprs.fi</a
+                    >
+                  </small>
                 </td>
                 <td class="comment-cell">{{ record.toComment || '-' }}</td>
-                <td>{{ record.mode || '-' }}</td>
+                <td>{{ stationIdentity(record.toCallsign).mode || record.mode || '-' }}</td>
                 <td class="relay-cell">
                   <button
                     v-if="record.relayName"
@@ -535,6 +548,7 @@ import {
 import { getControlTarget, switchStationByRelayName } from '../services/stationControl'
 import { useSpeakingStatusStore } from '../stores/speakingStore'
 import { gridToAddress } from '../services/gridService'
+import { stationIdentity, eventCoordinates, getEventGrid } from '../core/stationIdentity'
 import { getPlatform } from '../platform'
 import { coordinatesToMaidenhead } from '../core/maidenhead'
 import { addDiagnosticLog } from '../services/diagnosticLog'
@@ -640,6 +654,7 @@ const pinnedRelayNames = ref([])
 const pinnedStations = ref([])
 const allStations = ref([])
 const qthCache = ref({})
+const locationMetadata = ref({})
 const qthLoadingKeys = new Set()
 const fmoCoordinate = ref(null)
 const voiceStatus = ref('')
@@ -832,8 +847,8 @@ const activeContact = computed(() => {
   if (!current) return null
 
   const matchedLog = findMatchingLog(current)
-  const grid = normalizeGrid(current.grid || matchedLog?.toGrid || '')
-  const qth = getRecordQth({ ...matchedLog, toGrid: grid })
+  const grid = normalizeGrid(current.grid || '')
+  const qth = getRecordQth({ toCallsign: current.callsign, toGrid: grid })
   const callsign = getCallsign(current)
   const isSelf = isSelfCallsign(callsign)
   const bearing = getBearingForGrid(grid, isSelf)
@@ -842,6 +857,8 @@ const activeContact = computed(() => {
     callsign,
     timestamp: Math.floor(current.startTime / 1000),
     grid,
+    eventGrid: grid,
+    ...eventCoordinates(current),
     qth,
     relayName: current.serverName || matchedLog?.relayName || currentStation.value?.name || '',
     frequencySource: matchedLog || findStationByName(current.serverName) || currentStation.value,
@@ -920,13 +937,15 @@ const displayRecords = computed(() => {
     .map((item) => {
       const matchedLog = findMatchingLog(item)
       const timestamp = Math.floor(item.startTime / 1000)
-      const grid = item.grid || matchedLog?.toGrid || ''
+      const grid = getEventGrid(item)
       return {
         ...matchedLog,
         rowId: `live-${item.addressId || 'single'}-${item.callsign}-${item.startTime}`,
         toCallsign: item.callsign,
         toGrid: grid,
-        qth: getRecordQth({ ...matchedLog, toGrid: grid }),
+        ...eventCoordinates(item),
+        eventGrid: grid,
+        qth: getRecordQth({ toCallsign: item.callsign, toGrid: grid }),
         timestamp,
         toComment: item.endTime
           ? matchedLog?.toComment || t('dashboard.recentSpeaker', '最近发言')
@@ -1353,6 +1372,8 @@ function isLocalAccessHost(host) {
 }
 
 function getRecordQth(record) {
+  const aprs = qthCache.value[getQthCacheKey(getCallsign(record), '')]
+  if (!record?.toGrid && !record?.grid && aprs) return aprs
   const qthGrid = isMaidenheadGrid(record?.qth) ? record.qth : ''
   const grid = normalizeGrid(record?.toGrid || record?.grid || qthGrid)
   if (grid) {
@@ -1371,6 +1392,22 @@ function getRecordQth(record) {
   if (direct) return direct
 
   return grid
+}
+
+function locationLabel(record) {
+  const grid = normalizeGrid(record.eventGrid || record.toGrid || record.grid)
+  if (grid) return ''
+  const meta = locationMetadata.value[getQthCacheKey(getCallsign(record), '')]
+  return meta?.receivedAt ? 'APRS 最近位置' : ''
+}
+
+function aprsFiSource(record) {
+  return (
+    !record.eventGrid &&
+    !record.toGrid &&
+    !record.grid &&
+    locationMetadata.value[getQthCacheKey(getCallsign(record), '')]?.source === 'aprs.fi'
+  )
 }
 
 function getQthCacheKey(callsign, grid) {
@@ -1547,72 +1584,62 @@ function collectVisibleLocations() {
   // 当前发言记录通常位于 speakingHistory 首位，优先发起其 QTH 查询。
   const eventRows =
     allSpeakingHistories.value.length > 0 ? allSpeakingHistories.value : speakingHistory.value
+  const eventCallsigns = new Set(eventRows.map(getCallsign).filter(Boolean))
   for (const item of eventRows) {
-    const grid = normalizeGrid(item.grid)
+    const grid = getEventGrid(item)
     const callsign = getCallsign(item)
-    if (grid && callsign) locations.set(getQthCacheKey(callsign, grid), { callsign, grid })
+    if (callsign) locations.set(getQthCacheKey(callsign, grid), { callsign, grid })
   }
   for (const record of records.value) {
     const grid = normalizeGrid(record.toGrid)
     const callsign = getCallsign(record)
-    if (grid && callsign) locations.set(getQthCacheKey(callsign, grid), { callsign, grid })
+    if (eventCallsigns.has(callsign)) continue
+    if (callsign) locations.set(getQthCacheKey(callsign, grid), { callsign, grid })
   }
-  return Array.from(locations.values())
+  return Array.from(locations.values()).map((item) => ({
+    ...item,
+    refreshMinute: Math.floor(activeNow.value / 60000)
+  }))
 }
 
 async function loadQthForStation(callsign, grid) {
   const cacheKey = getQthCacheKey(callsign, grid)
-  if (!grid || qthCache.value[cacheKey] || qthLoadingKeys.has(cacheKey)) return
+  if (qthLoadingKeys.has(cacheKey)) return
+  if (grid && qthCache.value[cacheKey]) return
+  const cached = locationMetadata.value[cacheKey]
+  if (!grid && cached && Date.now() - cached.checkedAt < 5 * 60 * 1000) return
   qthLoadingKeys.add(cacheKey)
-  let preciseAddressApplied = false
-  // 6 位网格反查立即并行执行，先让实时卡片和列表尽快显示可读地址。
-  // 若 APRS 稍后返回更精确的位置，下面会覆盖这个临时结果。
-  const fallbackPromise = gridToAddress(grid)
-    .then((address) => formatAddress(address))
-    .then((fallbackAddress) => {
-      if (fallbackAddress && !preciseAddressApplied) {
-        qthCache.value = {
-          ...qthCache.value,
-          [grid]: fallbackAddress,
-          [cacheKey]: fallbackAddress
-        }
-      }
-      return fallbackAddress
-    })
-    .catch(() => '')
-
   try {
-    // 1. 优先使用 APRS 经纬度直接逆地理编码。
-    try {
-      const position = await getPlatform().stationLocation.getLatest(callsign)
-      if (position) {
-        const coordinateAddress = formatAddress(position.address)
-        if (coordinateAddress) {
-          preciseAddressApplied = true
-          qthCache.value = { ...qthCache.value, [cacheKey]: coordinateAddress }
-          return
-        }
-
-        // 2. 坐标直查失败后，转换成 8 位梅登海德网格反查。
-        const preciseGrid = coordinatesToMaidenhead(position.latitude, position.longitude, 8)
-        const preciseAddress = formatAddress(await gridToAddress(preciseGrid))
-        if (preciseAddress) {
-          preciseAddressApplied = true
-          qthCache.value = { ...qthCache.value, [cacheKey]: preciseAddress }
-          return
-        }
-      }
-    } catch {
-      // 继续使用事件内的 6 位网格。
+    if (isMaidenheadGrid(grid)) {
+      const address = formatAddress(await gridToAddress(grid))
+      qthCache.value = { ...qthCache.value, [cacheKey]: address || grid }
+      return
     }
-
-    // 3. APRS 不可用时，保留并行完成的 SW 事件 6 位网格地址。
-    await fallbackPromise
+    const position = await getPlatform().stationLocation.getLatest(callsign)
+    locationMetadata.value = {
+      ...locationMetadata.value,
+      [cacheKey]: {
+        checkedAt: Date.now(),
+        status: getPlatform().stationLocation.getStatus?.(callsign),
+        ...position
+      }
+    }
+    if (!position) {
+      const updated = { ...qthCache.value }
+      delete updated[cacheKey]
+      qthCache.value = updated
+      return
+    }
+    const preciseGrid = coordinatesToMaidenhead(position.latitude, position.longitude, 8)
+    const address =
+      formatAddress(position.address) || formatAddress(await gridToAddress(preciseGrid))
+    qthCache.value = { ...qthCache.value, [cacheKey]: address || preciseGrid }
+  } catch {
+    // Keep the source grid available when reverse geocoding fails.
   } finally {
     qthLoadingKeys.delete(cacheKey)
   }
 }
-
 function getCallsign(record) {
   return (record?.toCallsign || record?.callsign || '').toUpperCase()
 }
@@ -2849,15 +2876,22 @@ onUnmounted(() => {
 
 .relay-cell {
   width: clamp(130px, 15vw, 185px);
+  overflow-wrap: anywhere;
 }
 
 .live-table th:nth-child(5),
 .live-table td:nth-child(5) {
-  width: 58px;
+  width: 130px;
+  padding-left: 12px;
+  padding-right: 16px;
+  overflow-wrap: anywhere;
+  white-space: normal;
   text-align: center;
 }
 
 .relay-link {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   border: 0;
   background: transparent;
   color: var(--color-primary);
@@ -4484,6 +4518,44 @@ onUnmounted(() => {
 
   .live-table {
     min-width: 520px;
+  }
+}
+
+/* Portrait cards must grow with QTH text instead of clipping the final row. */
+@media (max-width: 768px) and (orientation: portrait) {
+  .active-contact-card {
+    grid-template-rows: 1.35rem 7.3rem 7.35rem auto;
+  }
+
+  .mobile-previous-card {
+    height: auto;
+    min-height: 5rem;
+    grid-template-rows: auto auto;
+    overflow: visible;
+  }
+
+  .mobile-previous-main {
+    min-width: 0;
+    align-content: start;
+    overflow: visible;
+  }
+
+  .mobile-previous-meta {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .mobile-previous-meta .qth-tag {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+  }
+
+  .active-contact-card.idle .active-contact-primary h1 {
+    font-size: clamp(1.25rem, 5.6vw, 1.7rem);
   }
 }
 

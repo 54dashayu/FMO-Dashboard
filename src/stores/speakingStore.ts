@@ -7,6 +7,7 @@ import { gridToAddress } from '../services/gridService'
 import { getPlatform } from '../platform'
 import type { ServerInfo, EventsStatus } from '../platform/types/speaking'
 import { coordinatesToMaidenhead } from '../core/maidenhead'
+import { eventCoordinates, getEventGrid } from '../core/stationIdentity'
 
 // 是否由原生侧（Android）托管 events：连接池、快照、通知栏等
 const hasNativeEvents = getPlatform().capabilities.hasNativeEvents
@@ -15,6 +16,8 @@ const DUPLICATE_SPEAKING_EVENT_MS = 2500
 interface SpeakingRecord {
   callsign: string
   grid?: string
+  latitude?: number
+  longitude?: number
   startTime: number
   endTime: number | null
   serverName?: string
@@ -61,8 +64,8 @@ function formatAddr(data: any): string {
 }
 
 async function resolveSpeakerAddress(callsign: string, fallbackGrid: string): Promise<string> {
-  if (!fallbackGrid) return ''
-  if (!hasNativeEvents && callsign) {
+  if (fallbackGrid) return formatAddr(await gridToAddress(fallbackGrid))
+  if (callsign) {
     try {
       const position = await getPlatform().stationLocation.getLatest(callsign)
       if (position) {
@@ -207,7 +210,8 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
           const now = Date.now()
 
           if (isSpeaking && callsign) {
-            const grid = msg.data.grid || ''
+            const coordinates = eventCoordinates(msg.data)
+            const grid = getEventGrid(msg.data)
             const currentSpeaker = currentSpeakerMap.get(addressId) || ''
             const activeRecord = history.find((h) => !h.endTime && h.callsign === callsign)
             if (
@@ -219,8 +223,14 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
             }
 
             resolveSpeakerAddress(callsign, grid)
-              .then((address) => speakerAddressMap.set(addressId, address))
-              .catch(() => speakerAddressMap.set(addressId, ''))
+              .then((address) => {
+                if (currentSpeakerMap.get(addressId) === callsign)
+                  speakerAddressMap.set(addressId, address)
+              })
+              .catch(() => {
+                if (currentSpeakerMap.get(addressId) === callsign)
+                  speakerAddressMap.set(addressId, '')
+              })
 
             history.forEach((h) => {
               if (!h.endTime) h.endTime = now
@@ -235,6 +245,8 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
               existing.startTime = now
               existing.endTime = null
               existing.grid = grid
+              existing.latitude = coordinates?.latitude
+              existing.longitude = coordinates?.longitude
               if (sInfo) {
                 existing.serverName = sInfo.name
                 existing.serverUid = sInfo.uid
@@ -244,6 +256,7 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
               const rec: SpeakingRecord = {
                 callsign,
                 grid,
+                ...coordinates,
                 startTime: now,
                 endTime: null
               }
@@ -305,7 +318,8 @@ export const useSpeakingStatusStore = defineStore('speakingStatus', () => {
     function toRecord(h: any): SpeakingRecord {
       const rec: SpeakingRecord = {
         callsign: h.callsign,
-        grid: h.grid || '',
+        grid: getEventGrid(h),
+        ...eventCoordinates(h),
         startTime: h.startTime,
         endTime: h.endTime == null ? null : h.endTime
       }

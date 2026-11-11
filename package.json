@@ -2,7 +2,7 @@
   "name": "fmo-dashboard",
   "private": true,
   "license": "MIT",
-  "version": "2.0.5",
+  "version": "2.6.2",
   "type": "module",
   "scripts": {
     "dev": "vite",

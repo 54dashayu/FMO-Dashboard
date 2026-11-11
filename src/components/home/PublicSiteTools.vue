@@ -45,7 +45,7 @@
             ×
           </button>
           <div class="download-heading">
-            <strong>Web V2.05</strong>
+            <strong>Web V2.06.2</strong>
             <div>
               <h2>{{ t('public.downloadTitle', 'FMO 仪表盘下载') }}</h2>
               <p>
@@ -106,26 +106,18 @@ const downloads = [
   {
     icon: 'Win64',
     titleKey: 'public.windowsX64',
-    title: 'Windows 桌面版 Win64 V2.05',
+    title: 'Windows 桌面版 Win64 V2.06.2',
     hintKey: 'public.windowsX64Hint',
     hint: '推荐 Win10 / Win11 64 位用户下载，不依赖外部浏览器。',
-    url: `${vpsDownloadBase}/v2.0.5/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.5.exe`
-  },
-  {
-    icon: 'Win32',
-    titleKey: 'public.windowsX86',
-    title: 'Windows 桌面版 Win32 V2.05',
-    hintKey: 'public.windowsX86Hint',
-    hint: '32 位 Windows 或兼容备用版本，64 位系统也可运行。',
-    url: `${vpsDownloadBase}/v2.0.5/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.5.exe`
+    url: `${vpsDownloadBase}/v2.6.2/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.6.2.exe`
   },
   {
     icon: 'APK',
     titleKey: 'public.androidApk',
-    title: 'Android APK V2.05',
+    title: 'Android APK V2.06.2',
     hintKey: 'public.androidApkHint',
-    hint: 'V2.05 统一版，包含完整核心功能、QTH 显示修正及安卓设备适配。',
-    url: `${vpsDownloadBase}/FMO-Dashboard-Android-V2.05.apk`
+    hint: 'V2.06.2，包含位置优先级、APRS 最近位置、模式识别及手机排版优化。',
+    url: `${vpsDownloadBase}/FMO-Dashboard-Android-V2.06.2.apk`
   },
   {
     icon: 'DMG',
@@ -136,9 +128,9 @@ const downloads = [
   {
     icon: 'iOS',
     titleKey: 'public.iosApp',
-    title: 'iOS / iPadOS V2.05',
+    title: 'iOS / iPadOS',
     hintKey: 'public.iosAppHint',
-    hint: 'V2.05 已提交 App Store 审核，通过后可在 App Store 更新。',
+    hint: '请在 App Store 查看当前可用版本并更新。',
     url: 'https://apps.apple.com/cn/app/fmo-dashboard/id6772919070'
   }
 ]
