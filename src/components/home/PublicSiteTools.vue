@@ -121,9 +121,9 @@ const downloads = [
   },
   {
     icon: 'DMG',
-    title: 'macOS Universal V2.05',
+    title: 'macOS Universal V2.06.2',
     hint: '支持 Apple Silicon 与 Intel Mac，使用 Developer ID 签名并通过 Apple 公证。',
-    url: `${vpsDownloadBase}/v2.0.5/FMO-Dashboard-macOS-Universal-v2.0.5.dmg`
+    url: `${vpsDownloadBase}/v2.6.2/FMO-Dashboard-macOS-Universal-v2.6.2.dmg`
   },
   {
     icon: 'iOS',
