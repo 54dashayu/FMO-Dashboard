@@ -29,7 +29,7 @@ iPhone / iPad 用户可在 Apple App Store 搜索 `FMO-Dashboard` 下载。
 
 ### macOS
 
-- [FMO-Dashboard-macOS-Universal-v2.0.1.dmg](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.1/FMO-Dashboard-macOS-Universal-v2.0.1.dmg)
+- [macOS Universal V2.06.2 DMG](https://fmo.bh1jss.net/downloads/v2.6.2/FMO-Dashboard-macOS-Universal-v2.6.2.dmg)
 - [SHA256SUMS-macos-v2.0.1.txt](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.1/SHA256SUMS-macos-v2.0.1.txt)
 
 macOS DMG 为 Universal 版本，同时支持 Apple Silicon 和 Intel Mac。V2.01 起已完成 Developer ID 签名与 Apple 公证。
