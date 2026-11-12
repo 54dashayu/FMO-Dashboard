@@ -6,5 +6,5 @@ export const iosCapabilities: ICapabilities = {
   hasPersistentGridCache: false,
   hasNativeEvents: false,
   hasNativeAudio: false,
-  hasNativeLocation: true
+  hasNativeLocation: false
 }

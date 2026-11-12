@@ -15,7 +15,7 @@ FMO 仪表盘是面向 FMO 用户的实时通联看板，基于 FmoLogs 数据�
 - 服务器控制：支持服务器列表、收藏服务器、最近活跃服务器切换。
 - 语音播报：支持新呼号提示、通联播报、呼号 NATO 读法和离线语音兜底。
 - 移动端适配：针对手机浏览器和 Android App 优化布局、导航和安全区域。
-- 桌面端适配：提供 Windows Win64/Win32 安装包和 macOS Universal DMG，减少浏览器环境差异。
+- 桌面端适配：提供 Windows Win64 安装包和 macOS Universal DMG，减少浏览器环境差异；Win32 已停止维护。
 
 ## 下载
 
@@ -29,7 +29,7 @@ iPhone / iPad 用户可在 Apple App Store 搜索 `FMO-Dashboard` 下载。
 
 ### macOS
 
-- [FMO-Dashboard-macOS-Universal-v2.0.1.dmg](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.1/FMO-Dashboard-macOS-Universal-v2.0.1.dmg)
+- [macOS Universal V2.06.2 DMG](https://fmo.bh1jss.net/downloads/v2.6.2/FMO-Dashboard-macOS-Universal-v2.6.2.dmg)
 - [SHA256SUMS-macos-v2.0.1.txt](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.1/SHA256SUMS-macos-v2.0.1.txt)
 
 macOS DMG 为 Universal 版本，同时支持 Apple Silicon 和 Intel Mac。V2.01 起已完成 Developer ID 签名与 Apple 公证。
@@ -43,13 +43,12 @@ Android V2.02 主要针对更低版本 Android 和特殊车机/音箱系统增�
 
 ### Windows 桌面版
 
-推荐 Win10 / Win11 64 位用户下载 Win64 安装包：
+推荐 Win10 / Win11 64 位用户下载 Win64 V2.06.2 安装包：
 
-- [FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.1.exe](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.1/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.0.1.exe)
-- [FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.1.exe](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.1/FMO-Dashboard-Windows-Desktop-x86-Setup-v2.0.1.exe)
-- [SHA256SUMS-windows-desktop-v2.0.1.txt](https://github.com/54dashayu/FMO-Dashboard/releases/download/v2.0.1/SHA256SUMS-windows-desktop-v2.0.1.txt)
+- [FMO-Dashboard-Windows-Desktop-x64-Setup-v2.6.2.exe](https://fmo.bh1jss.net/downloads/v2.6.2/FMO-Dashboard-Windows-Desktop-x64-Setup-v2.6.2.exe)
+- [SHA256SUMS-windows-desktop-v2.6.2.txt](https://fmo.bh1jss.net/downloads/v2.6.2/SHA256SUMS-windows-desktop-v2.6.2.txt)
 
-Win7 不再作为桌面版主支持目标。普通用户建议使用 Win10 / Win11 64 位版本；32 位 Windows 可使用 Win32 备用安装包。
+Win7 和 Win32（x86）停止维护，不再构建或提供官网下载。新版只提供 Win64；安装包当前未配置 Authenticode 代码签名，Windows 可能显示 SmartScreen 提示。
 
 Windows 下添加本地 FMO 地址时，建议填写设备局域网 IP，例如 `192.168.x.x`。部分 Windows 环境无法解析 `fmo.local` 这类 `.local` 地址。
 

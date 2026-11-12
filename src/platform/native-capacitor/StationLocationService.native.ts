@@ -1,13 +1,6 @@
-import type {
-  IStationLocationService,
-  StationLocation
-} from '../interfaces/IStationLocationService'
+import { WebStationLocationService } from '../web/StationLocationService.web'
 
 /**
- * 本轮只启用网页版。Android 保持原有行为，后续可接入原生 APRS-IS。
+ * Native WebView uses the same read-only APRS HTTP fallback and identity safeguards.
  */
-export class NativeStationLocationService implements IStationLocationService {
-  async getLatest(_callsign: string): Promise<StationLocation | null> {
-    return null
-  }
-}
+export class NativeStationLocationService extends WebStationLocationService {}

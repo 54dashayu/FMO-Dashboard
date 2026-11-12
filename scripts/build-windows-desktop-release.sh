@@ -21,13 +21,10 @@ EOF
 fi
 
 bash "$ROOT_DIR/scripts/build-windows-desktop.sh" --arch x64
-bash "$ROOT_DIR/scripts/build-windows-desktop.sh" --arch x86
 
 desktop_artifacts=(
   "$RELEASE_DIR/FMO-Dashboard-Windows-Desktop-x64-Setup.exe"
   "$RELEASE_DIR/FMO-Dashboard-Windows-Desktop-x64-Setup-v$APP_VERSION.exe"
-  "$RELEASE_DIR/FMO-Dashboard-Windows-Desktop-x86-Setup.exe"
-  "$RELEASE_DIR/FMO-Dashboard-Windows-Desktop-x86-Setup-v$APP_VERSION.exe"
 )
 
 bash "$ROOT_DIR/scripts/generate-release-checksums.sh" "$CHECKSUM_FILE" "${desktop_artifacts[@]}"
@@ -38,7 +35,6 @@ Windows desktop release artifacts are ready.
 
 Mainline:
 - $RELEASE_DIR/FMO-Dashboard-Windows-Desktop-x64-Setup-v$APP_VERSION.exe
-- $RELEASE_DIR/FMO-Dashboard-Windows-Desktop-x86-Setup-v$APP_VERSION.exe
 
 Checksums:
 - $CHECKSUM_FILE

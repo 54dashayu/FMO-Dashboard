@@ -142,6 +142,13 @@
           </a>
           {{ t('footer.share', '欢迎分享') }}
         </span>
+        <a
+          v-if="Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios'"
+          href="https://beian.miit.gov.cn/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >鲁ICP备2026051181号-2A</a
+        >
       </footer>
 
       <!-- 回到顶部按钮（仅移动端显示） -->

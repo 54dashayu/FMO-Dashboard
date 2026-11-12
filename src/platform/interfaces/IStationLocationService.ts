@@ -4,7 +4,7 @@ export interface StationLocation {
   longitude: number
   receivedAt: number
   ageSeconds: number
-  source: 'APRS-IS'
+  source: 'APRS-IS' | 'aprs.fi'
   address?: {
     country?: string
     province?: string
@@ -18,4 +18,5 @@ export interface StationLocation {
 
 export interface IStationLocationService {
   getLatest(callsign: string): Promise<StationLocation | null>
+  getStatus?(callsign: string): string
 }

@@ -13,11 +13,11 @@ on:
           - 'false'
   push:
     tags:
-      - 'v*'
+      - 'windows-v*'
 
 jobs:
   build:
-    name: Build Win32 and Win64 desktop installers
+    name: Build Win64 desktop installer
     runs-on: windows-latest
     env:
       WINDOWS_SIGN_CERT_P12_BASE64: ${{ secrets.WINDOWS_SIGN_CERT_P12_BASE64 }}
@@ -36,11 +36,15 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc,i686-pc-windows-msvc
+          targets: x86_64-pc-windows-msvc
 
       - name: Install dependencies
         shell: bash
         run: npm ci
+
+      - name: Check types
+        shell: bash
+        run: npm run typecheck
 
       - name: Prepare signing certificate
         if: ${{ env.WINDOWS_SIGN_CERT_P12_BASE64 != '' }}
@@ -79,6 +83,5 @@ jobs:
           name: fmo-dashboard-windows-desktop
           path: |
             release/FMO-Dashboard-Windows-Desktop-x64-Setup-v*.exe
-            release/FMO-Dashboard-Windows-Desktop-x86-Setup-v*.exe
             release/SHA256SUMS-windows-desktop-v*.txt
           if-no-files-found: error

@@ -7,7 +7,7 @@ import { WebGridService } from '../web/GridService.web'
 import { WebStationLocationService } from '../web/StationLocationService.web'
 import { WebStorageService } from '../web/StorageService.web'
 import { iosCapabilities } from './Capabilities.ios'
-import { NativeLocationService } from './LocationService.native'
+import { WebLocationService } from '../web/LocationService.web'
 
 export function createIosPlatform(): Platform {
   return {
@@ -16,7 +16,7 @@ export function createIosPlatform(): Platform {
     aprs: new WebAprsService(),
     grid: new WebGridService(),
     background: new WebBackgroundService(),
-    location: new NativeLocationService(),
+    location: new WebLocationService(),
     stationLocation: new WebStationLocationService(),
     storage: new WebStorageService(),
     capabilities: iosCapabilities
